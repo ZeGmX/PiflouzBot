@@ -269,9 +269,9 @@ async def on_raw_reaction_add(playload):
     user_id = str(user.id)
 
     # New user
-    if user_id not in db["piflouz_bank"].keys():
-      db["piflouz_bank"] = {user_id: NB_PIFLOUZ_PER_REACT}
-      db["timers_react"] = {user_id: int(time.time())}
+    if str(user_id) not in db["piflouz_bank"].keys():
+      db["piflouz_bank"][user_id] = NB_PIFLOUZ_PER_REACT
+      db["timers_react"][user_id] = int(time.time())
       await message.add_reaction("✅")
 
     else:
