@@ -22,7 +22,7 @@ async def get_pibou_live_status():
   """
   print("checking live status")
 
-  if "out_channel" in db.keys() and "is_currently_live" in db.keys():
+  if "out_channel" in db.keys():
 
     API_ENDPOINT = "https://api.twitch.tv/helix/streams?user_login=pibou421"
     head = {
@@ -39,6 +39,7 @@ async def get_pibou_live_status():
     elif r["data"] == [] and db["is_currently_live"]:
       # The live just ended
       db["is_currently_live"] = False
+      await send_end_live_message(r)
 
 
 async def send_new_live_message(r):
@@ -53,6 +54,16 @@ async def send_new_live_message(r):
   role = client.guilds[0].get_role(TWITCH_NOTIF_ROLE_ID)
   await out_channel.send(f"{role.mention} Pibou421 is currently live on \"{title}\", go check out on http://www.twitch.tv/pibou421 ! {FUEGO_EMOJI}")
 
+
+async def send_end_live_message(r):
+  """
+  Sends a message saying pibou421 is no longer live
+  --
+  input:
+    r: dict -> request
+  """
+  out_channel = client.get_channel(db["out_channel"])
+  await out_channel.send(f"Pibou421 is no longer live, follow him on http://www.twitch.tv/pibou421 to stay tuned! {FUEGO_EMOJI}")
 
 
 def get_live_status(user_name):
@@ -138,6 +149,16 @@ def get_embed_help_message():
     value="to laugh your ass off (or not, manage your expectations)",
     inline=False
   )
+  embed.add_field(
+    name="`$donate @user amount`",
+    value="be generous to others",
+    inline=False
+  )
+  embed.add_field(
+    name ="`$balance`",
+    value=f"check how many {PIFLOUZ_EMOJI} you have. Kind of a low-cost Piflex.",
+    inline=False
+  )
 
   embed.add_field(
     name="Things I do in the background",
@@ -211,7 +232,60 @@ async def on_message(message):
   
   if message.content.startswith("$?"):
     await out_channel.send(embed=get_embed_help_message())
-  
+
+  if message.content.startswith("$donate"):
+    L = message.content.split()
+    if len(L) >= 3 and "piflouz_bank" in db.keys():
+      amount, user_receiver_id = L[2], L[1]
+      if user_receiver_id.startswith("<@!") and user_receiver_id.endswith(">") and user_receiver_id[3:-1].isdigit() and amount.isdigit():  
+        #We check wheter  a user is pinged (avoid donating to roles / @everyone)
+        amount = int(amount)
+        user_receiver_id = int(user_receiver_id[3:-1]) 
+        try:
+          user_receiver = await client.fetch_user(user_receiver_id)
+        except discord.errors.NotFound:
+          user_receiver = None
+        user_sender = message.author 
+
+        if user_receiver is not None:
+          # Check if the user exists (not a random message)
+            
+          # Check if the sender and receiver have an account
+          if str(user_sender.id) in db["piflouz_bank"].keys():
+            # Check if the sender has enough piflouz
+            if db["piflouz_bank"][str(user_sender.id)] >= amount:
+            
+              db["piflouz_bank"][str(user_sender.id)] -= amount
+
+              if str(user_receiver_id) in db["piflouz_bank"].keys():
+                db["piflouz_bank"][str(user_receiver.id)] += amount
+              else:
+                db["piflouz_bank"][str(user_receiver.id)] = amount
+                db["timers_react"][str(user_receiver.id)] = 0 
+
+              await message.add_reaction("✅")
+          
+              embed = await get_embed_piflouz()
+
+              piflouz_message = await out_channel.fetch_message(int(db["piflouz_message_id"]))
+              await piflouz_message.edit(embed=embed)
+              return
+    
+    await message.add_reaction("❌")
+    await asyncio.sleep(10)
+    await message.delete()
+
+  if message.content.startswith("$balance"):
+    user = message.author
+    if "piflouz_bank" in db.keys() and str(user.id) in db["piflouz_bank"].keys():
+      balance = db["piflouz_bank"][str(user.id)]
+      message = f"<@{user.id}>, your balance is of {balance} {PIFLOUZ_EMOJI}! " 
+      await out_channel.send(message)
+      return
+    await message.add_reaction("❌")
+    await asyncio.sleep(10)
+    await message.delete()
+
   if message.content.startswith("$shutdown"):
     exit()
   
@@ -246,6 +320,7 @@ async def on_raw_reaction_add(playload):
     await message.remove_reaction(emoji, user)
 
 
+
   # Reaction to the piflouz message
   if "piflouz_message_id" in db.keys() and message.id == db["piflouz_message_id"]:
     # Check mark or cross mark created by the bot
@@ -269,7 +344,7 @@ async def on_raw_reaction_add(playload):
     user_id = str(user.id)
 
     # New user
-    if str(user_id) not in db["piflouz_bank"].keys():
+    if user_id not in db["piflouz_bank"].keys():
       db["piflouz_bank"][user_id] = NB_PIFLOUZ_PER_REACT
       db["timers_react"][user_id] = int(time.time())
       await message.add_reaction("✅")
@@ -288,6 +363,7 @@ async def on_raw_reaction_add(playload):
 
     embed = await get_embed_piflouz()
     await message.edit(embed=embed)
+  
 
 
 async def get_embed_piflouz():
@@ -332,19 +408,26 @@ def get_embed_twitch_notif():
 
 
 # How many seconds between each react to earn piflouz
-REACT_TIME_INTERVAL = 1800
-NB_PIFLOUZ_PER_REACT = 50
+REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))
+NB_PIFLOUZ_PER_REACT = int(os.getenv("NB_PIFLOUZ_PER_REACT"))
 
-PIFLOUZ_EMOJI_ID = 820340949716041798
+#PIFLOUZ_EMOJI_ID = 820340949716041798
+PIFLOUZ_EMOJI_ID = int(os.getenv("PIFLOUZ_EMOJI_ID"))
 PIFLOUZ_EMOJI = f"<:piflouz:{PIFLOUZ_EMOJI_ID}>"
-FUEGO_EMOJI_ID = 818582820388601896
+
+#FUEGO_EMOJI_ID = 818582820388601896
+FUEGO_EMOJI_ID = int(os.getenv("FUEGO_EMOJI_ID"))
 FUEGO_EMOJI = f"<:fuego:{FUEGO_EMOJI_ID}>"
-PIFLOUZ_URL = "https://cdn.discordapp.com/emojis/820340949716041798.png?v=1"
-PIBOU4LOVE_URL = "https://cdn.discordapp.com/emojis/823601705189900308.png?v=1"
+PIFLOUZ_URL = os.getenv("PIFLOUZ_URL")
+#"https://cdn.discordapp.com/emojis/820340949716041798.png?v=1"
 
-PIBOU_TWITCH_THUMBNAIL_URL = "https://static-cdn.jtvnw.net/jtv_user_pictures/40bfa05b-7af4-448e-8504-2b81eaa3f11d-profile_image-70x70.png"
+PIBOU4LOVE_URL = os.getenv("PIBOU4LOVE_URL")
+#"https://cdn.discordapp.com/emojis/823601705189900308.png?v=1"
 
-TWITCH_NOTIF_ROLE_ID = 827192106333765642
+PIBOU_TWITCH_THUMBNAIL_URL = os.getenv("PIBOU_TWITCH_THUMBNAIL_URL")
+#"https://static-cdn.jtvnw.net/jtv_user_pictures/40bfa05b-7af4-448e-8504-2b81eaa3f11d-profile_image-70x70.png"
+
+TWITCH_NOTIF_ROLE_ID = int(os.getenv("TWITCH_NOTIF_ROLE_ID"))
 
 BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, react every {REACT_TIME_INTERVAL} seconds to gain more {PIFLOUZ_EMOJI}\n\n\
 You just need to react with the {PIFLOUZ_EMOJI} emoji\n\
@@ -353,20 +436,24 @@ A :white_check_mark: reaction will appear for 2 seconds to make you know you won
 A :x: reaction will appear for 2s if you did not wait for long enough, better luck next time\n"
 
 
-
 greetings = [ "Greetings <@{}>! Nice to meet you!",
               "Hello there <@{}>, how are you doing today ?",
               "Hello, oh great <@{}>. Hope you are doing great"]
 
+
 keep_alive()
 client.run(os.getenv("DISCORDTOKEN"))
 
-
+# Diflouz ???
 
 """
 Ideas:
   Add a prediction system
   diep.io party link generator
 
+
   How to use piflouz
+  Give Piflouz to people (ex: reduced time between actions)
+  Random chests
+  Graph piflouz
 """
