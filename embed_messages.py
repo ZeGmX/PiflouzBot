@@ -56,7 +56,7 @@ def get_embed_help_message():
     )
     embed.add_field(
       name="`$cooldown`",
-      value="'cause Pibou's next stream is neither too soon",
+      value="when your addiction is stronger than your sense of time",
       inline=False
     )
     embed.add_field(
@@ -64,12 +64,28 @@ def get_embed_help_message():
       value="for the lazy ones",
       inline=False
     )
+    embed.add_field(
+      name="`$piflex`",
+      value=f"when you have too many {Constants.PIFLOUZ_EMOJI}\n /!\ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
+      inline=False
+    )
+    embed.add_field(
+      name="`$buyRankPiflex`",
+      value=f"flex with a custom rank\n /!\ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {Constants.PIFLEXROLE_DURATION} seconds",
+      inline=False
+    )
+    embed.add_field(
+      name="`$tarpin`",
+      value="what could that be? Can be used in any channel",
+      inline=False
+    )
     
     embed.add_field(
       name="Things I do in the background",
       value=f"- I will send a message everytime the great streamer pibou421 goes live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you react to the message below\n\
-- I spawn random gifts from time to time. Be the first to react to earn more {Constants.PIFLOUZ_EMOJI}"
+- I spawn random gifts from time to time. Be the first to react to earn more {Constants.PIFLOUZ_EMOJI}\n\
+- I update the Pilord role to give it to the player with the most piflouz"
     )
     return embed
 
@@ -116,3 +132,24 @@ def get_embed_twitch_notif():
     )
     embed.set_thumbnail(url=Constants.PIBOU_TWITCH_THUMBNAIL_URL)
     return embed
+
+
+def get_embed_piflex(user_id):
+  """
+  Returns an embed message corresponding to the piflex message
+  --
+  input:
+    user_id: str/int -> the id of the user requesting the piflex
+  """
+  embed = discord.Embed(
+    title="PIFLEX",
+    description=f"Look how much piflouz <@{user_id}> has. So much pifluz that he/she is flexing on you poor peasants! He/She is so cool and rich that he/she can just take a bath in piflouz. You mad?",
+    colour=discord.Colour.gold()
+  )
+  print(Constants.PIBOU4STONKS_URL)
+  embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
+  
+  embed.set_image(url=Constants.PICSOU_URL)
+
+  return embed
+

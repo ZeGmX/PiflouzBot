@@ -5,7 +5,11 @@ class Constants:
   REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))
   NB_PIFLOUZ_PER_REACT = int(os.getenv("NB_PIFLOUZ_PER_REACT"))
 
-  # Rate of random drop
+  #Miscelaneous timing things
+  TIME_BEFORE_DELETION = int(os.getenv("TIME_BEFORE_DELETION"))
+
+
+  # Rate of random drop (pibox)
   RANDOM_DROP_RATE = 5 / 2880 # 2880 * 30s in a day, 5 mean drop a day 
   RANDOM_DROP_AVERAGE = NB_PIFLOUZ_PER_REACT * 10
 
@@ -20,12 +24,25 @@ class Constants:
                     [PIFLOUZ_EMOJI_ID, PIFLOUZ_EMOJI]]
 
   PIBOU4LOVE_URL = os.getenv("PIBOU4LOVE_URL")
+  PIBOU4STONKS_URL = os.getenv("PIBOU4STONKS_URL")
 
   PIBOU_TWITCH_THUMBNAIL_URL = os.getenv("PIBOU_TWITCH_THUMBNAIL_URL")
 
-  TWITCH_ANNOUNCEMENTDELAY = os.getenv("TWITCH_ANNOUNCEMENTDELAY")#Time between announcement of streams, to avoid spam if the stream crashes.
+  TWITCH_ANNOUNCEMENTDELAY = int(os.getenv("TWITCH_ANNOUNCEMENTDELAY")) #Time between announcement of streams, to avoid spam if the stream crashes.
 
   TWITCH_NOTIF_ROLE_ID = int(os.getenv("TWITCH_NOTIF_ROLE_ID"))
+
+  PIFLEX_COST = int(os.getenv("PIFLEX_COST"))
+
+
+  PICSOU_URL = os.getenv("PICSOU_URL")
+
+  PILORD_ROLE_ID = int(os.getenv("PILORD_ROLE_ID"))
+
+  # Role that you can buy to flex
+  PIFLEXER_ROLE_ID = int(os.getenv("PIFLEXER_ROLE_ID"))
+  PIFLEXROLE_DURATION = int(os.getenv("PIFLEXROLE_DURATION"))
+  PIFLEXER_COST = int(os.getenv("PIFLEXER_COST"))
 
 
   BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, react every {REACT_TIME_INTERVAL} seconds to gain more {PIFLOUZ_EMOJI}\n\n\

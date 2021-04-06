@@ -34,7 +34,6 @@ async def task_check_live_status():
       }
       
       r = requests.get(url=API_ENDPOINT, headers=head).json()
-
       if streamer_name not in db["is_currently_live"].keys() or streamer_name not in db["previous_live_message_time"].keys():
         db["is_currently_live"][streamer_name] = False
         db["previous_live_message_time"][streamer_name] = 0
@@ -91,8 +90,12 @@ async def on_ready():
   if "random_gifts" not in db.keys():
     db["random_gifts"] = dict()
 
+  if "current_pilords" not in db.keys():
+    db["current_pilords"] = []
+
   task_check_live_status.start()
   piflouz_handlers.random_gift.start(client)
+  piflouz_handlers.update_rank_pilord.start(client)
 
 
 @client.event
@@ -111,6 +114,8 @@ async def on_message(message):
     out_channel = message.channel
     # Saving the channel in the database in order not to need to do $setupChannel when
     # rebooting
+    await message.delete()
+
     db["out_channel"] = out_channel.id
     await out_channel.send("This channel is now my default channel")
     await out_channel.send(embed=embed_messages.get_embed_help_message())
@@ -121,7 +126,10 @@ async def on_message(message):
     message = await out_channel.send(embed=await embed_messages.get_embed_piflouz(client))
     db["piflouz_message_id"] = message.id
     await message.add_reaction(Constants.PIFLOUZ_EMOJI)
-    
+  
+  if "$tarpin" in message.content:
+    await message.reply("Du quoi ?")
+
   # Can't use the commands before using $setupChannel
   if "out_channel" not in db.keys():
     return
@@ -152,17 +160,19 @@ async def on_message(message):
     joke = utils.get_new_joke()
     output_message = f"<@{user.id}>, here is a joke for you:\n{joke}"
     await out_channel.send(output_message)
-    await asyncio.sleep(3)
+    #await asyncio.sleep(3)
     await message.delete()
 
-  if message.content.startswith("$?"):
-    await out_channel.send(embed=embed_messages.get_embed_help_message())
+  if message.content.startswith("$?") or message.content.startswith("$help"):
+    user = message.author
+    await out_channel.send(f"<@{user.id}>, here is some help. Hopes you understand me better after reading this! {Constants.PIFLOUZ_EMOJI}\n", embed=embed_messages.get_embed_help_message())
+    await message.delete()
 
-  if message.content.startswith("$donate"):
+  if message.content.startswith("$donate") or message.content.startswith("$khalass"):
     L = message.content.split()
     if len(L) >= 3 and "piflouz_bank" in db.keys():
       amount, user_receiver_id = L[2], utils.check_tag(L[1])
-      if user_receiver_id is not None and amount.isdigit():
+      if user_receiver_id is not None and utils.is_digit(amount):
         #We check wheter a user is pinged (avoid donating to roles / @everyone)
         amount = int(amount)
         try:
@@ -194,42 +204,111 @@ async def on_message(message):
               return
     
     await message.add_reaction("❌")
-    await asyncio.sleep(10)
+    await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
     await message.delete()
 
   if message.content.startswith("$balance"):
     user = message.author
     if "piflouz_bank" in db.keys() and str(user.id) in db["piflouz_bank"].keys():
+      await message.delete()
       balance = db["piflouz_bank"][str(user.id)]
-      message = f"<@{user.id}>, your balance is of {balance} {Constants.PIFLOUZ_EMOJI}! " 
-      await out_channel.send(message)
+      content = f"<@{user.id}>, your balance is of {balance} {Constants.PIFLOUZ_EMOJI}! " 
+      message_answer = await out_channel.send(content)
+      
+      await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
+      await message_answer.delete()
       return
+
     await message.add_reaction("❌")
-    
-    await asyncio.sleep(10)
+    await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
     await message.delete()
 
   if message.content.startswith("$get"):
     user = message.author
     successful_update = piflouz_handlers.update_piflouz(user)
     await message.add_reaction("✅" if successful_update else "❌")
+    if not successful_update:
+      timer = utils.get_timer(user)
+      output_text = f"<@{user.id}>, you still need to wait {timer} seconds before earning more {Constants.PIFLOUZ_EMOJI}!"
+      output_message = await out_channel.send(output_text)
     embed = await embed_messages.get_embed_piflouz(client)
     piflouz_message = await out_channel.fetch_message(int(db["piflouz_message_id"]))
     await piflouz_message.edit(embed=embed)
-    await asyncio.sleep(3)
-    await message.delete()
+    if successful_update:
+      await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
+      await message.delete()
+    else:
+      await message.delete()
+      await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
+      await output_message.delete()
 
   if message.content.startswith("$cooldown"):
     user = message.author
-    timer = utils.get_timer(user)
-    if timer >0 :
-      output_message = f"<@{user.id}>, you still need to wait {timer} seconds before earning more {Constants.PIFLOUZ_EMOJI}!"
-    else:
-      output_message = f"<@{user.id}>, you can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
-    await out_channel.send(output_message)
-    await asyncio.sleep(3)
     await message.delete()
 
+    timer = utils.get_timer(user)
+    if timer >0 :
+      output_text = f"<@{user.id}>, you still need to wait {timer} seconds before earning more {Constants.PIFLOUZ_EMOJI}!"
+    else:
+      output_text = f"<@{user.id}>, you can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
+    output_message = await out_channel.send(output_text)
+    await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
+    await output_message.delete()
+
+  if message.content.startswith("$piflex"):
+    user_id = str(message.author.id)
+    if user_id in db["piflouz_bank"] and db["piflouz_bank"][user_id] > Constants.PIFLEX_COST:
+      db["piflouz_bank"][user_id] -= Constants.PIFLEX_COST
+      await message.add_reaction("✅")
+
+      embed = embed_messages.get_embed_piflex(user_id)
+      await out_channel.send(embed=embed)
+
+    else:
+      await message.add_reaction("❌")
+
+    await asyncio.sleep(2)
+    await message.delete()
+
+  if message.content.startswith("$buyRankPiflex"):
+    user_id = str(message.author.id)
+    done = False
+    guild = client.guilds[0]
+    member = await guild.fetch_member(user_id)
+    role = guild.get_role(Constants.PIFLEXER_ROLE_ID)
+
+    if user_id in db["piflouz_bank"] and db["piflouz_bank"][user_id] > Constants.PIFLEXER_COST and role not in member.roles:
+      db["piflouz_bank"][user_id] -= Constants.PIFLEXER_COST
+      await message.add_reaction("✅")
+      await member.add_roles(role)
+
+      done = True
+    else:
+      await message.add_reaction("❌")
+
+    await asyncio.sleep(2)
+    await message.delete()
+
+    if done:
+      await asyncio.sleep(Constants.PIFLEXROLE_DURATION)
+      await member.remove_roles(role)
+
+  if message.content.startswith("$pilord"):
+    user_id = str(message.author.id)
+    if user_id not in db["piflouz_bank"].keys():
+      db["piflouz_bank"][user_id] = 0
+
+    if user_id in db["current_pilords"]:
+      answer_message = await out_channel.send(f"<@{user_id}> You are currently a pilord. Kinda flexing right now!")
+    
+    elif user_id in db["piflouz_bank"].keys():
+      amount = db["piflouz_bank"][user_id]
+      max_amount = db["piflouz_bank"][db["current_pilords"][0]]
+      answer_message = await out_channel.send(f"<@{user_id}> You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!")
+    
+    await asyncio.sleep(Constants.TIME_BEFORE_DELETION)
+    await message.delete()
+    await answer_message.delete()
 
   if message.content.startswith("$shutdown"):
     exit()
@@ -295,10 +374,15 @@ async def on_raw_reaction_add(playload):
   if str(message.id) in db["random_gifts"]:
     emoji_required, qty = db["random_gifts"][str(message.id)]
     if str(emoji) == emoji_required:
-      piflouz_handlers.update_piflouz(user, qty)
+      piflouz_handlers.update_piflouz(user, qty, False)
 
       del db["random_gifts"][str(message.id)]
-      await message.edit(content=f"<@{user.id}> won {qty} {Constants.PIFLOUZ_EMOJI}")
+      await message.edit(content=f"<@{user.id}> won {qty} {Constants.PIFLOUZ_EMOJI} (pibox)")
+
+      out_channel = client.get_channel(db["out_channel"])
+      embed = await embed_messages.get_embed_piflouz(client)
+      piflouz_message = await out_channel.fetch_message(int(db["piflouz_message_id"]))
+      await piflouz_message.edit(embed=embed)
 
 
 
@@ -313,13 +397,15 @@ if __name__ == "__main__":
 Ideas:
   Add a prediction system
   diep.io party link generator
-
-  How to use piflouz
-  Give Piflouz to people (ex: reduced time between actions, piflouz miner)
-  Random chests
+  buy with piflouz (ex: reduced time between actions, piflouz miner)
   Graph piflouz
-  BIG PIFLEX
   Horoscope
-  $get to get the piflouz without going to the message
   backup db
+  plus d'emote pour les gifts random -> mettre dans .env
+  giveway (custom -> one winner, random, sharing the loot, ... ?)
+  $get gives cooldown if not working
+  rank with xp
+  $steal (up to 50), 1-2 times a day
+  modify piflouz earned: 100 at 30minutes -> 50 at 35+
+  more pioflouz if consecutive win
 """

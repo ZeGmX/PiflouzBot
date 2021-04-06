@@ -62,9 +62,22 @@ def check_tag(tag):
     tag: str -> the string version of the tag
   """
   # Desktop version
-  if tag.startswith("<@!") and tag.endswith(">") and tag[3:-1].isdigit():
+  if tag.startswith("<@!") and tag.endswith(">") and is_digit(tag[3:-1]):
     return int(tag[3:-1])
   # Phone version
-  elif tag.startswith("<@") and tag.endswith(">") and tag[2:-1].isdigit():
+  elif tag.startswith("<@") and tag.endswith(">") and is_digit(tag[2:-1]):
     return int(tag[2:-1])
   return None
+
+
+def is_digit(var):
+  """
+  Checks if a string only contains numbers
+  --
+  input:
+    var: str
+  --
+  output:
+    res: bool
+  """
+  return all(char in "0123456789" for char in var)
