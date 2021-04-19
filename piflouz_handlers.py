@@ -72,6 +72,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
   
   db["random_gifts"][str(message.id)] = [emoji, piflouz_quantity, custom_message]
 
+
 @tasks.loop(seconds=30)
 async def random_gift(bot):
   """

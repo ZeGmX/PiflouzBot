@@ -245,12 +245,12 @@ def get_embed_store_ui():
   )
   embed.add_field(
     name="⌛",
-    value=f"{Constants.POWERUP_COOLDOWN_EFFECT1}% multiplier for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE1} {Constants.PIFLOUZ_EMOJI}",
+    value=f"{Constants.POWERUP_COOLDOWN_EFFECT1}% cooldown reduction for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE1} {Constants.PIFLOUZ_EMOJI}",
     inline=True
   )
   embed.add_field(
     name="⏩",
-    value=f"{Constants.POWERUP_COOLDOWN_EFFECT2}% multiplier for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE2} {Constants.PIFLOUZ_EMOJI}",
+    value=f"{Constants.POWERUP_COOLDOWN_EFFECT2}% cooldown reduction for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE2} {Constants.PIFLOUZ_EMOJI}",
     inline=True
   )
   embed.add_field(

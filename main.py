@@ -307,7 +307,6 @@ async def get_cmd(ctx, *args):
   user = ctx.author
   successful_update = piflouz_handlers.update_piflouz(user)
   react = "✅" if successful_update else "❌"
-  await utils.react_and_delete(ctx.message, react)
 
   if not successful_update:
     timer = utils.get_timer(user)
@@ -315,6 +314,7 @@ async def get_cmd(ctx, *args):
     await ctx.channel.send(output_text, delete_after=Constants.TIME_BEFORE_DELETION)
   
   await utils.update_piflouz_message(bot)
+  await utils.react_and_delete(ctx.message, react)
 
 
 @bot.command(name="cooldown")
@@ -529,7 +529,7 @@ async def store_cmd(ctx, *args):
       print("Failed to delete old shop message")
 
 
-@bot.command(name="powerups")
+@bot.command(name="powerups", aliases=["powerup"])
 async def powerups_cmd(ctx, *args):
   """
   Callback for the powerups command
