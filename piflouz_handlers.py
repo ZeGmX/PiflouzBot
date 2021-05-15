@@ -2,12 +2,12 @@ from discord.ext import tasks
 from random import randrange
 from random import random
 from replit import db
-import asyncio
-import datetime
+import functools
 import time
 
 from constant import Constants
-import embed_messages
+import events  # Used in eval()
+import powerups  # Used in eval()
 import utils
 
  
@@ -38,18 +38,37 @@ def update_piflouz(user, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True
   balance = db["piflouz_bank"][user_id]
   new_time = int(time.time())
   cooldown = utils.get_timer(user)
-  if check_cooldown:
-    qty = utils.update_with_powerup(qty, user,"multiplier")
+
+  if check_cooldown:  # corresponding to a /get
+    if str(user.id) not in db["powerups"].keys():
+      db["powerups"][str(user.id)] = []
+
+    qty = functools.reduce(lambda accu, powerup_str: accu * eval(powerup_str).get_piflouz_multiplier_value(), db["powerups"][str(user.id)], qty)
+    qty = int(qty)
+  
   if (cooldown == 0 or not check_cooldown) and balance + qty >= 0:
     db["piflouz_bank"][user_id] = balance + qty
     if check_cooldown:
+      """
+      if user_id not in db["stats"].keys():
+        db["stats"][user_id] = {"nb": 0, "times": []}
+        
+      cooldown = utils.update_with_powerup(Constants.REACT_TIME_INTERVAL, user, "cooldown_reduction")
+      differential = abs(db["timers_react"][user_id] + cooldown - new_time)
+      
+      db["stats"][user_id]["nb"] += 1
+      db["stats"][user_id]["times"].append(differential)
+
+      print(db["stats"])
+      """
+    
       db["timers_react"][user_id] = new_time
     return True
 
   return False
 
 
-async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
+async def spawn_pibox(bot, piflouz_quantity, custom_message=None, ctx=None):
   """
   Generates a pibox of the amount passed in argument.
   --
@@ -57,6 +76,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
     bot: discord.ext.commands.Bot
     amount: int, positive
     custom_message: either None, or a custom message to add at the end.
+    ctx: discord_slash.context.SlashContext -> None if not a giveway
   """
   out_channel = bot.get_channel(db["out_channel"])
 
@@ -65,9 +85,13 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
   emoji_name = Constants.EMOJI_NAMES_FOR_PIBOX[index]
   emoji = f"<:{emoji_name}:{emoji_id}>"
 
-  text_output = f"Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !" 
+  role = bot.guilds[0].get_role(Constants.PIBOX_NOTIF_ROLE_ID)
+
+  text_output = f"{role.mention} Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !" 
   if custom_message is not None:
     text_output += " " + custom_message
+  if ctx is not None:
+    out_channel = ctx # To reply to the sender of a giveaway
   message = await out_channel.send(text_output)
   
   db["random_gifts"][str(message.id)] = [emoji, piflouz_quantity, custom_message]
@@ -81,97 +105,22 @@ async def random_gift(bot):
   input:
     bot: discord.ext.commands.Bot
   """
-  if random() < Constants.RANDOM_DROP_RATE:
+  drop_rate = Constants.RANDOM_DROP_RATE
+
+  # Computing the drop rate based on the current event's powerups
+  if "current_event" in db.keys():
+    event = eval(db["current_event"])
+    powerups_list = event.get_powerups()
+    drop_rate = functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_rate_multiplier_value(), powerups_list, drop_rate)
+  
+  if random() < drop_rate:
+    # Main piflouz
     piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random())
-    await spawn_pibox(bot,piflouz_quantity)
+    await spawn_pibox(bot, piflouz_quantity)
 
+  if random() < drop_rate:
+    # Piflouz with the bot's money
+    piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random())
+    if update_piflouz(bot.user, qty=-piflouz_quantity, check_cooldown=False):
+      await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
 
-@tasks.loop(hours=1)
-async def miners_action(bot):
-  """
-  Generate the action of miners, adding the amount to the users balance
-  --
-  input:
-    bot: discord.ext.commands.Bot
-  """
-  now = datetime.datetime.now()
-  then = now + datetime.timedelta(hours=1)
-  then = datetime.datetime(then.year, then.month, then.day, then.hour, then.minute, then.second)
-  dt = then - now
-  await asyncio.sleep(dt.total_seconds() % 3600)
-  
-  print("Updating miners") #TODO remove once checked in more detail on live server
-  if "powerups" in db.keys():
-    for user_id,powerups in db["powerups"].items():
-      nb_miners = powerups["miners"]
-      user = await bot.guilds[0].fetch_member(user_id)
-      qty = nb_miners * Constants.POWERUP_MINER_PIFLOUZ
-      update_piflouz(user, qty, check_cooldown=False)
-  await utils.update_piflouz_message(bot)
-
-
-async def daily_raffle(bot):
-  """
-  Generates a new raffle and ends the previous one
-  --
-  input:
-    bot: discord.ext.commands.Bot
-  """
-  if "out_channel" not in db.keys():
-    return
-  
-  message_exists = False
-  out_channel = bot.get_channel(db["out_channel"])
-  if "last_raffle_message" in db.keys():
-    message_exists = True
-    message = await out_channel.fetch_message(db["last_raffle_message"])
-    del db["last_raffle_message"]
-    await message.unpin()
-  
-  # Computing the winner for the last raffle
-  if message_exists and len(db["raffle_participation"]) > 0:
-    
-    total_tickets = sum(db["raffle_participation"].values())
-    winning_index = randrange(0, total_tickets)
-    
-    partial_sum = 0
-    for id, value in db["raffle_participation"].items():
-      if partial_sum <= winning_index < partial_sum + value:
-        break
-      partial_sum += value
-    
-    prize = utils.get_raffle_total_prize()
-    db["raffle_participation"] = dict()
-
-    member = await bot.guilds[0].fetch_member(id)
-    message = f"Congratulations to <@{member.id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!"
-
-    update_piflouz(member, prize, check_cooldown=False)
-    await out_channel.send(message)
-    
-    await utils.update_piflouz_message(bot)
-  
-  # Starting new raffle
-  embed = await embed_messages.get_embed_raffle(bot)
-  message = await out_channel.send(embed=embed)
-  db["last_raffle_message"] = message.id
-  await message.pin()
-
-
-@tasks.loop(hours=24)
-async def check_daily_raffle(bot):
-  """
-  Checks the raffle once a day
-  --
-  input:
-    bot: discord.ext.commands.Bot
-  """
-  now = datetime.datetime.now()
-  then = Constants.RAFFLE_TIME
-  then = datetime.datetime(now.year, now.month, now.day, then.hour, then.minute, then.second)
-
-  dt = then - now
-
-  print("time remaining: ", dt.total_seconds() % (24 * 3600))
-  await asyncio.sleep(dt.total_seconds() % (24 * 3600))
-  await daily_raffle(bot)

@@ -2,6 +2,7 @@ import os
 import datetime # Useful for an eval
 
 class Constants:
+  DISCORDTOKEN = os.getenv("DISCORDTOKEN")
   # How many seconds between each react to earn piflouz
   REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))
   NB_PIFLOUZ_PER_REACT = int(os.getenv("NB_PIFLOUZ_PER_REACT"))
@@ -45,22 +46,10 @@ class Constants:
   EMOJI_NAMES_FOR_PIBOX = eval(os.getenv("EMOJI_NAMES_FOR_PIBOX"))
   PIFLEX_IMAGES_URL = eval(os.getenv("PIFLEX_IMAGES_URL"))
 
-  POWERUP_MULTIPLIER_TIME = int(os.getenv("POWERUP_MULTIPLIER_TIME"))
-  POWERUP_MULTIPLIER_EFFECT1 = int(os.getenv("POWERUP_MULTIPLIER_EFFECT1"))
-  POWERUP_MULTIPLIER_EFFECT2 = int(os.getenv("POWERUP_MULTIPLIER_EFFECT2"))
-  POWERUP_MULTIPLIER_PRICE1 = int(os.getenv("POWERUP_MULTIPLIER_PRICE1"))
-  POWERUP_MULTIPLIER_PRICE2 = int(os.getenv("POWERUP_MULTIPLIER_PRICE2"))
-  POWERUP_COOLDOWN_TIME = int(os.getenv("POWERUP_COOLDOWN_TIME"))
-  POWERUP_COOLDOWN_EFFECT1 = int(os.getenv("POWERUP_COOLDOWN_EFFECT1"))
-  POWERUP_COOLDOWN_EFFECT2 = int(os.getenv("POWERUP_COOLDOWN_EFFECT2"))
-  POWERUP_COOLDOWN_PRICE1 = int(os.getenv("POWERUP_COOLDOWN_PRICE1"))
-  POWERUP_COOLDOWN_PRICE2 = int(os.getenv("POWERUP_COOLDOWN_PRICE2"))
-  POWERUP_MINER_LIMIT = int(os.getenv("POWERUP_MINER_LIMIT"))
-  POWERUP_MINER_PIFLOUZ = int(os.getenv("POWERUP_MINER_PIFLOUZ"))
-  POWERUP_MINER_PRICE = int(os.getenv("POWERUP_MINER_PRICE"))
-
   PIBOX_MASTER_ID = int(os.getenv("PIBOX_MASTER_ID"))
 
+  GUILD_IDS = eval(os.getenv("GUILD_IDS"))
+  DISCORD_BOT_ID = os.getenv("DISCORD_BOT_ID")
 
   BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, react every {REACT_TIME_INTERVAL} seconds to gain more {PIFLOUZ_EMOJI}\n\n\
   You just need to react with the {PIFLOUZ_EMOJI} emoji\n\
@@ -68,13 +57,28 @@ class Constants:
   A :white_check_mark: reaction will appear for 2 seconds to make you know you won\n\
   A :x: reaction will appear for 2s if you did not wait for long enough, better luck next time\n"
 
-  RAFFLE_TICKET_PRICE = int(os.getenv("RAFFLE_TICKET_PRICE"))
-  RAFFLE_TIME = eval(os.getenv("RAFFLE_TIME"))
-  RAFFLE_TAX_RATIO = int(os.getenv("RAFFLE_TAX_RATIO"))
+  EVENT_TIME = eval(os.getenv("EVENT_TIME"))
+  DONATE_TAX_RATIO = eval(os.getenv("DONATE_TAX_RATIO"))
+  REDDIT_ID = os.getenv("REDDIT_ID")
+  REDDIT_SECRET = os.getenv("REDDIT_SECRET")
+  REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT")
+  OTTER_IMAGE_TIME = eval(os.getenv("OTTER_IMAGE_TIME"))
+  PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
+  PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
 
-  greetings = [ "Greetings <@{}>! Nice to meet you!",
-                "Hello there <@{}>, how are you doing today ?",
-                "Hello, oh great <@{}>. Hope you are doing great"]
+
+  @staticmethod
+  def load():
+    import powerups
+    import events
+    Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
+    Constants.RANDOM_EVENTS = eval(os.getenv("RANDOM_EVENTS"))
+
+  
+
+  greetings = [ "Greetings {}! Nice to meet you!",
+                "Hello there {}, how are you doing today ?",
+                "Hello, oh great {}. Hope you are doing great"]
   
   streamers_to_check = eval(os.getenv("STREAMERS"))
   

@@ -1,11 +1,15 @@
 import requests
 import time
+import datetime
 import os
 import asyncio
 from replit import db
+import functools
 
 from constant import Constants
 import embed_messages
+import powerups  # Used in eval()
+
 
 def get_live_status(user_name):
   """
@@ -36,38 +40,6 @@ def get_new_joke():
   joke = r["setup"] + "\n||**" + r["punchline"] + "**||"
   return joke
 
-def update_with_powerup(base_value,user,powerup_type):
-  """
-  This function returns the modificator for a user, according to the powerup_type asked
-  --
-  input:
-    base_value: int, the amount of piflouz/time needed according to the powerup type
-    user: discord.Member/User
-    powerup_type: string
-  """
-  user_id = str(user.id)  
-  if user_id not in db["powerups"]:
-    db["powerups"][user_id] ={
-        "multiplier": [0, 0], # Effect, limit time
-        "cooldown_reduction" : [0, 0], # Effect, limit time
-        "miners": 0 
-      }
-  current_time = int(time.time())
-
-  if powerup_type == "multiplier" :
-    if db["powerups"][user_id][powerup_type][1] >= current_time:
-      new_value = (base_value * (1 +  db["powerups"][user_id][powerup_type][0]/100))
-      return int(new_value)
-    else:
-      return int(base_value)
-
-  elif powerup_type == "cooldown_reduction":
-    if db["powerups"][user_id][powerup_type][1] >= current_time:
-      new_value = (base_value * (1 - db["powerups"][user_id][powerup_type][0]/100 ))
-      return int(new_value)
-    else:
-      return int(base_value)
-
 
 def get_timer(user):
   """
@@ -75,23 +47,29 @@ def get_timer(user):
   --
   input:
     user: discord.Member/User
+  --
+  output:
+    time_needed: int -> time remaining before the end of cooldown
   """
   user_id = str(user.id)
   if "timers_react" not in db.keys():
-      db["timers_react"] = dict()
+    db["timers_react"] = dict()
   if user_id not in db["timers_react"].keys():
     db["timers_react"][user_id] = 0
 
+  if str(user.id) not in db["powerups"].keys():
+    db["powerups"][str(user.id)] = []
 
   old_time = db["timers_react"][user_id]
   current_time = int(time.time())
   differential = current_time - old_time
-  cooldown = update_with_powerup( Constants.REACT_TIME_INTERVAL, user, "cooldown_reduction")
+  cooldown = functools.reduce(lambda cumul, powerup_str: cumul * eval(powerup_str).get_cooldown_multiplier_value(), db["powerups"][str(user.id)], Constants.REACT_TIME_INTERVAL)
+
   time_needed = max(0, cooldown - differential)
   
   return time_needed
 
-
+# TODO: deprecated?
 def check_tag(tag):
   """
   Checks if a tag corresponds to a user mention
@@ -121,22 +99,7 @@ async def update_piflouz_message(bot):
   await piflouz_message.edit(embed=embed)
 
 
-async def update_raffle_message(bot):
-  """
-  Updates the piflouz message with the rankings
-  --
-  input:
-    bot: discord.ext.commands.Bot
-  """
-  if "last_raffle_message" not in db.keys():
-    return
-
-  channel = bot.get_channel(db["out_channel"])
-  embed = await embed_messages.get_embed_raffle(bot)
-  raffle_message = await channel.fetch_message(db["last_raffle_message"])
-  await raffle_message.edit(embed=embed)
-
-
+# TODO: deprecated?
 def is_digit(var):
   """
   Checks if a string only contains numbers
@@ -149,7 +112,7 @@ def is_digit(var):
   """
   return all(char in "0123456789" for char in var)
 
-    
+# TODO: deprecated?    
 async def react_and_delete(message, reaction="❌", t=Constants.TIME_BEFORE_DELETION):
   """
   Eventually reacts to a message and deletes it a few seconds later
@@ -165,14 +128,33 @@ async def react_and_delete(message, reaction="❌", t=Constants.TIME_BEFORE_DELE
   await message.delete()
 
 
-def get_raffle_total_prize():
+def create_duel(ctx, user, amount, duel_type):
   """
-  Returns the total prize in the current raffle
-  Returns 0 if there is no current raffle
+  TODO
+  """
+  duel = {
+    "user_id1": ctx.author_id, # Challenger
+    "user_id2": user.id, # Challenged
+    "duel_type": duel_type,
+    "amount": amount,
+    "move1": None, # Not played yet
+    "move2": None, # Not played yet
+    "accepted": False # Not accepted yet
+  }
+  return duel
+
+
+async def wait_until(then):
+  """
+  Waits until a certain time of the day (or the next day)
   --
-  output:
-    prize: int
+  input:
+    then: datetime.datetime
   """
-  nb_tickets = sum(db["raffle_participation"].values())
-  prize = int(nb_tickets * Constants.RAFFLE_TICKET_PRICE * (100 - Constants.RAFFLE_TAX_RATIO) / 100)
-  return prize
+  now = datetime.datetime.now()
+  then = datetime.datetime(now.year, now.month, now.day, then.hour, then.minute, then.second)
+
+  dt = then - now
+
+  print("Waiting for:", dt.total_seconds() % (24 * 3600))
+  await asyncio.sleep(dt.total_seconds() % (24 * 3600))

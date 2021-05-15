@@ -1,9 +1,10 @@
 import discord
 import random
+import asyncio
 from replit import db
 
 from constant import Constants
-import utils
+import socials
 
 
 def get_embed_help_message():
@@ -17,94 +18,84 @@ def get_embed_help_message():
     embed.set_thumbnail(url=Constants.PIBOU4LOVE_URL)
 
     embed.add_field(
-      name="`$?`",
+      name="`/help`",
       value="Show this message",
-      inline=False
     )
     embed.add_field(
-      name="`$hello`",
+      name="`/hello`",
       value="Say hi!",
-      inline=False
     )
     embed.add_field(
-      name="`$isLive streamer_name`",
+      name="`/isLive streamer_name`",
       value="check if a certain streamer is live!",
-      inline=False
     )
     embed.add_field(
-      name="`$shutdown`",
+      name="`/shutdown`",
       value="if I start doing something nasty, or if you don't like me anymore :cry:",
-      inline=False
     )
     embed.add_field(
-      name="`$setupChannel`",
+      name="`/setupChannel`",
       value="change my default channel",
-      inline=False
     )
     embed.add_field(
-      name="`$joke`",
+      name="`/joke`",
       value="to laugh your ass off (or not, manage your expectations)",
-      inline=False
     )
     embed.add_field(
-      name="`$donate @user amount`",
+      name="`/donate @user amount`",
       value="be generous to others",
-      inline=False
     )
     embed.add_field(
-      name="`$balance`",
+      name="`/balance`",
       value=f"check how many {Constants.PIFLOUZ_EMOJI} you have. Kind of a low-cost Piflex",
-      inline=False
     )
     embed.add_field(
-      name="`$cooldown`",
+      name="`/cooldown`",
       value="when your addiction is stronger than your sense of time",
-      inline=False
     )
     embed.add_field(
-      name="`$get`",
+      name="`/get`",
       value="for the lazy ones",
-      inline=False
     )
     embed.add_field(
-      name="`$piflex`",
+      name="`/piflex`",
       value=f"when you have too many {Constants.PIFLOUZ_EMOJI}\n /!\ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
-      inline=False
     )
     embed.add_field(
-      name="`$buyRankPiflex`",
+      name="`/buyRankPiflex`",
       value=f"flex with a custom rank\n /!\ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {Constants.PIFLEXROLE_DURATION} seconds",
-      inline=False
     )
     embed.add_field(
       name="`$tarpin`",
       value="what could that be? Can be used in any channel",
-      inline=False
     )
     embed.add_field(
-      name="`$pilord`",
+      name="`/pilord`",
       value="see how much you need to farm to flex with your rank",
-      inline=False
     )
     embed.add_field(
-      name="`$raffle n`",
+      name="`/raffle n`",
       value="buy raffle tickets to test your luck",
-      inline=False
     )
     embed.add_field(
-      name="`$store`",
+      name="`/store`",
       value="buy fun upgrades",
-      inline=False
     )
     embed.add_field(
-      name="`$powerups`",
+      name="`/powerups`",
       value="see how powerful you are",
-      inline=False
     )
     embed.add_field(
-      name="`$giveaway n`",
+      name="`/giveaway n`",
       value="launch a pibox with your own money",
-      inline=False
+    )
+    embed.add_field(
+      name="`duel [accept|deny|challenge|cancel|play]`",
+      value="earn piflouz by winning challenges against others",
+    )
+    embed.add_field(
+      name="`/ranking`",
+      value="check how worthy you are",
     )
     
     embed.add_field(
@@ -112,8 +103,10 @@ def get_embed_help_message():
       value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you react to the piflouz message\n\
 - I spawn random gifts from time to time. Be the first to react to earn more {Constants.PIFLOUZ_EMOJI}\n\
-- I update the Pilord role to give it to the player with the most piflouz\n\
-- I create raffle events every day at 12AM"
+- I update the roles\n\
+- I create events every day\n\
+- I send a cute otter picture everyday",
+      inline=False
     )
     return embed
 
@@ -135,16 +128,32 @@ async def get_embed_piflouz(bot):
     )
     # Piflouz thumbnail
     embed.set_thumbnail(url=Constants.PIFLOUZ_URL)
+
+    # Rankings
     if "piflouz_bank" in db.keys():
         d_piflouz = dict(db["piflouz_bank"])
-        ranking = ""
-        # Generating the ranking string
-        sorted_rank = sorted(list(d_piflouz.items()), key=lambda key_val: -int(key_val[1]))
-        for i, (user_id, balance) in enumerate(sorted_rank):
-            member = await bot.guilds[0].fetch_member(user_id)  # nickname is relative to the guild
-            ranking += f"{i + 1}: {member.display_name} - {balance}\n"
+        d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
 
-        embed.add_field(name="Balance", value=ranking, inline=False)
+        sorted_balance = sorted(list(d_piflouz.items()), key=lambda key_val: -int(key_val[1]))
+        sorted_piflex_discovery = sorted(d_piflex, key=lambda key_val: -int(key_val[1]))
+
+        async def get_str(i, L):
+          user_id, value = L[i]
+          member = await bot.guilds[0].fetch_member(user_id)
+          return f"{i + 1}: {member.display_name} - {value}\n"
+        
+        tasks_balance_ranking = [get_str(i, sorted_balance) for i in range(len(sorted_balance))]
+        tasks_discovery_ranking = [get_str(i, sorted_piflex_discovery) for i in range(len(sorted_piflex_discovery))]
+
+        res = await asyncio.gather(*tasks_balance_ranking)
+        ranking = "".join(res)
+        if ranking != "":
+          embed.add_field(name="Balance", value=ranking, inline=True)
+
+        res = await asyncio.gather(*tasks_discovery_ranking)
+        ranking = "".join(res)
+        if ranking != "":
+          embed.add_field(name="Piflex Discovery", value=ranking, inline=True)
 
     return embed
 
@@ -152,6 +161,9 @@ async def get_embed_piflouz(bot):
 def get_embed_twitch_notif():
   """
   Returns an embed message on which to react to get the role to get notified when pibou421 goes live on Twitch
+  --
+  output:
+    embed: discord.Embed -> the message
   """
   embed = discord.Embed(
     title="Twitch notification role",
@@ -162,70 +174,37 @@ def get_embed_twitch_notif():
   return embed
 
 
-def get_embed_piflex(user_id):
+def get_embed_piflex(user):
   """
   Returns an embed message corresponding to the piflex message
   --
   input:
-    user_id: str/int -> the id of the user requesting the piflex
+    user: user -> the user requesting the piflex
+  --
+  output:
+    embed: discord.Embed -> the message
+    index: int -> index of the image/gif
   """
   embed = discord.Embed(
     title="PIFLEX",
-    description=f"Look how much piflouz <@{user_id}> has. So much piflouz that he/she is flexing on you poor peasants! He/She is so cool and rich that he/she can just take a bath in piflouz. You mad?",
+    description=f"Look how much piflouz {user.mention} has. So much piflouz that he/she is flexing on you poor peasants! He/She is so cool and rich that he/she can just take a bath in piflouz. You mad?",
     colour=discord.Colour.gold()
   )
   embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
   
-  image_url = random.choice(Constants.PIFLEX_IMAGES_URL)
+  index = random.randrange(0, len(Constants.PIFLEX_IMAGES_URL))
+  image_url = Constants.PIFLEX_IMAGES_URL[index]
   embed.set_image(url=image_url)
 
-  return embed
-
-
-async def get_embed_raffle(bot):
-  """
-  Returns an embed message corresponding to the raffle message
-  --
-  input:
-    bot: discord.ext.commands.Bot
-  """
-  desc = f"Here is the new raffle! Use `$raffle n` to buy `n` tickets!\n\
-  They cost {Constants.RAFFLE_TICKET_PRICE} {Constants.PIFLOUZ_EMOJI} each\n\
-  The user with the winning ticket will earn {100 - Constants.RAFFLE_TAX_RATIO}% of the total money spent by everyone!"
-
-  embed = discord.Embed(
-    title="New raffle!",
-    description=desc,
-    colour=discord.Colour.random()
-  )
-
-  embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
-
-  if "raffle_participation" in db.keys() and len(db["raffle_participation"]) > 0:
-    val = ""
-    for user_id, nb_tickets in db["raffle_participation"].items():
-      member = await bot.guilds[0].fetch_member(user_id)  # nickname is relative to the guild
-      val += f"{member.display_name} - {nb_tickets}\n"
-    
-    total_prize = utils.get_raffle_total_prize()
-
-    embed.add_field(  
-      name="Current tickets bought",
-      value=val,
-      inline=False
-    )
-    embed.add_field(
-      name="Total prize",
-      value=f"The winner will earn {total_prize} {Constants.PIFLOUZ_EMOJI}!",
-      inline=False
-    )
-  
-  return embed
+  return embed, index
 
 
 def get_embed_store_ui():
   """
   Returns an embed message corresponding to the store message
+  --
+  output:
+    embed: discord.Embed -> the message
   """
   embed = discord.Embed(
     title="Piflouz shop",
@@ -233,30 +212,27 @@ def get_embed_store_ui():
     colour=discord.Colour.dark_magenta()
   )
 
-  embed.add_field(
-    name="❎",
-    value=f"{Constants.POWERUP_MULTIPLIER_EFFECT1}% multiplier for the piflouz mining for {Constants.POWERUP_MULTIPLIER_TIME}s!\nCosts {Constants.POWERUP_MULTIPLIER_PRICE1} {Constants.PIFLOUZ_EMOJI}",
-    inline=True
-  )
-  embed.add_field(
-    name="❇️",
-    value=f"{Constants.POWERUP_MULTIPLIER_EFFECT2}% multiplier for the piflouz mining for {Constants.POWERUP_MULTIPLIER_TIME}s!\nCosts {Constants.POWERUP_MULTIPLIER_PRICE2} {Constants.PIFLOUZ_EMOJI}",
-    inline=True
-  )
-  embed.add_field(
-    name="⌛",
-    value=f"{Constants.POWERUP_COOLDOWN_EFFECT1}% cooldown reduction for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE1} {Constants.PIFLOUZ_EMOJI}",
-    inline=True
-  )
-  embed.add_field(
-    name="⏩",
-    value=f"{Constants.POWERUP_COOLDOWN_EFFECT2}% cooldown reduction for the piflouz mining for {Constants.POWERUP_COOLDOWN_TIME}s!\nCosts {Constants.POWERUP_COOLDOWN_PRICE2} {Constants.PIFLOUZ_EMOJI}",
-    inline=True
-  )
-  embed.add_field(
-    name="⛏️",
-    value=f"Piflouz auto-miner! Earn {Constants.POWERUP_MINER_PIFLOUZ} {Constants.PIFLOUZ_EMOJI} every hour\nYou can only have {Constants.POWERUP_MINER_LIMIT} auto-miners\nCosts {Constants.POWERUP_MINER_PRICE} {Constants.PIFLOUZ_EMOJI}",
-    inline=True
-  )
+  for emoji, powerup in Constants.POWERUPS_STORE.items():
+    embed.add_field(
+      name=emoji,
+      value=powerup.get_store_str(),
+      inline=True
+    )
 
+  return embed
+
+
+async def get_embed_otter():
+  """
+  Returns an embed corresponding to a random otter image
+  --
+  output:
+    embed: discord.Embed -> the message
+  """ 
+  embed = discord.Embed(
+    title="Otter image of the day!",
+    colour=discord.Colour.from_rgb(101, 67, 33)  # brown
+  )
+  url = await socials.get_otter_image()
+  embed.set_image(url=url) 
   return embed
