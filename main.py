@@ -184,6 +184,7 @@ async def donate_cmd(ctx, user_receiver, amount):
     user_receiver: discord.User
     amount: int
   """
+  await ctx.defer()
   assert amount > 0, "Cannot donate 0 or less"
 
   user_sender = ctx.author 
@@ -215,15 +216,6 @@ async def setup_channel_cmd(ctx):
   db["out_channel"] = ctx.channel.id
 
   await ctx.channel.send("This channel is now my default channel")
-
-  """
-  # Twitch message
-  await ctx.channel.send(embed=embed_messages.get_embed_help_message())
-  message = await ctx.channel.send(embed=embed_messages.get_embed_twitch_notif())
-  db["twitch_notif_message_id"] = message.id
-  await message.add_reaction("✅")
-  await message.add_reaction("❌")
-  """
 
   # Piflouz mining message
   message = await ctx.channel.send(embed=await embed_messages.get_embed_piflouz(bot))
@@ -291,7 +283,7 @@ async def get_cmd(ctx):
   input:
     ctx: discord_slash.context.SlashContext
   """
-  
+  await ctx.defer(hidden=True)
   user = ctx.author
   successful_update = piflouz_handlers.update_piflouz(user)
   
@@ -422,6 +414,7 @@ async def raffle_cmd(ctx, nb_tickets):
     ctx: discord_slash.context.SlashContext
     nb_tickets: int
   """
+  await ctx.defer(hidden=True)
   assert "current_event" in db.keys(), "No current event registered"
 
   current_event = eval(db["current_event"])
@@ -456,6 +449,7 @@ async def giveaway_cmd(ctx, amount):
     ctx: discord_slash.context.SlashContext
     amount: int -> how many piflouz given
   """
+  await ctx.defer()
   assert amount > 0, "The amount to giveaway has to ba a strictly positive integer"
 
   user_sender = ctx.author 
@@ -503,6 +497,7 @@ async def powerups_cmd(ctx):
   input:
     ctx: discord_slash.context.SlashContext
   """
+  await ctx.defer(hidden=True)
   user_id = str(ctx.author_id)
   content = "Here is the list of powerups you have at the moment:\n"
   has_any_powerup = False
@@ -550,6 +545,7 @@ async def duel_challenge_cmd(ctx, user, amount, duel_type):
     amount: int -> how many piflouz involved by both users
     duel_type: string -> what kind of duel
   """
+  await ctx.defer()
   assert ctx.author != user, "You can't challenge yourself!"
 
   # Check if there is no duel with the person
@@ -579,6 +575,7 @@ async def duel_accept_cmd(ctx, user):
     ctx: discord.ext.commands.Context
     user: discord.User -> the person challenged
   """
+  await ctx.defer()
   duel_index = None
   for i, duel in enumerate(db["duels"]):
     if duel["user_id2"] == ctx.author_id and duel["user_id1"] == user.id:
@@ -612,6 +609,7 @@ async def duel_deny_cmd(ctx, user):
     ctx: discord.ext.commands.Context
     user: discord.User -> the person challenged
   """
+  await ctx.defer()
   duel_index = None
   for i, duel in enumerate(db["duels"]):
     if duel["user_id2"] == ctx.author_id and duel["user_id1"] == user.id:
@@ -641,6 +639,7 @@ async def duel_cancel_cmd(ctx, user):
     ctx: discord.ext.commands.Context
     user: discord.User -> the person challenged
   """
+  await ctx.defer()
   duel_index = None
   for i, duel in enumerate(db["duels"]):
     if duel["user_id1"] == ctx.author_id and duel["user_id2"] == user.id:
@@ -661,7 +660,7 @@ async def duel_cancel_cmd(ctx, user):
 
 
 @slash.subcommand(name="shifumi", base="duel", subcommand_group="play", description="Play shifumi!", guild_ids=Constants.GUILD_IDS, options=[
-  create_option(name="opponent", description="Who do you play against?", required=True, option_type=option_type.USER),
+  create_option(name="user", description="Who do you play against?", required=True, option_type=option_type.USER),
   create_option(name="value", description="What do you want to play?", required=True, option_type=option_type.STRING, choices=[
       create_choice("Rock", "Rock"),
       create_choice("Paper", "Paper"),
@@ -707,6 +706,7 @@ async def duel_play_shifumi_cmd(ctx, user, value):
 
   win_shifumi = {"Rock": "Scissors", "Paper": "Rock", "Scissors": "Paper"}
   if move1 is not None and move2 is not None:
+    await ctx.defer()
     # Tie
     if move1 == move2:
       piflouz_handlers.update_piflouz(player1, qty=db["duels"][duel_index]["amount"], check_cooldown=False)
@@ -741,6 +741,7 @@ async def ranking_cmd(ctx):
   input:
    ctx: discord.ext.commands.Context
   """
+  await ctx.defer(hidden=True)
   d_piflouz = dict(db["piflouz_bank"])
   d_piflex = dict(db["discovered_piflex"])
   

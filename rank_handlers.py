@@ -107,7 +107,7 @@ async def update_rank_piflex_master(bot):
   L = sorted(list(db["discovered_piflex"].items()), key=lambda key_val: -len(key_val[1]))
 
   # in case of ties
-  L = list(filter(lambda key_val: key_val[1] == L[0][1], L))
+  L = list(filter(lambda key_val: len(key_val[1]) == len(L[0][1]), L))
   user_ids = [key_val[0] for key_val in L]
 
   # Remove old pilords
