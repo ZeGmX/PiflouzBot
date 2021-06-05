@@ -161,7 +161,7 @@ class Cooldown_reduction(Powerups_non_permanent):
   Powerup is multiplicative
   """
   def get_cooldown_multiplier_value(self):
-    return 1 + self.value / 100 if self.is_active() else 1
+    return 1 - self.value / 100 if self.is_active() else 1
   
 
   def get_info_str(self):
@@ -251,7 +251,7 @@ class Miner_powerup(Powerups_permanent):
 
 
   def get_store_str(self):
-    return f"Piflouz auto-miner! Eatn {self.value} {Constants.PIFLOUZ_EMOJI} every hou\nYou can only have {self.max_qty} auto-miners\nCosts {self.price} {Constants.PIFLOUZ_EMOJI}"
+    return f"Piflouz auto-miner! Earn {self.value} {Constants.PIFLOUZ_EMOJI} every hour\nYou can only have {self.max_qty} auto-miners\nCosts {self.price} {Constants.PIFLOUZ_EMOJI}"
   
 
   def actions_every_hour(self, user):

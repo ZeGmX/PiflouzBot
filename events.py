@@ -180,8 +180,7 @@ class Raffle_event(Event):
 
       async def get_str(key_val):
         user_id, nb_tickets = key_val
-        member = await bot.guilds[0].fetch_member(user_id)  # nickname is relative to the guild
-        return f"{member.display_name} - {nb_tickets}\n"
+        return f"<@{user_id}> - {nb_tickets}\n"
 
       tasks = [get_str(key_val) for key_val in participation.items()]
       res = await asyncio.gather(*tasks)

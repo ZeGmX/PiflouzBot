@@ -91,7 +91,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None, ctx=None):
   if custom_message is not None:
     text_output += " " + custom_message
   if ctx is not None:
-    out_channel = ctx # To reply to the sender of a giveaway
+    out_channel = ctx.channel # To reply to the sender of a giveaway
   message = await out_channel.send(text_output)
   
   db["random_gifts"][str(message.id)] = [emoji, piflouz_quantity, custom_message]

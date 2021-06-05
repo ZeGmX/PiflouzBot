@@ -67,7 +67,7 @@ def get_timer(user):
 
   time_needed = max(0, cooldown - differential)
   
-  return time_needed
+  return int(time_needed)
 
 # TODO: deprecated?
 def check_tag(tag):

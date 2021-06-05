@@ -139,8 +139,7 @@ async def get_embed_piflouz(bot):
 
         async def get_str(i, L):
           user_id, value = L[i]
-          member = await bot.guilds[0].fetch_member(user_id)
-          return f"{i + 1}: {member.display_name} - {value}\n"
+          return f"{i + 1}: <@{user_id}> - {value}\n"
         
         tasks_balance_ranking = [get_str(i, sorted_balance) for i in range(len(sorted_balance))]
         tasks_discovery_ranking = [get_str(i, sorted_piflex_discovery) for i in range(len(sorted_piflex_discovery))]
