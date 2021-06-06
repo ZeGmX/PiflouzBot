@@ -29,7 +29,7 @@ async def handle_actions_every_hour(bot):
   for user_id, powerups in db["powerups"].items():
     for powerup_str in powerups:
       # Removing the '__name__.' at the beginning
-      user = await bot.guilds[0].fetch_member(user_id)
+      user = bot.guilds[0].get_member(int(user_id))
       powerup = eval(powerup_str[len(__name__) + 1:])
       if powerup.has_action_every_hour:
         powerup.actions_every_hour(user)
@@ -91,12 +91,12 @@ class Powerups:
     return ""
 
 
-  def on_buy(self, user):
+  def on_buy(self, user_id):
     """
     Actions to be done when buying the powerup
     --
     input:
-      user: discord.User/Member -> the user who bought the powerup
+      user_id: int/str -> id of the user who bought the powerup
     --
     output:
       res: bool -> wether it succeded or not
@@ -104,12 +104,12 @@ class Powerups:
     return False
   
 
-  def actions_every_hour(self, user):
+  def actions_every_hour(self, user_id):
     """
     Callback if a powerup has an effect every hour
     --
     input:
-      user: discord.User/Member
+      user_id: int/str
     """
     pass
 
@@ -124,29 +124,30 @@ class Powerups_non_permanent(Powerups):
     self. duration = duration
     self.buy_date = buy_date
   
-  def on_buy(self, user):
-    if str(user.id) not in db["powerups"].keys():
-        db["powerups"][str(user.id)] = []
+  def on_buy(self, user_id):
+    user_id = str(user_id)
+    if user_id not in db["powerups"].keys():
+        db["powerups"][user_id] = []
           
     i = None
-    for current, powerup_str in enumerate(db["powerups"][str(user.id)]):
+    for current, powerup_str in enumerate(db["powerups"][user_id]):
       if powerup_str.startswith(f"{__name__}.{type(self).__name__}"):
         i = current
         break
 
     # Remove the '__name__.' at the begining
-    if i is not None and eval(db["powerups"][str(user.id)][i][len(__name__) + 1:]).is_active():
+    if i is not None and eval(db["powerups"][user_id][i][len(__name__) + 1:]).is_active():
       return False  # User already has an active power of the same type
     
     self.buy_date = int(time.time())
     powerup_str = f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.duration}, {self.buy_date})"
 
-    if not piflouz_handlers.update_piflouz(user, qty=-self.price, check_cooldown=False):
+    if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
       return False
 
     if i is not None:
-      del db["powerups"][str(user.id)][i]
-    db["powerups"][str(user.id)].append(powerup_str)
+      del db["powerups"][user_id][i]
+    db["powerups"][user_id].append(powerup_str)
 
     return True
 
@@ -205,29 +206,30 @@ class Powerups_permanent(Powerups):
     self.qty = qty  # How many of this powerup does the user have
     self.max_qty = max_qty  # How many of this powerup can the user get
   
-  def on_buy(self, user):
-    if str(user.id) not in db["powerups"].keys():
-        db["powerups"][str(user.id)] = []
+  def on_buy(self, user_id):
+    user_id = str(user_id)
+    if user_id not in db["powerups"].keys():
+        db["powerups"][user_id] = []
           
     i = None
-    for current, powerup_str in enumerate(db["powerups"][str(user.id)]):
+    for current, powerup_str in enumerate(db["powerups"][user_id]):
       if powerup_str.startswith(f"{__name__}.{type(self).__name__}"):
         i = current
-        self.qty = eval(db["powerups"][str(user.id)][i][len(__name__) + 1:]).qty
+        self.qty = eval(db["powerups"][user_id][i][len(__name__) + 1:]).qty
         break
 
     # Remove the '__name__.' at the begining
-    if i is not None and eval(db["powerups"][str(user.id)][i][len(__name__) + 1:]).qty == self.max_qty:
+    if i is not None and eval(db["powerups"][user_id][i][len(__name__) + 1:]).qty == self.max_qty:
       return False  # User already has the maximum number of this powerup
     
     powerup_str = f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.max_qty}, {self.qty + 1})"
 
-    if not piflouz_handlers.update_piflouz(user, qty=-self.price, check_cooldown=False):
+    if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
       return False
 
     if i is not None:
-      del db["powerups"][str(user.id)][i]
-    db["powerups"][str(user.id)].append(powerup_str)
+      del db["powerups"][user_id][i]
+    db["powerups"][user_id].append(powerup_str)
 
     return True
 
@@ -254,9 +256,10 @@ class Miner_powerup(Powerups_permanent):
     return f"Piflouz auto-miner! Earn {self.value} {Constants.PIFLOUZ_EMOJI} every hour\nYou can only have {self.max_qty} auto-miners\nCosts {self.price} {Constants.PIFLOUZ_EMOJI}"
   
 
-  def actions_every_hour(self, user):
+  def actions_every_hour(self, user_id):
+    user_id = str(user_id)
     piflouz_earned = self.value * self.qty
-    piflouz_handlers.update_piflouz(user, qty=piflouz_earned, check_cooldown=False)
+    piflouz_handlers.update_piflouz(user_id, qty=piflouz_earned, check_cooldown=False)
 
 
 class Pibox_drop_rate_multiplier(Powerups_permanent):

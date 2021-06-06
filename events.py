@@ -20,9 +20,14 @@ async def event_handlers(bot):
     current_event = eval(db["current_event"][len(__name__) + 1:])
     await current_event.on_end(bot)
 
+    old_message = await bot.get_channel(db["out_channel"]).fetch_message(db["current_event_message_id"])
+    await old_message.unpin()
+
   # Chose the new event of the day
   new_event = random.choice(Constants.RANDOM_EVENTS)
-  await new_event.on_begin(bot)
+  message = await new_event.on_begin(bot)
+  await message.pin()
+  db["current_event_message_id"] = message.id
   db["current_event"] = new_event.to_str()
   
 
@@ -37,8 +42,11 @@ class Event:
     --
     input:
       bot: discord.ext.commands.Bot
+    --
+    output:
+      msg: int -> id of the message announcing the event
     """
-    pass
+    return None
   
   
   async def on_end(self, bot):
@@ -89,27 +97,18 @@ class Raffle_event(Event):
     # Starting new raffle
     embed = await self.get_embed_raffle(bot)
     message = await out_channel.send(embed=embed)
-    db["last_raffle_message"] = message.id
-    await message.pin()
+    return message
   
 
   async def on_end(self, bot):
     if "out_channel" not in db.keys():
       return
-    
-    message_exists = False
+
     out_channel = bot.get_channel(db["out_channel"])
-
-    if "last_raffle_message" in db.keys():
-      message_exists = True
-      message = await out_channel.fetch_message(db["last_raffle_message"])
-      del db["last_raffle_message"]
-      await message.unpin()
-
     participation = db["raffle_participation"]
 
     # Computing the winner for the last raffle
-    if message_exists and len(participation) > 0:
+    if len(participation) > 0:
       
       total_tickets = sum(participation.values())
       winning_index = random.randrange(0, total_tickets)
@@ -125,12 +124,11 @@ class Raffle_event(Event):
 
       # Giving the tax to the bot
       tax_value = total_tickets * self.ticket_price - prize
-      piflouz_handlers.update_piflouz(bot.user, qty=tax_value, check_cooldown=False)
+      piflouz_handlers.update_piflouz(bot.user.id, qty=tax_value, check_cooldown=False)
 
-      member = await bot.guilds[0].fetch_member(id)
-      message = f"Congratulations to {member.mention} for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!"
+      message = f"Congratulations to <@{id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!"
 
-      piflouz_handlers.update_piflouz(member, prize, check_cooldown=False)
+      piflouz_handlers.update_piflouz(id, prize, check_cooldown=False)
       await out_channel.send(message)
       
       await utils.update_piflouz_message(bot)
@@ -147,12 +145,12 @@ class Raffle_event(Event):
     input:
       bot: discord.ext.commands.Bot
     """
-    if "last_raffle_message" not in db.keys():
+    if "current_event_message_id" not in db.keys():
       return
 
     channel = bot.get_channel(db["out_channel"])
     embed = await self.get_embed_raffle(bot)
-    raffle_message = await channel.fetch_message(db["last_raffle_message"])
+    raffle_message = await channel.fetch_message(db["current_event_message_id"])
     await raffle_message.edit(embed=embed)
 
 
@@ -232,6 +230,7 @@ class Increased_pibox_drop_rate_event(Event):
     embed = self.get_embed()
     message = await out_channel.send(embed=embed)
     await message.pin()
+    return message
 
 
   async def on_end(self, bot):

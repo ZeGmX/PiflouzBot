@@ -66,6 +66,11 @@ class Constants:
   PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
   PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
 
+  TWITCHID = os.getenv("TWITCHID")
+  TWITCHSECRET = os.getenv("TWITCHSECRET")
+
+  DUEL_TAX_RATIO = int(os.getenv("DUEL_TAX_RATIO"))
+
 
   @staticmethod
   def load():

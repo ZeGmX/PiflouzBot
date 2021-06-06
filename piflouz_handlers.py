@@ -11,12 +11,12 @@ import powerups  # Used in eval()
 import utils
 
  
-def update_piflouz(user, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True):
+def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True):
   """
   This function does the generic piflouz mining, and returns wether it suceeded or not
   --
   input:
-    user: discord.User -> the person who reacted
+    user_id: int/str -> id of the person who reacted
     qty: int -> number of piflouz (not necesseraly positive)
     check_cooldown: boolean -> if we need to check the cooldown (for the piflouz mining)
   --
@@ -26,7 +26,7 @@ def update_piflouz(user, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True
   if "piflouz_bank" not in db.keys():
       db["piflouz_bank"] = dict()
     
-  user_id = str(user.id)
+  user_id = str(user_id)
 
   # New user
   if user_id not in db["piflouz_bank"].keys():
@@ -37,13 +37,13 @@ def update_piflouz(user, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True
   # User already registered
   balance = db["piflouz_bank"][user_id]
   new_time = int(time.time())
-  cooldown = utils.get_timer(user)
+  cooldown = utils.get_timer(user_id)
 
   if check_cooldown:  # corresponding to a /get
-    if str(user.id) not in db["powerups"].keys():
-      db["powerups"][str(user.id)] = []
+    if user_id not in db["powerups"].keys():
+      db["powerups"][user_id] = []
 
-    qty = functools.reduce(lambda accu, powerup_str: accu * eval(powerup_str).get_piflouz_multiplier_value(), db["powerups"][str(user.id)], qty)
+    qty = functools.reduce(lambda accu, powerup_str: accu * eval(powerup_str).get_piflouz_multiplier_value(), db["powerups"][user_id], qty)
     qty = int(qty)
   
   if (cooldown == 0 or not check_cooldown) and balance + qty >= 0:
@@ -121,6 +121,6 @@ async def random_gift(bot):
   if random() < drop_rate:
     # Piflouz with the bot's money
     piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random())
-    if update_piflouz(bot.user, qty=-piflouz_quantity, check_cooldown=False):
+    if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
       await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
 
