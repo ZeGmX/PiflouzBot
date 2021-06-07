@@ -141,8 +141,8 @@ async def get_embed_piflouz(bot):
           user_id, value = L[i]
           return f"{i + 1}: <@{user_id}> - {value}\n"
         
-        tasks_balance_ranking = [get_str(i, sorted_balance) for i in range(len(sorted_balance))]
-        tasks_discovery_ranking = [get_str(i, sorted_piflex_discovery) for i in range(len(sorted_piflex_discovery))]
+        tasks_balance_ranking = [get_str(i, sorted_balance) for i in range(min(len(sorted_balance), 10))]
+        tasks_discovery_ranking = [get_str(i, sorted_piflex_discovery) for i in range(min(len(sorted_piflex_discovery), 10))]
 
         res = await asyncio.gather(*tasks_balance_ranking)
         ranking = "".join(res)

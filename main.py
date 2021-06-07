@@ -768,7 +768,6 @@ async def duel_status_cmd(ctx):
     
     msgs.append(s)
   
-  print(len(msgs))
   if len(msgs) == 0:
     await ctx.send("You have no ongoing duels", hidden=True)
   
@@ -928,7 +927,7 @@ async def on_raw_reaction_add(playload):
 
     
     powerup = Constants.POWERUPS_STORE[emoji.name]
-    if powerup.on_buy(user):
+    if powerup.on_buy(user_id):
       await message.add_reaction("✅")
       await utils.update_piflouz_message(bot)
     else:
@@ -975,8 +974,6 @@ async def on_raw_reaction_add(playload):
       embed = await embed_messages.get_embed_piflouz(bot)
       piflouz_message = await out_channel.fetch_message(int(db["piflouz_message_id"]))
       await piflouz_message.edit(embed=embed)
-
-
 
 
 if __name__ == "__main__":

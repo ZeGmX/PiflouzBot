@@ -29,10 +29,9 @@ async def handle_actions_every_hour(bot):
   for user_id, powerups in db["powerups"].items():
     for powerup_str in powerups:
       # Removing the '__name__.' at the beginning
-      user = bot.guilds[0].get_member(int(user_id))
       powerup = eval(powerup_str[len(__name__) + 1:])
       if powerup.has_action_every_hour:
-        powerup.actions_every_hour(user)
+        powerup.actions_every_hour(user_id)
   await utils.update_piflouz_message(bot)
 
 
