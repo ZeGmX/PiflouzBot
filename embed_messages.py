@@ -193,6 +193,7 @@ def get_embed_piflex(user):
   
   index = random.randrange(0, len(Constants.PIFLEX_IMAGES_URL))
   image_url = Constants.PIFLEX_IMAGES_URL[index]
+  print(f"Piflex with {image_url}")
   embed.set_image(url=image_url)
 
   return embed, index

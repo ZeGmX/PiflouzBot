@@ -1,9 +1,9 @@
 import requests
 import time
 import datetime
-import os
 import asyncio
 from replit import db
+from discord.ext import commands
 import functools
 
 from constant import Constants
@@ -104,3 +104,16 @@ async def wait_until(then):
 
   print("Waiting for:", dt.total_seconds() % (24 * 3600))
   await asyncio.sleep(dt.total_seconds() % (24 * 3600))
+
+
+@commands.check
+def check_message_to_be_processed(ctx):
+    """
+    Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
+    --
+    input:
+      ctx: discord.ext.commands.Context
+    """
+    assert not (ctx.author == ctx.bot.user or "out_channel" not in db.keys() or ctx.bot.get_channel(db["out_channel"]) != ctx.channel), "Command attempt in the wrong channel"
+    return True
+
