@@ -109,20 +109,7 @@ class Cog_buy(commands.Cog):
     buttons = [create_button(style=ButtonStyle.gray, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]
     components = spread_to_rows(*buttons)
 
-    message = await ctx.send(embed=embed, components=components)
-
-    old_message_id = None
-    if "store_message_id" in db.keys():
-      old_message_id = db["store_message_id"]
-      
-    db["store_message_id"] = message.id
-
-    try: 
-      if old_message_id is not None:
-        old_message =  await ctx.channel.fetch_message(old_message_id)
-        await old_message.delete()
-    except:
-        print("Failed to delete old shop message")
+    await ctx.send(embed=embed, components=components, hidden=True)
   
 
   async def store_button_callback(self, ctx, emoji):

@@ -1,11 +1,9 @@
 from discord.ext import commands
 from discord_slash import cog_ext
 from replit import db
-import functools
 
 from constant import Constants
 import piflouz_handlers
-import powerups  # Used for eval
 import utils
 
 
@@ -46,9 +44,8 @@ class Cog_piflouz_mining(commands.Cog):
     else:
       if str(user.id) not in db["powerups"].keys():
         db["powerups"][str(user.id)] = []
-        
-      qty = functools.reduce(lambda accu, powerup_str: accu * eval(powerup_str).get_piflouz_multiplier_value(), db["powerups"][str(user.id)], Constants.NB_PIFLOUZ_PER_REACT)
-      qty = int(qty)
+
+      qty = utils.get_total_piflouz_multiplier(user.id)
 
       output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more"
     

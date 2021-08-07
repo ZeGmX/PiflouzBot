@@ -43,8 +43,7 @@ def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=T
     if user_id not in db["powerups"].keys():
       db["powerups"][user_id] = []
 
-    qty = functools.reduce(lambda accu, powerup_str: accu * eval(powerup_str).get_piflouz_multiplier_value(), db["powerups"][user_id], qty)
-    qty = int(qty)
+    qty = utils.get_total_piflouz_multiplier(user_id)
   
   if (cooldown == 0 or not check_cooldown) and balance + qty >= 0:
     db["piflouz_bank"][user_id] = balance + qty

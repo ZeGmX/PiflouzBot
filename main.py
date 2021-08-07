@@ -1,3 +1,8 @@
+import subprocess
+import sys
+
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-slash-command", "--upgrade"])
+
 import random
 from discord.ext import commands
 import discord

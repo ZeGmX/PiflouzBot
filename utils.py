@@ -4,11 +4,11 @@ import datetime
 import asyncio
 from replit import db
 from discord.ext import commands
-import functools
 
 from constant import Constants
 import embed_messages
 import powerups  # Used in eval()
+import events  # Used in eval()
 
 
 def get_new_joke():
@@ -45,7 +45,12 @@ def get_timer(user_id):
   old_time = db["timers_react"][user_id]
   current_time = int(time.time())
   differential = current_time - old_time
-  cooldown = functools.reduce(lambda cumul, powerup_str: cumul * eval(powerup_str).get_cooldown_multiplier_value(), db["powerups"][user_id], Constants.REACT_TIME_INTERVAL)
+
+  current_event = eval(db["current_event"])
+  powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
+  powerups_event = current_event.get_powerups()
+
+  cooldown = Constants.REACT_TIME_INTERVAL * (1 + sum(p.get_cooldown_multiplier_value() - 1 for p in powerups_user + powerups_event))
 
   time_needed = max(0, cooldown - differential)
   
@@ -117,3 +122,21 @@ def check_message_to_be_processed(ctx):
     assert not (ctx.author == ctx.bot.user or "out_channel" not in db.keys() or ctx.bot.get_channel(db["out_channel"]) != ctx.channel), "Command attempt in the wrong channel"
     return True
 
+
+def get_total_piflouz_multiplier(user_id):
+  """
+  Returns the amount earned with a /get, taking into account the user powerups and the current event
+  --
+  input:
+    user_id: int/str - the id of the user having the powerups
+  --
+  output:
+    qty: the pilouz amount
+  """
+  current_event = eval(db["current_event"])
+  powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
+  powerups_event = current_event.get_powerups()
+
+  qty = Constants.NB_PIFLOUZ_PER_REACT * (1 + sum(p.get_piflouz_multiplier_value() - 1 for p in powerups_user + powerups_event))
+  qty = round(qty)
+  return qty

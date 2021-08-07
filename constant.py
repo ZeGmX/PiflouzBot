@@ -1,6 +1,7 @@
 import os
 import datetime # Useful for an eval
 
+
 class Constants:
   DISCORDTOKEN = os.getenv("DISCORDTOKEN")
   # How many seconds between each react to earn piflouz

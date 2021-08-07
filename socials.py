@@ -1,9 +1,7 @@
 from discord.ext import tasks
 from replit import db
-import requests
 import time
 import asyncpraw
-import os
 import twitch
 
 from constant import Constants

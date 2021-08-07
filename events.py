@@ -213,13 +213,13 @@ class Raffle_event(Event):
     return prize
 
 
-class Increased_pibox_drop_rate_event(Event):
+class Event_from_powerups(Event):
   """
-  Event with a powerup that increases the pibox drop rate
+  Creates an event with just a list of powerups
   """
-  def __init__(self, value):
-    self.value = value
-
+  def __init__(self, *powerup_list):
+    self.powerups = list(powerup_list)
+  
   async def on_begin(self, bot):
     if "out_channel" not in db.keys():
       return
@@ -231,14 +231,14 @@ class Increased_pibox_drop_rate_event(Event):
     message = await out_channel.send(embed=embed)
     await message.pin()
     return message
-
+  
 
   async def on_end(self, bot):
     pass
   
 
   def get_powerups(self):
-    return [powerups.Pibox_drop_rate_multiplier(self.value)]
+    return self.powerups
   
 
   def get_embed(self):
@@ -249,12 +249,37 @@ class Increased_pibox_drop_rate_event(Event):
       embed: discord.Embed
     """
     embed = discord.Embed(
-      title="Increased pibox rate!",
-      description=f"Pibox drop rate increased by {self.value}%",
+      title="Event of the day",
       colour=discord.Colour.random()
+    )
+    descriptions = [p.get_info_str() for p in self.powerups]
+    content = "\n".join(descriptions)
+    embed.add_field(
+      name="The following powerups are active:",
+      value=content
     )
     embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
     return embed
   
+
   def to_str(self):
-    return f"{__name__}.{type(self).__name__}({self.value})"
+    powerups_str = ", ".join([p.to_str() for p in self.powerups])
+    return f"{__name__}.{Event_from_powerups.__name__}({powerups_str})"
+
+
+class Increased_pibox_drop_rate_event(Event_from_powerups):
+  def __init__(self, value):
+    p = powerups.Pibox_drop_rate_multiplier(value)
+    super().__init__(p)
+
+
+class Increased_piflouz_event(Event_from_powerups):
+  def __init__(self, value):
+    p = powerups.Piflouz_multiplier(None, value, None)
+    super().__init__(p)
+
+
+class Cooldown_reduction_event(Event_from_powerups):
+  def __init__(self, value):
+    p = powerups.Cooldown_reduction(None, value, None)
+    super().__init__(p)

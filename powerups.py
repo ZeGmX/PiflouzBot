@@ -90,6 +90,16 @@ class Powerups:
     return ""
 
 
+  def to_str(self):
+    """
+    Returns the string used for recreating the object with eval()
+    --
+    output:
+      res: str
+    """
+    return ""
+
+
   def on_buy(self, user_id):
     """
     Actions to be done when buying the powerup
@@ -120,7 +130,7 @@ class Powerups_non_permanent(Powerups):
   def __init__(self, price, value, duration, buy_date=0):
     self.price = price
     self.value = value
-    self. duration = duration
+    self.duration = duration
     self.buy_date = buy_date
   
   def on_buy(self, user_id):
@@ -139,7 +149,7 @@ class Powerups_non_permanent(Powerups):
       return False  # User already has an active power of the same type
     
     self.buy_date = int(time.time())
-    powerup_str = f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.duration}, {self.buy_date})"
+    powerup_str = self.to_str()
 
     if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
       return False
@@ -151,8 +161,12 @@ class Powerups_non_permanent(Powerups):
     return True
 
 
+  def to_str(self):
+    return f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.duration}, {self.buy_date})"
+
+
   def is_active(self):
-    return time.time() - self.buy_date <= self.duration
+    return self.duration is None or time.time() - self.buy_date <= self.duration
 
 
 class Cooldown_reduction(Powerups_non_permanent):
@@ -165,6 +179,9 @@ class Cooldown_reduction(Powerups_non_permanent):
   
 
   def get_info_str(self):
+    if self.duration is None:
+      return f"Cooldown reduction - {self.value}%"
+
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
       return f"Cooldown reduction - {self.value}% - Time left: {dt}s"
@@ -185,6 +202,9 @@ class Piflouz_multiplier(Powerups_non_permanent):
   
 
   def get_info_str(self):
+    if self.duration is None:
+      return f"Piflouz multiplier - {self.value}%"
+
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
       return f"Piflouz multiplier - {self.value}% - Time left: {dt}s"
@@ -221,7 +241,7 @@ class Powerups_permanent(Powerups):
     if i is not None and eval(db["powerups"][user_id][i][len(__name__) + 1:]).qty == self.max_qty:
       return False  # User already has the maximum number of this powerup
     
-    powerup_str = f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.max_qty}, {self.qty + 1})"
+    powerup_str = self.to_str()
 
     if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
       return False
@@ -231,6 +251,10 @@ class Powerups_permanent(Powerups):
     db["powerups"][user_id].append(powerup_str)
 
     return True
+
+  
+  def to_str(self):
+    return f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.max_qty}, {self.qty + 1})"
 
 
   def is_active(self):
@@ -272,3 +296,11 @@ class Pibox_drop_rate_multiplier(Powerups_permanent):
 
   def get_pibox_rate_multiplier_value(self):
     return 1 + self.value / 100
+  
+
+  def get_info_str(self):
+    return f"Increased pibox drop rate - {self.value}%"
+  
+
+  def to_str(self):
+    return f"{__name__}.{type(self).__name__}({self.value})"
