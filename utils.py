@@ -85,13 +85,13 @@ async def update_piflouz_message(bot):
   await piflouz_message.edit(embed=embed)
 
 
-def create_duel(ctx, user, amount, duel_type):
+def create_duel(id_challenger, id_challenged, amount, duel_type):
   """
   Generates a new duel
   --
   input:
-    ctx: discord.ext.commands.Context
-    user: discord.User/Member
+    id_challenged: int
+    id_challenged: int
     amount: int
     duel_type: str
   --
@@ -99,8 +99,9 @@ def create_duel(ctx, user, amount, duel_type):
     duel: dict
   """
   duel = {
-    "user_id1": ctx.author_id, # Challenger
-    "user_id2": user.id, # Challenged
+    "user_id1": id_challenger, # Challenger
+    "user_id2": id_challenged, # Challenged
+    "duel_id": get_new_duel_id(),
     "duel_type": duel_type,
     "amount": amount,
     "move1": None, # Not played yet
@@ -246,3 +247,17 @@ def seconds_to_formatted_string(s):
     return f"{min}min {seconds}s"
   else:
     return f"{seconds}s"
+
+
+def get_new_duel_id():
+    """
+    Creates a new unique id to represent a duel
+    --
+    output:
+      res: int
+    """
+    if "last_duel_id" not in db.keys():
+      db["last_duel_id"] = -1
+    
+    db["last_duel_id"] += 1
+    return db["last_duel_id"]

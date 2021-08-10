@@ -138,18 +138,29 @@ async def get_embed_piflouz(bot):
           user_id, value = L[i]
           return f"{i + 1}: <@{user_id}> - {value}\n"
         
-        tasks_balance_ranking = [get_str(i, sorted_balance) for i in range(min(len(sorted_balance), 10))]
-        tasks_discovery_ranking = [get_str(i, sorted_piflex_discovery) for i in range(min(len(sorted_piflex_discovery), 10))]
+        ranking_balance = ""
+        previous_val = 0
+        previous_index = 0
+        for i in range(min(len(sorted_balance), 10)):
+          user_id, balance = sorted_balance[i]
+          index = i if balance != previous_val else previous_index
+          previous_val, previous_index = balance, index
+          ranking_balance += f"{index + 1}: <@{user_id}> - {balance}\n"
 
-        res = await asyncio.gather(*tasks_balance_ranking)
-        ranking = "".join(res)
-        if ranking != "":
-          embed.add_field(name="Balance", value=ranking, inline=True)
+        ranking_piflex = ""
+        previous_val = 0
+        previous_index = 0
+        for i in range(min(len(sorted_piflex_discovery), 10)):
+          user_id, qty = sorted_piflex_discovery[i]
+          index = i if qty != previous_val else previous_index
+          previous_val, previous_index = qty, index
+          ranking_piflex += f"{index + 1}: <@{user_id}> - {qty}\n"
 
-        res = await asyncio.gather(*tasks_discovery_ranking)
-        ranking = "".join(res)
-        if ranking != "":
-          embed.add_field(name="Piflex Discovery", value=ranking, inline=True)
+        if ranking_balance != "":
+          embed.add_field(name="Balance", value=ranking_balance, inline=True)
+
+        if ranking_piflex != "":
+          embed.add_field(name="Piflex Discovery", value=ranking_piflex, inline=True)
 
     return embed
 
