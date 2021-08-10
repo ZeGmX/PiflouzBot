@@ -61,7 +61,7 @@ def get_total_cooldown(user_id):
   output:
     cooldown: the time in seconds
   """
-  if user_id not in db["powerups"].keys():
+  if str(user_id) not in db["powerups"].keys():
     db["powerups"][user_id] = []
 
   current_event = eval(db["current_event"])

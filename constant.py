@@ -6,11 +6,9 @@ class Constants:
   DISCORDTOKEN = os.getenv("DISCORDTOKEN")
   # How many seconds between each react to earn piflouz
   REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))
-  NB_PIFLOUZ_PER_REACT = int(os.getenv("NB_PIFLOUZ_PER_REACT"))
 
   # Miscelaneous timing things
   TIME_BEFORE_DELETION = int(os.getenv("TIME_BEFORE_DELETION"))
-
 
   # Rate of random drop (pibox)
   PIBOX_DROP_RATE = eval(os.getenv("PIBOX_DROP_RATE"))
