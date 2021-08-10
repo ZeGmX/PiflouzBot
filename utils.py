@@ -2,11 +2,14 @@ import requests
 import time
 import datetime
 import asyncio
+import pickle
 from replit import db
-from discord.ext import commands
+from replit.database.database import ObservedList, ObservedDict, Database
+from discord.ext import commands, tasks
 
 from constant import Constants
 import embed_messages
+import piflouz_handlers
 import powerups  # Used in eval()
 import events  # Used in eval()
 
@@ -34,27 +37,39 @@ def get_timer(user_id):
     time_needed: int -> time remaining before the end of cooldown
   """
   user_id = str(user_id)
-  if "timers_react" not in db.keys():
-    db["timers_react"] = dict()
   if user_id not in db["timers_react"].keys():
     db["timers_react"][user_id] = 0
-
-  if user_id not in db["powerups"].keys():
-    db["powerups"][user_id] = []
 
   old_time = db["timers_react"][user_id]
   current_time = int(time.time())
   differential = current_time - old_time
+
+  cooldown = get_total_cooldown(user_id)
+
+  time_needed = max(0, cooldown - differential)
+  
+  return int(time_needed)
+
+
+def get_total_cooldown(user_id):
+  """
+  Returns the time to wait between two /get, taking into account the user powerups and the current event
+  --
+  input:
+    user_id: int/str - the id of the user having the powerups
+  --
+  output:
+    cooldown: the time in seconds
+  """
+  if user_id not in db["powerups"].keys():
+    db["powerups"][user_id] = []
 
   current_event = eval(db["current_event"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
   powerups_event = current_event.get_powerups()
 
   cooldown = Constants.REACT_TIME_INTERVAL * (1 + sum(p.get_cooldown_multiplier_value() - 1 for p in powerups_user + powerups_event))
-
-  time_needed = max(0, cooldown - differential)
-  
-  return int(time_needed)
+  return cooldown
 
 
 async def update_piflouz_message(bot):
@@ -125,7 +140,7 @@ def check_message_to_be_processed(ctx):
 
 def get_total_piflouz_multiplier(user_id):
   """
-  Returns the amount earned with a /get, taking into account the user powerups and the current event
+  Returns the amount earned with a /get, taking into account the user powerups, the current event, the user combo and the accuracy
   --
   input:
     user_id: int/str - the id of the user having the powerups
@@ -133,10 +148,101 @@ def get_total_piflouz_multiplier(user_id):
   output:
     qty: the pilouz amount
   """
+  if str(user_id) not in db["mining_combo"].keys():
+    db["mining_combo"][str(user_id)] = 0
+
   current_event = eval(db["current_event"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
   powerups_event = current_event.get_powerups()
 
-  qty = Constants.NB_PIFLOUZ_PER_REACT * (1 + sum(p.get_piflouz_multiplier_value() - 1 for p in powerups_user + powerups_event))
+  qty = Constants.BASE_MINING_AMOUNT * (1 + sum(p.get_piflouz_multiplier_value() - 1 for p in powerups_user + powerups_event))
   qty = round(qty)
-  return qty
+
+  combo_bonus = min(db["mining_combo"][str(user_id)], Constants.MAX_MINING_COMBO) * Constants.PIFLOUZ_PER_MINING_COMBO
+
+  return qty + combo_bonus + piflouz_handlers.get_mining_accuracy_bonus(user_id)
+
+
+def observed_to_py(obj):
+  """
+  Turns an "Observed" object (from the database) into a classic Python object
+  --
+  input:
+    obj: int/str/bool/None/ObservedDict/ObservedList/Database
+  output:
+    res: int/str/bool/None/dict/list
+  """
+  t = type(obj)
+  if t == int or t == str or t == bool or obj is None:
+    return obj
+
+  elif t == ObservedList:
+    return [observed_to_py(sub_obj) for sub_obj in obj]
+  
+  elif t == ObservedDict or t == Database:
+    return {key: observed_to_py(val) for key, val in obj.items()}
+  
+  else:
+    print("Cannot convert from type: ", t)
+
+
+@tasks.loop(hours=24)
+async def backup_db(filename=None):
+  """
+  Creates a daily backup of the database
+  --
+  input:
+    filename: str -> the path to the file where the database will be saved. If None, the name is based on the date
+  """
+  then = datetime.time(22, 0, 0)
+  await wait_until(then)
+
+  if filename is None:
+    now = datetime.datetime.now()
+    filename = now.strftime("backups_db/%Y_%m_%d_%H:%M:%S.dump")
+
+  content = observed_to_py(db)
+
+  pickle.dump(content, open(filename, "wb"))
+  print("Made a backup of the database in file: ", filename)
+
+
+async def recover_db(filename):
+  """
+  Overrides the current database with one from a backed up file
+  --
+  input:
+    filename: str -> the path to the file
+  """
+  new_db = pickle.load(open(filename, "rb"))
+  print("loaded the database from file: ", filename)
+
+  # Backing up the current database just in case
+  now = datetime.datetime.now()
+  tmp_filename = now.strftime("backups_db/tmp_%Y_%m_%d_%H:%M:%S.dump")
+  await backup_db(tmp_filename)
+
+  print("Overriding the current database")
+  for key in db.keys():
+    del db[key]
+  
+  for key in new_db.keys():
+    db[key] = new_db[key]
+
+
+def seconds_to_formatted_string(s):
+  """
+  Returns a formated string 'Xh Ymin Zs' corresponding to a certain amount of seconds
+  --
+  input:
+    s: int -> the number of seconds
+  """
+  seconds = s % 60
+  min = (s // 60) % 60
+  hours = s // (60 * 60)
+  if hours > 0:
+    return f"{hours}h {min}min {seconds}s"
+  elif min > 0:
+    return f"{min}min {seconds}s"
+  else:
+    return f"{seconds}s"

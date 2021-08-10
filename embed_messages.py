@@ -5,110 +5,107 @@ from replit import db
 
 from constant import Constants
 import socials
+import utils
 
 
 def get_embed_help_message():
-    """
+  """
   Returns the embed message with help for every command
   --
   output:
     embed: discord.Embed -> the embeded message
   """
-    embed = discord.Embed(title="Need help?", colour=discord.Colour.red())
-    embed.set_thumbnail(url=Constants.PIBOU4LOVE_URL)
+  embed = discord.Embed(title="Need help?", colour=discord.Colour.red())
+  embed.set_thumbnail(url=Constants.PIBOU4LOVE_URL)
 
-    embed.add_field(
-      name="`/help`",
-      value="Show this message",
-    )
-    embed.add_field(
-      name="`/hello`",
-      value="Say hi!",
-    )
-    embed.add_field(
-      name="`/isLive streamer_name`",
-      value="check if a certain streamer is live!",
-    )
-    embed.add_field(
-      name="`/shutdown`",
-      value="if I start doing something nasty, or if you don't like me anymore :cry:",
-    )
-    embed.add_field(
-      name="`/setupChannel`",
-      value="change my default channel",
-    )
-    embed.add_field(
-      name="`/joke`",
-      value="to laugh your ass off (or not, manage your expectations)",
-    )
-    embed.add_field(
-      name="`/donate @user amount`",
-      value="be generous to others",
-    )
-    embed.add_field(
-      name="`/balance`",
-      value=f"check how many {Constants.PIFLOUZ_EMOJI} you have. Kind of a low-cost Piflex",
-    )
-    embed.add_field(
-      name="`/cooldown`",
-      value="when your addiction is stronger than your sense of time",
-    )
-    embed.add_field(
-      name="`/get`",
-      value="for the lazy ones",
-    )
-    embed.add_field(
-      name="`/piflex`",
-      value=f"when you have too many {Constants.PIFLOUZ_EMOJI}\n /!\ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
-    )
-    embed.add_field(
-      name="`/buyRankPiflex`",
-      value=f"flex with a custom rank\n /!\ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {Constants.PIFLEXROLE_DURATION} seconds",
-    )
-    embed.add_field(
-      name="`$tarpin`",
-      value="what could that be? Can be used in any channel",
-    )
-    embed.add_field(
-      name="`/pilord`",
-      value="see how much you need to farm to flex with your rank",
-    )
-    embed.add_field(
-      name="`/raffle n`",
-      value="buy raffle tickets to test your luck",
-    )
-    embed.add_field(
-      name="`/store`",
-      value="buy fun upgrades",
-    )
-    embed.add_field(
-      name="`/powerups`",
-      value="see how powerful you are",
-    )
-    embed.add_field(
-      name="`/giveaway n`",
-      value="launch a pibox with your own money",
-    )
-    embed.add_field(
-      name="`duel [accept|deny|challenge|cancel|play]`",
-      value="earn piflouz by winning challenges against others",
-    )
-    embed.add_field(
-      name="`/ranking`",
-      value="check how worthy you are",
-    )
-    
-    embed.add_field(
-      name="Things I do in the background",
-      value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
-- I can give you {Constants.PIFLOUZ_EMOJI} if you react to the piflouz message\n\
+  embed.add_field(
+    name="`/help`",
+    value="Show this message",
+  )
+  embed.add_field(
+    name="`/hello`",
+    value="Say hi!",
+  )
+  embed.add_field(
+    name="`/isLive streamer_name`",
+    value="check if a certain streamer is live!",
+  )
+  embed.add_field(
+    name="`/setupChannel`",
+    value="change my default channel",
+  )
+  embed.add_field(
+    name="`/joke`",
+    value="to laugh your ass off (or not, manage your expectations)",
+  )
+  embed.add_field(
+    name="`/donate @user amount`",
+    value="be generous to others",
+  )
+  embed.add_field(
+    name="`/balance`",
+    value=f"check how many {Constants.PIFLOUZ_EMOJI} you have. Kind of a low-cost Piflex",
+  )
+  embed.add_field(
+    name="`/cooldown`",
+    value="when your addiction is stronger than your sense of time",
+  )
+  embed.add_field(
+    name="`/get`",
+    value="for the lazy ones",
+  )
+  embed.add_field(
+    name="`/piflex`",
+    value=f"when you have too many {Constants.PIFLOUZ_EMOJI}\n /!\ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
+  )
+  embed.add_field(
+    name="`/buyRankPiflex`",
+    value=f"flex with a custom rank\n /!\ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEXROLE_DURATION)}",
+  )
+  embed.add_field(
+    name="`$tarpin`",
+    value="what could that be? Can be used in any channel",
+  )
+  embed.add_field(
+    name="`/pilord`",
+    value="see how much you need to farm to flex with your rank",
+  )
+  embed.add_field(
+    name="`/raffle n`",
+    value="buy raffle tickets to test your luck",
+  )
+  embed.add_field(
+    name="`/store`",
+    value="buy fun upgrades",
+  )
+  embed.add_field(
+    name="`/powerups`",
+    value="see how powerful you are",
+  )
+  embed.add_field(
+    name="`/giveaway n`",
+    value="launch a pibox with your own money",
+  )
+  embed.add_field(
+    name="`duel [accept|deny|challenge|cancel|play]`",
+    value="earn piflouz by winning challenges against others",
+  )
+  embed.add_field(
+    name="`/ranking`",
+    value="check how worthy you are",
+  )
+  
+  embed.add_field(
+    name="Things I do in the background",
+    value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
+- I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\
 - I spawn random gifts from time to time. Be the first to react to earn more {Constants.PIFLOUZ_EMOJI}\n\
 - I update the roles\n\
 - I create events every day\n\
 - I send a cute otter picture everyday",
-      inline=False
-    )
-    return embed
+    inline=False
+  )
+  return embed
 
 
 async def get_embed_piflouz(bot):

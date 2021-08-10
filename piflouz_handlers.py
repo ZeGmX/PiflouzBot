@@ -1,6 +1,6 @@
 from discord.ext import tasks
 from random import randrange
-from random import random
+from random import random, randrange
 from replit import db
 import functools
 import time
@@ -11,7 +11,7 @@ import powerups  # Used in eval()
 import utils
 
  
-def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=True):
+def update_piflouz(user_id, qty=None, check_cooldown=True):
   """
   This function does the generic piflouz mining, and returns wether it suceeded or not
   --
@@ -22,6 +22,7 @@ def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=T
   --
   output:
     res: boolean -> if the update succeded
+    qty: int -> the amount actually sent/received (only returned if check_cooldown = Try(corresponding to a /get))
   """
   if "piflouz_bank" not in db.keys():
       db["piflouz_bank"] = dict()
@@ -30,9 +31,8 @@ def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=T
 
   # New user
   if user_id not in db["piflouz_bank"].keys():
-    db["piflouz_bank"][user_id] = qty
+    db["piflouz_bank"][user_id] = 0
     db["timers_react"][user_id] = 0
-    return True
 
   # User already registered
   balance = db["piflouz_bank"][user_id]
@@ -44,6 +44,8 @@ def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=T
       db["powerups"][user_id] = []
 
     qty = utils.get_total_piflouz_multiplier(user_id)
+  else:
+    assert qty is not None, "Got qty = None"
   
   if (cooldown == 0 or not check_cooldown) and balance + qty >= 0:
     db["piflouz_bank"][user_id] = balance + qty
@@ -62,8 +64,11 @@ def update_piflouz(user_id, qty=Constants.NB_PIFLOUZ_PER_REACT, check_cooldown=T
       """
     
       db["timers_react"][user_id] = new_time
+      return True, qty
     return True
 
+  if check_cooldown:
+    return False, qty
   return False
 
 
@@ -104,7 +109,7 @@ async def random_gift(bot):
   input:
     bot: discord.ext.commands.Bot
   """
-  drop_rate = Constants.RANDOM_DROP_RATE
+  drop_rate = Constants.PIBOX_DROP_RATE
 
   # Computing the drop rate based on the current event's powerups
   if "current_event" in db.keys():
@@ -114,12 +119,60 @@ async def random_gift(bot):
   
   if random() < drop_rate:
     # Main piflouz
-    piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random())
+    piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
     await spawn_pibox(bot, piflouz_quantity)
 
   if random() < drop_rate:
     # Piflouz with the bot's money
-    piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random())
+    piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
     if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
       await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
+
+
+def update_combo(user_id):
+  """
+  Updates the current combo of the user
+  --
+  input:
+    user_id: int/str
+  """
+  if str(user_id) not in db["mining_combo"].keys():
+    db["mining_combo"][str(user_id)] = 0
+
+  cooldown = utils.get_total_cooldown(user_id)
+  old_time = db["timers_react"][str(user_id)]
+  current_time = int(time.time())
+
+  if old_time + cooldown <= current_time < old_time + 2 * cooldown:
+    db["mining_combo"][str(user_id)] += 1
+  
+  elif current_time >= old_time + 2 * cooldown:
+    db["mining_combo"][str(user_id)] = 0
+
+
+def get_mining_accuracy_bonus(user_id):
+  """
+  Returns the piflouz bonus earned from a /get depending on the user accuracy
+  --
+  input:
+    user_id: str/int
+  --
+  output:
+    res: int
+  """
+  user_id = str(user_id)
+  if user_id not in db["timers_react"].keys():
+    db["timers_react"][user_id] = 0
+
+  old_time = db["timers_react"][user_id]
+  current_time = int(time.time())
+  diff = current_time - old_time
+
+  cooldown = utils.get_total_cooldown(user_id)
+
+  if diff < cooldown or diff > 2 * cooldown:
+    return 0
+  
+  t = 1 - (diff - cooldown) / cooldown
+  return round(t * Constants.MAX_MINING_ACCURACY_BONUS)
 

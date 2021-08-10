@@ -8,13 +8,13 @@ class Constants:
   REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))
   NB_PIFLOUZ_PER_REACT = int(os.getenv("NB_PIFLOUZ_PER_REACT"))
 
-  #Miscelaneous timing things
+  # Miscelaneous timing things
   TIME_BEFORE_DELETION = int(os.getenv("TIME_BEFORE_DELETION"))
 
 
   # Rate of random drop (pibox)
-  RANDOM_DROP_RATE = eval(os.getenv("RANDOM_DROP_RATE"))
-  RANDOM_DROP_AVERAGE = NB_PIFLOUZ_PER_REACT * 10
+  PIBOX_DROP_RATE = eval(os.getenv("PIBOX_DROP_RATE"))
+  MAX_PIBOX_AMOUNT = int(os.getenv("MAX_PIBOX_AMOUNT"))
 
   PIFLOUZ_EMOJI_ID = int(os.getenv("PIFLOUZ_EMOJI_ID"))
   PIFLOUZ_EMOJI = f"<:piflouz:{PIFLOUZ_EMOJI_ID}>"
@@ -52,12 +52,6 @@ class Constants:
   GUILD_IDS = eval(os.getenv("GUILD_IDS"))
   DISCORD_BOT_ID = os.getenv("DISCORD_BOT_ID")
 
-  BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, react every {REACT_TIME_INTERVAL} seconds to gain more {PIFLOUZ_EMOJI}\n\n\
-  You just need to react with the {PIFLOUZ_EMOJI} emoji\n\
-  If you waited long enough ({REACT_TIME_INTERVAL} seconds), you will earn {NB_PIFLOUZ_PER_REACT} {PIFLOUZ_EMOJI}!\n\
-  A :white_check_mark: reaction will appear for 2 seconds to make you know you won\n\
-  A :x: reaction will appear for 2s if you did not wait for long enough, better luck next time\n"
-
   EVENT_TIME = eval(os.getenv("EVENT_TIME"))
   DONATE_TAX_RATIO = eval(os.getenv("DONATE_TAX_RATIO"))
   REDDIT_ID = os.getenv("REDDIT_ID")
@@ -72,15 +66,26 @@ class Constants:
 
   DUEL_TAX_RATIO = int(os.getenv("DUEL_TAX_RATIO"))
 
+  MAX_MINING_COMBO = int(os.getenv("MAX_MINING_COMBO"))
+  PIFLOUZ_PER_MINING_COMBO = int(os.getenv("PIFLOUZ_PER_MINING_COMBO"))
+
+  BASE_MINING_AMOUNT = int(os.getenv("BASE_MINING_AMOUNT"))
+  MAX_MINING_ACCURACY_BONUS = int(os.getenv("MAX_MINING_ACCURACY_BONUS"))
+
 
   @staticmethod
   def load():
     import powerups
     import events
+    import utils
+
     Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
     Constants.RANDOM_EVENTS = eval(os.getenv("RANDOM_EVENTS"))
 
-  
+    Constants.BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}\n\n\
+You just need to click on the {Constants.PIFLOUZ_EMOJI} button below\n\
+If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, you powerups, your mining combo and your accuracy to use /get"
+ 
 
   greetings = [ "Greetings {}! Nice to meet you!",
                 "Hello there {}, how are you doing today ?",

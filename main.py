@@ -57,13 +57,15 @@ async def on_ready():
   # Setting the base parameters in the database
   for key in [
     "piflouz_bank",         # money of everyone
+    "timers_react",         # the time at which the users last used /get
     "random_gifts",         # information about current piboxes
     "mega_piflexers",       # buy date of user doing /piflex
     "piflexers",            # buy date of user doing /buyrankpiflex
     "raffle_participation", # tickets bought by everyone
     "powerups",             # powerups of each user
     "stats",                # to test things
-    "discovered_piflex"     # ids of the piflex images found
+    "discovered_piflex",    # ids of the piflex images found
+    "mining_combo"          # the current combo for mining piflouz
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -89,6 +91,7 @@ async def on_ready():
   powerups.handle_actions_every_hour.start(bot)
   events.event_handlers.start(bot)
   socials.generate_otter_of_the_day.start(bot)
+  utils.backup_db.start()
 
 
 @bot.event
@@ -290,7 +293,7 @@ async def spawn_pibox_cmd(ctx):
     ctx: discord_slash.context.SlashContext
   """
   assert ctx.author.id == Constants.PIBOX_MASTER_ID, "Only the pibox master can use this command"
-  piflouz_quantity = int(Constants.RANDOM_DROP_AVERAGE * random.random())
+  piflouz_quantity = random.randrange(Constants.MAX_PIBOX_AMOUNT)
   custom_message = "It was spawned by the pibox master"
   await piflouz_handlers.spawn_pibox(bot, piflouz_quantity, custom_message)
   await ctx.send("Done!", hidden=True)

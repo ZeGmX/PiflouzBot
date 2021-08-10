@@ -35,19 +35,16 @@ class Cog_piflouz_mining(commands.Cog):
     """
     await ctx.defer(hidden=True)
     user = ctx.author
-    successful_update = piflouz_handlers.update_piflouz(user.id)
+
+    piflouz_handlers.update_combo(ctx.author_id)
+    successful_update, qty = piflouz_handlers.update_piflouz(user.id)
     
     if not successful_update:
       timer = utils.get_timer(user.id)
       
-      output_text = f"{user.mention}, you still need to wait {timer} seconds before earning more {Constants.PIFLOUZ_EMOJI}!"
+      output_text = f"{user.mention}, you still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
-      if str(user.id) not in db["powerups"].keys():
-        db["powerups"][str(user.id)] = []
-
-      qty = utils.get_total_piflouz_multiplier(user.id)
-
-      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more"
+      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(user.id)]} / {Constants.MAX_MINING_COMBO}"
     
     await ctx.send(output_text, hidden=True)
     await utils.update_piflouz_message(self.bot)
@@ -77,7 +74,7 @@ class Cog_piflouz_mining(commands.Cog):
     user = ctx.author
     timer = utils.get_timer(user.id)
     if timer > 0 :
-      output_text = f"{user.mention}, you still need to wait {timer} seconds before earning more {Constants.PIFLOUZ_EMOJI}!"
+      output_text = f"{user.mention}, you still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
       output_text = f"{user.mention}, you can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
     await ctx.send(output_text, hidden=True)

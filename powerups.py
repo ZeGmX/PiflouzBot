@@ -184,7 +184,7 @@ class Cooldown_reduction(Powerups_non_permanent):
 
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
-      return f"Cooldown reduction - {self.value}% - Time left: {dt}s"
+      return f"Cooldown reduction - {self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
     return ""
   
 
@@ -207,7 +207,7 @@ class Piflouz_multiplier(Powerups_non_permanent):
 
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
-      return f"Piflouz multiplier - {self.value}% - Time left: {dt}s"
+      return f"Piflouz multiplier - {self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
     return ""
   
 
