@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-slash-command", "--upgrade"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-slash-command==3.0.1a"])
 
 import random
 from discord.ext import commands
@@ -9,7 +9,7 @@ import discord
 from discord_slash import SlashCommand 
 from discord_slash.utils.manage_commands import create_option, create_choice
 from discord_slash.utils.manage_components import create_button, create_actionrow
-from discord_slash.model import SlashCommandOptionType as option_type, ButtonStyle
+from discord_slash.model import SlashCommandOptionType as option_type, ContextMenuType, ButtonStyle
 from replit import db
 from math import ceil
 import logging
@@ -341,7 +341,31 @@ async def remove_role_cmd(ctx, role):
   member = ctx.author
   await member.remove_roles(role)
   await ctx.send("Done!", hidden=True)
-  
+
+
+@slash.context_menu(target=ContextMenuType.MESSAGE, name="Du quoi ?", guild_ids=Constants.GUILD_IDS)
+async def du_quoi_context_app(ctx):
+  """
+  Answers "Du quoi ?" to a message (probably in response to message containing the word "tarpin")
+  --
+  input:
+    ctx: discord_slash.context.MenuContext
+  """
+  await ctx.target_message.reply("Du quoi ?")
+  await ctx.send("Done!", hidden=True)
+
+
+@slash.context_menu(target=ContextMenuType.MESSAGE, name="Du tarpin !", guild_ids=Constants.GUILD_IDS)
+async def du_tarpin_context_app(ctx):
+  """
+  Answers "Du tarpin !" to a message (probably in response to message containing "Du quoi ?")
+  --
+  input:
+    ctx: discord_slash.context.MenuContext
+  """
+  await ctx.target_message.reply("Du tarpin !")
+  await ctx.send("Done!", hidden=True)
+
 
 @bot.event
 async def on_message(message):

@@ -1,4 +1,5 @@
 from discord.ext import tasks
+from discord.utils import escape_markdown
 from replit import db
 import time
 import asyncpraw
@@ -70,7 +71,8 @@ async def send_new_live_message(bot, stream, streamer_name):
     db["previous_live_message_time"][streamer_name] = current_live_message_time
     out_channel = bot.get_channel(db["out_channel"])
     role = bot.guilds[0].get_role(Constants.TWITCH_NOTIF_ROLE_ID)
-    await out_channel.send(f"{role.mention} {streamer_name} is currently live on \"{stream.title}\", go check out on http://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
+    msg = escape_markdown(f"{role.mention} {streamer_name} is currently live on \"{stream.title}\", go check out on http://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
+    await out_channel.send(msg)
   else:
     print(f"Found {streamer_name}, but cooldown was still up.")
 

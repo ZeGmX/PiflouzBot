@@ -127,7 +127,7 @@ class Cog_buy(commands.Cog):
     powerup = Constants.POWERUPS_STORE[emoji]
     if powerup.on_buy(user_id):
       await utils.update_piflouz_message(self.bot)
-      await ctx.send("Successfully bout the powerup", hidden=True)
+      await ctx.send("Successfully bought the powerup", hidden=True)
     else:
       await ctx.send("Purchase failed", hidden=True)
 
