@@ -25,6 +25,7 @@ import events
 import piflouz_handlers
 import powerups
 import rank_handlers
+import seasons
 import socials
 import utils
 
@@ -65,7 +66,9 @@ async def on_ready():
     "powerups",             # powerups of each user
     "stats",                # to test things
     "discovered_piflex",    # ids of the piflex images found
-    "mining_combo"          # the current combo for mining piflouz
+    "mining_combo",         # the current combo for mining piflouz
+    "turbo_piflouz_bank",   # money after each season
+    "donation_balance"      # money donated - money received throug donations
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -92,6 +95,7 @@ async def on_ready():
   events.event_handlers.start(bot)
   socials.generate_otter_of_the_day.start(bot)
   utils.backup_db.start()
+  seasons.season_task.start(bot)
 
 
 @bot.event
@@ -177,6 +181,17 @@ async def donate_cmd(ctx, user_receiver, amount):
 
   await ctx.channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}")
   await utils.update_piflouz_message(bot)
+
+  # Update the statistics to see the most generous donators
+  id_sender = str(user_sender.id)
+  id_receiver = str(user_receiver.id)
+  if id_sender not in db["donation_balance"].keys():
+    db["donation_balance"][id_sender] = 0
+  if id_receiver not in db["donation_balance"].keys():
+    db["donation_balance"][id_receiver] = 0
+  
+  db["donation_balance"][id_sender] += amount
+  db["donation_balance"][id_receiver] -= qty_receiver
 
 
 @slash.slash(name="setupChannel", description="change my default channel", guild_ids=Constants.GUILD_IDS, options=[])
