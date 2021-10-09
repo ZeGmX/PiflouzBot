@@ -2,6 +2,7 @@ from discord.ext import commands
 from discord_slash import cog_ext
 from discord_slash.utils.manage_commands import create_option
 from discord_slash.model import SlashCommandOptionType as option_type
+from discord.utils import escape_markdown
 from replit import db
 
 from constant import Constants
@@ -37,10 +38,12 @@ class Cog_status_check(commands.Cog):
     stream = socials.get_live_status(streamer_name)
     if stream is not None:
       # The streamer is live
-      await ctx.send(f"{streamer_name} is currently live on \"{stream.title}\", go check out on http://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
+      msg = escape_markdown(f"{streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
+      await ctx.send(msg)
     else:
       # The streamer is not live
-      await ctx.send(f"{streamer_name} is not live yet. Follow http://www.twitch.tv/{streamer_name} to stay tuned ! {Constants.FUEGO_EMOJI}")
+      msg = escape_markdown(f"{streamer_name} is not live yet. Follow https://www.twitch.tv/{streamer_name} to stay tuned ! {Constants.FUEGO_EMOJI}")
+      await ctx.send(msg)
   
 
   @cog_ext.cog_slash(name="balance", description=f"check how many piflouz you have. Kind of a low-cost Piflex", guild_ids=Constants.GUILD_IDS, options=[])

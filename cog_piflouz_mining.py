@@ -42,7 +42,7 @@ class Cog_piflouz_mining(commands.Cog):
     if not successful_update:
       timer = utils.get_timer(user.id)
       
-      output_text = f"{user.mention}, you still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
+      output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
       output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(user.id)]} / {Constants.MAX_MINING_COMBO}"
     
@@ -74,7 +74,7 @@ class Cog_piflouz_mining(commands.Cog):
     user = ctx.author
     timer = utils.get_timer(user.id)
     if timer > 0 :
-      output_text = f"{user.mention}, you still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
+      output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
-      output_text = f"{user.mention}, you can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
+      output_text = f"You can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
     await ctx.send(output_text, hidden=True)
