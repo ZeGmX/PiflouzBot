@@ -4,24 +4,34 @@ from math import sqrt
 from replit import db
 import datetime
 from dateutil.relativedelta import relativedelta
+from discord_slash.utils.manage_components import create_button, create_actionrow
+from discord_slash.model import ButtonStyle
 
+from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
+import embed_messages
 
 
-async def start_new_season(bot, end_time):
+
+async def start_new_season(bot):
   """
   Announces the beginning of a new season
   --
   input:
     bot: discord.ext.commands.Bot
-    end_time: datetime.datetime -> the time at which the season ends
   --
   output:
     msg: discord.Message -> the message sent
   """
   if "out_channel" in db.keys():
     channel = bot.get_channel(db["out_channel"])
-    msg = await channel.send(f"A new season begins! Your goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings. This season will end on <t:{int(end_time.timestamp())}>")
+
+    emoji = await bot.guilds[0].fetch_emoji(Constants.PIFLOUZ_EMOJI_ID)
+
+    piflouz_button = create_button(style=ButtonStyle.gray, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji)
+    action_row = create_actionrow(piflouz_button)
+
+    msg = await channel.send(embed=embed_messages.get_embed_piflouz(bot), components=[action_row])
     return msg
 
 
@@ -85,10 +95,12 @@ async def season_task(bot):
     old_message = await bot.get_channel(db["out_channel"]).fetch_message(db["current_season_message_id"])
     await old_message.unpin()
   
-  msg = await start_new_season(bot, next_begin + relativedelta(months=3))
+  db["last_begin_time"] = int(next_begin.timestamp())
+  msg = await start_new_season(bot)
   await msg.pin()
   db["current_season_message_id"] = msg.id
-  db["last_begin_time"] = int(next_begin.timestamp())
+  db["piflouz_message_id"] = msg.id
+  
 
 
 def reward_turbo_piflouz_based_on_ranking(scores, rewards):

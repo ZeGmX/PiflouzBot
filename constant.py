@@ -79,11 +79,11 @@ class Constants:
 
     Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
     Constants.RANDOM_EVENTS = eval(os.getenv("RANDOM_EVENTS"))
-
+  '''
     Constants.BASE_PIFLOUZ_MESSAGE = f"\nThis is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}\n\n\
 You just need to click on the {Constants.PIFLOUZ_EMOJI} button below\n\
 If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, you powerups, your mining combo and your accuracy to use /get"
- 
+ '''
 
   greetings = [ "Greetings {}! Nice to meet you!",
                 "Hello there {}, how are you doing today ?",

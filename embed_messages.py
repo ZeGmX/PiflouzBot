@@ -2,6 +2,8 @@ import discord
 import random
 import asyncio
 from replit import db
+import datetime
+from dateutil.relativedelta import relativedelta
 
 from constant import Constants
 import socials
@@ -108,8 +110,8 @@ def get_embed_help_message():
   return embed
 
 
-async def get_embed_piflouz(bot):
-    """
+def get_embed_piflouz(bot):
+  """
   Creates an embed message containing the explanation for the piflouz game and the balance
   --
   input:
@@ -118,52 +120,61 @@ async def get_embed_piflouz(bot):
   output:
     embed: discord.Embed -> the message
   """
-    embed = discord.Embed(
-      title=f"Come get some {Constants.PIFLOUZ_EMOJI}!",
-      description=Constants.BASE_PIFLOUZ_MESSAGE,
-      colour=discord.Colour.gold()
-    )
-    # Piflouz thumbnail
-    embed.set_thumbnail(url=Constants.PIFLOUZ_URL)
+  last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
+  end_time = last_begin_time + relativedelta(months=3)
+  desc = f"This is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}.\n\n\
+You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the `/get` command.\n\
+If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, you powerups, your mining combo and your accuracy to use /get.\n\n\
+This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
-    # Rankings
-    if "piflouz_bank" in db.keys():
-        d_piflouz = dict(db["piflouz_bank"])
-        d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
+  embed = discord.Embed(
+    title=f"Come get some {Constants.PIFLOUZ_EMOJI}!",
+    description=desc,
+    colour=discord.Colour.gold()
+  )
+  # Piflouz thumbnail
+  embed.set_thumbnail(url=Constants.PIFLOUZ_URL)
 
-        sorted_balance = sorted(list(d_piflouz.items()), key=lambda key_val: -int(key_val[1]))
-        sorted_piflex_discovery = sorted(d_piflex, key=lambda key_val: -int(key_val[1]))
+  # Rankings
+  if "piflouz_bank" in db.keys():
+    d_piflouz = dict(db["piflouz_bank"])
+    d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
+    d_donations = [(user_id, val) for user_id, val in db["donation_balance"].items() if val > 0]
 
-        async def get_str(i, L):
-          user_id, value = L[i]
-          return f"{i + 1}: <@{user_id}> - {value}\n"
-        
-        ranking_balance = ""
-        previous_val = 0
-        previous_index = 0
-        for i in range(min(len(sorted_balance), 10)):
-          user_id, balance = sorted_balance[i]
-          index = i if balance != previous_val else previous_index
-          previous_val, previous_index = balance, index
-          ranking_balance += f"{index + 1}: <@{user_id}> - {balance}\n"
+    ranking_balance = get_ranking_str(list(d_piflouz.items()))
+    ranking_piflex = get_ranking_str(d_piflex)
+    ranking_donations = get_ranking_str(d_donations)
+    
+    if ranking_balance != "":
+      embed.add_field(name="Balance", value=ranking_balance, inline=True)
+    if ranking_piflex != "":
+      embed.add_field(name="Piflex Discovery", value=ranking_piflex, inline=True)
+    if ranking_donations != "":
+      embed.add_field(name="Donations", value=ranking_donations, inline=False)
 
-        ranking_piflex = ""
-        previous_val = 0
-        previous_index = 0
-        for i in range(min(len(sorted_piflex_discovery), 10)):
-          user_id, qty = sorted_piflex_discovery[i]
-          index = i if qty != previous_val else previous_index
-          previous_val, previous_index = qty, index
-          ranking_piflex += f"{index + 1}: <@{user_id}> - {qty}\n"
+  return embed
 
-        if ranking_balance != "":
-          embed.add_field(name="Balance", value=ranking_balance, inline=True)
 
-        if ranking_piflex != "":
-          embed.add_field(name="Piflex Discovery", value=ranking_piflex, inline=True)
+def get_ranking_str(L):
+  """
+  Returns a string representing the ranking for a given score
+  --
+  input:
+    L: (user_id: str, score: int) list
+  --
+  output:
+    res: str
+  """
+  res = ""
+  previous_val, previous_index = 0, 0
+  vals = sorted(L, key=lambda key_val: -key_val[1])
+  for i, (user_id, val) in enumerate(vals):
+    if i == 10: break # The embed has a limited size so we limit the amount of user in each ranking
 
-    return embed
-
+    index = i if val != previous_val else previous_index
+    previous_val, previous_index = val, index
+    res += f"{index + 1}: <@{user_id}> - {val}\n"
+  return res
 
 def get_embed_twitch_notif():
   """

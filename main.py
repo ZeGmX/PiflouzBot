@@ -214,7 +214,7 @@ async def setup_channel_cmd(ctx):
   piflouz_button = create_button(style=ButtonStyle.gray, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji)
   action_row = create_actionrow(piflouz_button)
   
-  embed = await embed_messages.get_embed_piflouz(bot)
+  embed = embed_messages.get_embed_piflouz(bot)
 
   # Piflouz mining message
   message = await ctx.channel.send(embed=embed, components=[action_row])
@@ -231,9 +231,8 @@ async def joke_cmd(ctx):
   input:
     ctx: discord_slash.context.SlashContext
   """
-  user = ctx.author
   joke = utils.get_new_joke()
-  output_message = f"{user.mention}, here is a joke for you:\n{joke}"
+  output_message = f"Here is a joke for you:\n{joke}"
   await ctx.send(output_message)
 
 

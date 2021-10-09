@@ -21,8 +21,12 @@ def get_new_joke():
   output:
     joke: str -> the formatted joke
   """
-  r = requests.get("https://official-joke-api.appspot.com/random_joke").json()
-  joke = r["setup"] + "\n||**" + r["punchline"] + "**||"
+  #r = requests.get("https://official-joke-api.appspot.com/random_joke").json()
+  r = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=racist,sexist").json()  
+  if r["type"] == "twopart":
+    joke = r["setup"] + "\n||**" + r["delivery"] + "**||"
+  else:
+    joke = r["joke"]
   return joke
 
 
@@ -80,7 +84,7 @@ async def update_piflouz_message(bot):
     bot: discord.ext.commands.Bot
   """
   channel = bot.get_channel(db["out_channel"])
-  embed = await embed_messages.get_embed_piflouz(bot)
+  embed = embed_messages.get_embed_piflouz(bot)
   piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
   await piflouz_message.edit(embed=embed)
 
