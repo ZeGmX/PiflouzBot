@@ -70,6 +70,9 @@ class Constants:
   BASE_MINING_AMOUNT = int(os.getenv("BASE_MINING_AMOUNT"))
   MAX_MINING_ACCURACY_BONUS = int(os.getenv("MAX_MINING_ACCURACY_BONUS"))
 
+  TURBO_PIFLOUZ_ANIMATED_EMOJI_ID = int(os.getenv("TURBO_PIFLOUZ_ANIMATED_EMOJI_ID"))
+  TURBO_PIFLOUZ_ANIMATED_EMOJI = f"<a:turbo_piflouz:{TURBO_PIFLOUZ_ANIMATED_EMOJI_ID}>"
+
 
   @staticmethod
   def load():

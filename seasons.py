@@ -42,34 +42,47 @@ async def end_current_season(bot):
   input:
     bot: discord.ext.commands.Bot
   """
-  bank = list(db["piflouz_bank"].items())
+  # Reseting the previous stats for the season results
+  db["season_results"] = {}
+
+  # Ending the ongoing duels and giving back the money
+  for duel in db["duels"]:
+    db["piflouz_bank"][duel["user_id1"]] += duel["amount"]
+    if duel["accepted"]:
+      db["piflouz_bank"][duel["user_id2"]] += duel["amount"]
+
 
   # Adding turbo piflouz based on the amount of piflouz collected
-  for user_id, balance in bank:
-      turbo_balance = int(sqrt(balance))
+  bank = list(db["piflouz_bank"].items())
+  reward_balance = lambda balance: int(sqrt(balance))
+  reward_turbo_piflouz_based_on_scores(bank, reward_balance, "Balance")
 
-      if user_id not in db["turbo_piflouz_bank"].keys():
-        db["turbo_piflouz_bank"][user_id] = 0
+  
+  # Adding turbo piflouz based on the amount of piflouz collected
+  piflex_count = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
+  reward_piflex = lambda count: int(310 / (12 ** 3) * count ** 3 + 20 * count)  
+  # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
+  # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
+  reward_turbo_piflouz_based_on_scores(bank, reward_piflex, "Discovered piflex")
 
-      db["turbo_piflouz_bank"][user_id] += turbo_balance
   
   bonus_ranking = [100, 50, 30]
 
   # Adding piflouz based on the ranking in piflouz
-  reward_turbo_piflouz_based_on_ranking(bank, bonus_ranking)
+  reward_turbo_piflouz_based_on_ranking(bank, bonus_ranking, "Balance ranking")
 
   # Adding piflouz based on the ranking in piflex
-  piflex_count = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
-  reward_turbo_piflouz_based_on_ranking(piflex_count, bonus_ranking)
+  reward_turbo_piflouz_based_on_ranking(piflex_count, bonus_ranking, "Piflex ranking")
 
   # Adding piflouz based on the ranking in donations
   donations = list(db["donation_balance"].items())
-  reward_turbo_piflouz_based_on_ranking(donations, bonus_ranking)
+  reward_turbo_piflouz_based_on_ranking(donations, bonus_ranking, "Donation ranking")
 
   # Reseting the database
   db["piflouz_bank"] = {}
   db["discovered_piflex"] = {}
   db["donation_balance"] = {}
+  db["duels"] = []
 
   # Sending the announcement message
   if "out_channel" in db.keys():
@@ -103,13 +116,14 @@ async def season_task(bot):
   
 
 
-def reward_turbo_piflouz_based_on_ranking(scores, rewards):
+def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
   """
   Give user rewards based on a given ranking
   --
   input:
     scores: (str, int) list -> the score (int) for a given user given their id (str)
     rewards: int list -> bonus score for the users ranked less than len(rewards)
+    reward_type: str
   """
   sorted_scores = sorted(scores, key=lambda key_val: -key_val[1]) # Sorting by decreasing score
 
@@ -120,5 +134,26 @@ def reward_turbo_piflouz_based_on_ranking(scores, rewards):
 
     if index < len(rewards):
       db["turbo_piflouz_bank"][user_id] += rewards[index]
+      db["season_results"][user_id][reward_type] = (rewards[index], index)
     else:  # The user has a ranking too low to earn rewards
       break
+
+
+def reward_turbo_piflouz_based_on_scores(scores, reward, reward_type):
+  """
+  Give user rewards based on a given ranking
+  --
+  input:
+    scores: (str, int) list -> the score (int) for a given user given their id (str)
+    reward: int -> int function -> transform the score into the rewarded turbo piflouz amount
+    reward_type: str
+  """
+  for user_id, score in scores:
+    turbo_balance = reward(score)
+
+    if user_id not in db["turbo_piflouz_bank"].keys():
+        db["turbo_piflouz_bank"][user_id] = 0
+        db["season_results"][user_id] = {}
+    
+    db["season_results"][user_id][reward_type] = turbo_balance
+    db["turbo_piflouz_bank"][user_id] += turbo_balance

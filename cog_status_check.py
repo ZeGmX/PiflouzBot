@@ -46,20 +46,27 @@ class Cog_status_check(commands.Cog):
       await ctx.send(msg)
   
 
-  @cog_ext.cog_slash(name="balance", description=f"check how many piflouz you have. Kind of a low-cost Piflex", guild_ids=Constants.GUILD_IDS, options=[])
+  @cog_ext.cog_slash(name="balance", description=f"check how many piflouz you have. Kind of a low-cost Piflex", guild_ids=Constants.GUILD_IDS, options=[
+    create_option(name="user", description="the person you want to check. Leave empty to check your own balance", option_type=option_type.USER, required=False)
+  ])
   @utils.check_message_to_be_processed
-  async def balance_cmd(self, ctx):
+  async def balance_cmd(self, ctx, user=None):
     """
     Callback for the balance command
     --
     input:
       ctx: discord_slash.context.SlashContext
     """
-    user = ctx.author
+    if user is None: user = ctx.author
+
     assert "piflouz_bank" in db.keys() and str(user.id) in db["piflouz_bank"].keys(), "User doesn't have an account"
     
     balance = db["piflouz_bank"][str(user.id)]
-    content = f"{user.mention}, your balance is of {balance} {Constants.PIFLOUZ_EMOJI}!" 
+    content = f"Balance of {user.mention}:\n{balance} {Constants.PIFLOUZ_EMOJI}"
+
+    if str(user.id) in db["turbo_piflouz_bank"].keys():
+      content += f"\n{db['turbo_piflouz_bank'][str(user.id)]} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}"
+
     await ctx.send(content, hidden=True)
 
 
@@ -137,3 +144,33 @@ class Cog_status_check(commands.Cog):
       await ctx.send("You are not part of any ranking", hidden=True)
     else:
       await ctx.send(res, hidden=True)
+  
+
+  @cog_ext.cog_slash(name="seasonresult", description="see how much you earned in the last season", guild_ids=Constants.GUILD_IDS, options=[])
+  async def seasonresult_cmd(self, ctx):
+    """
+    Callback for the seasonresult command
+    --
+    input:
+    ctx: discord.ext.commands.Context
+    """
+    await ctx.defer(hidden=True)
+
+    user_id = str(ctx.author_id)
+    assert user_id in db["season_results"].keys(), "You did not participate to the previous season"
+
+    lines = ["Last season you earned the following:"]
+    total = 0
+    for key, val in db["season_results"][user_id].items():
+      if key.endswith("ranking"):
+        score, rank = val
+        lines.append(f"{key} - {score} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI} - rank {rank}")
+        total += score
+      else:
+        lines.append(f"{key} - {val} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}")
+        total += val
+    lines.append(f"Total - {total}")
+  
+    msg = "\n".join(lines)
+    await ctx.send(msg, hidden=True)
+      

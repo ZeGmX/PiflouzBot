@@ -68,7 +68,8 @@ async def on_ready():
     "discovered_piflex",    # ids of the piflex images found
     "mining_combo",         # the current combo for mining piflouz
     "turbo_piflouz_bank",   # money after each season
-    "donation_balance"      # money donated - money received throug donations
+    "donation_balance",     # money donated - money received throug donations
+    "season_results"        # recap of the money earned last season
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -194,10 +195,10 @@ async def donate_cmd(ctx, user_receiver, amount):
   db["donation_balance"][id_receiver] -= qty_receiver
 
 
-@slash.slash(name="setupChannel", description="change my default channel", guild_ids=Constants.GUILD_IDS, options=[])
-async def setup_channel_cmd(ctx):
+@slash.subcommand(name="Main", base="setupChannel", description="change my default channel", guild_ids=Constants.GUILD_IDS, options=[])
+async def setup_channel_main_cmd(ctx):
   """
-  Callback for the setupChannnel command
+  Callback for the setupChannnel Main command
   --
   input:
     ctx: discord_slash.context.SlashContext
@@ -220,6 +221,18 @@ async def setup_channel_cmd(ctx):
   message = await ctx.channel.send(embed=embed, components=[action_row])
   db["piflouz_message_id"] = message.id
   await message.pin()
+
+
+@slash.subcommand(name="Twitch", base="setupChannel", description="change my default channel", guild_ids=Constants.GUILD_IDS, options=[])
+async def setup_channel_twithc_cmd(ctx):
+  """
+  Callback for the setupChannnel Twitch command
+  --
+  input:
+    ctx: discord_slash.context.SlashContext
+  """
+  db["twitch_channel"] = ctx.channel_id
+  await ctx.send("Done!", hidden=True)
 
 
 @slash.slash(name="joke", description="to laugh your ass off (or not, manage your expectations)", guild_ids=Constants.GUILD_IDS, options=[])

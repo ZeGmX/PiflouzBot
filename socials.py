@@ -40,7 +40,7 @@ async def task_check_live_status(bot):
   """
   print("checking live status")
 
-  if "out_channel" in db.keys():
+  if "twitch_channel" in db.keys():
     helix = twitch.Helix(Constants.TWITCHID, Constants.TWITCHSECRET)
     for streamer_name in Constants.streamers_to_check:
       stream = get_live_status(streamer_name, helix=helix)
@@ -69,7 +69,7 @@ async def send_new_live_message(bot, stream, streamer_name):
   current_live_message_time = int(time.time())
   if (current_live_message_time - db["previous_live_message_time"][streamer_name]) >= Constants.TWITCH_ANNOUNCEMENTDELAY:  #Checks if we waited long enough
     db["previous_live_message_time"][streamer_name] = current_live_message_time
-    out_channel = bot.get_channel(db["out_channel"])
+    out_channel = bot.get_channel(db["twitch_channel"])
     role = bot.guilds[0].get_role(Constants.TWITCH_NOTIF_ROLE_ID)
     msg = escape_markdown(f"{role.mention} {streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
     await out_channel.send(msg)
