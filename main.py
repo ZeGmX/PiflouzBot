@@ -134,7 +134,7 @@ async def help_cmd(ctx):
   input:
     ctx: discord_slash.context.SlashContext
   """
-  await ctx.send(f"{ctx.author.mention}, here is some help. Hopes you understand me better after reading this! {Constants.PIFLOUZ_EMOJI}\n", embed=embed_messages.get_embed_help_message(), hidden=True)
+  await ctx.send(f"Here is some help. Hopes you understand me better after reading this! {Constants.PIFLOUZ_EMOJI}\n", embed=embed_messages.get_embed_help_message(), hidden=True)
 
 
 @slash.slash(name="hello", description="Say hi!", guild_ids=Constants.GUILD_IDS, options=[])
@@ -453,6 +453,9 @@ async def on_raw_reaction_add(playload):
 
 if __name__ == "__main__":
   Constants.load()  # Due to import circular import issues
+
+  db["discovered_piflex"] = dict()
+  db["discovered_piflex"]["226787744058310656"] = [1, 2, 3]
 
   bot.add_cog(Cog_buy(bot, slash))
   bot.add_cog(Cog_duels(bot))

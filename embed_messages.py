@@ -1,6 +1,5 @@
 import discord
 import random
-import asyncio
 from replit import db
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -22,19 +21,19 @@ def get_embed_help_message():
 
   embed.add_field(
     name="`/help`",
-    value="Show this message",
+    value="show this message",
   )
   embed.add_field(
     name="`/hello`",
-    value="Say hi!",
+    value="say hi!",
   )
   embed.add_field(
     name="`/isLive streamer_name`",
     value="check if a certain streamer is live!",
   )
   embed.add_field(
-    name="`/setupChannel`",
-    value="change my default channel",
+    name="`/setupChannel [twitch|main]`",
+    value="change the channel where I send messages",
   )
   embed.add_field(
     name="`/joke`",
@@ -45,8 +44,8 @@ def get_embed_help_message():
     value="be generous to others",
   )
   embed.add_field(
-    name="`/balance`",
-    value=f"check how many {Constants.PIFLOUZ_EMOJI} you have. Kind of a low-cost Piflex",
+    name="`/balance [@user]`",
+    value=f"check how many {Constants.PIFLOUZ_EMOJI} the user has",
   )
   embed.add_field(
     name="`/cooldown`",
@@ -89,12 +88,20 @@ def get_embed_help_message():
     value="launch a pibox with your own money",
   )
   embed.add_field(
-    name="`duel [accept|deny|challenge|cancel|play]`",
+    name="`duel [accept|deny|challenge|cancel|play|status]`",
     value="earn piflouz by winning challenges against others",
   )
   embed.add_field(
     name="`/ranking`",
     value="check how worthy you are",
+  )
+  embed.add_field(
+    name="`/role [get|remove]`",
+    value="get a specific notification role"
+  )
+  embed.add_field(
+    name="`/seasonresult`",
+    value="check how good you were last season"
   )
   
   embed.add_field(
@@ -254,4 +261,24 @@ async def get_embed_otter():
   )
   url = await socials.get_otter_image()
   embed.set_image(url=url) 
+  return embed
+
+
+async def get_embed_end_season(bot):
+  """
+  Returns an embed announcing the end of a season
+  --
+  output:
+    embed: discord.Embed -> the message
+  """
+  channel = bot.get_channel(db["out_channel"])
+  msg = await channel.fetch_message(db["piflouz_message_id"])
+  
+  embed = discord.Embed(
+    title="The season is over!",
+    description=f"The last season has ended! Use the `/seasonresults` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({msg.jump_url})",
+    colour=discord.Colour.purple()
+  )
+  embed.set_thumbnail(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
+
   return embed

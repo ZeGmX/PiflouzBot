@@ -10,6 +10,7 @@ from discord_slash.model import ButtonStyle
 from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 import embed_messages
+import piflouz_handlers
 
 
 
@@ -47,9 +48,9 @@ async def end_current_season(bot):
 
   # Ending the ongoing duels and giving back the money
   for duel in db["duels"]:
-    db["piflouz_bank"][duel["user_id1"]] += duel["amount"]
+    piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
     if duel["accepted"]:
-      db["piflouz_bank"][duel["user_id2"]] += duel["amount"]
+      piflouz_handlers.update_piflouz(duel["user_id2"], qty=duel["amount"], check_cooldown=False)
 
 
   # Adding turbo piflouz based on the amount of piflouz collected
@@ -58,12 +59,12 @@ async def end_current_season(bot):
   reward_turbo_piflouz_based_on_scores(bank, reward_balance, "Balance")
 
   
-  # Adding turbo piflouz based on the amount of piflouz collected
+  # Adding turbo piflouz based on the amount of piflex images discovered
   piflex_count = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
   reward_piflex = lambda count: int(310 / (12 ** 3) * count ** 3 + 20 * count)  
   # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
   # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
-  reward_turbo_piflouz_based_on_scores(bank, reward_piflex, "Discovered piflex")
+  reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
 
   
   bonus_ranking = [100, 50, 30]
@@ -86,9 +87,9 @@ async def end_current_season(bot):
 
   # Sending the announcement message
   if "out_channel" in db.keys():
-    total_piflouz = sum(item[1] for item in bank)
+    embed = await embed_messages.get_embed_end_season(bot)
     channel = bot.get_channel(db["out_channel"])
-    await channel.send(f"The last season has ended! Use the `/seasonresults` to see what you earned. Congratulations to every participant, you generated a total of {total_piflouz} {Constants.PIFLOUZ_EMOJI} this season!")
+    await channel.send(embed=embed)
   
 
 @tasks.loop(hours=24)
@@ -101,7 +102,7 @@ async def season_task(bot):
   """
   last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
   next_begin = last_begin_time + relativedelta(months=3)
-  await sleep_until(next_begin)
+  #await sleep_until(next_begin)
 
   if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
     await end_current_season(bot)
@@ -153,6 +154,7 @@ def reward_turbo_piflouz_based_on_scores(scores, reward, reward_type):
 
     if user_id not in db["turbo_piflouz_bank"].keys():
         db["turbo_piflouz_bank"][user_id] = 0
+    if user_id not in db["season_results"].keys():
         db["season_results"][user_id] = {}
     
     db["season_results"][user_id][reward_type] = turbo_balance

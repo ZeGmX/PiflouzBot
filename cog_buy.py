@@ -119,6 +119,7 @@ class Cog_buy(commands.Cog):
     input:
       ctx: discord_slash.context.ComponentContext
     """
+    await ctx.defer(hidden=True)
     user_id = str(ctx.author.id)
 
     if user_id not in db["powerups"].keys():

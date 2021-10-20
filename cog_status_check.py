@@ -59,7 +59,9 @@ class Cog_status_check(commands.Cog):
     """
     if user is None: user = ctx.author
 
-    assert "piflouz_bank" in db.keys() and str(user.id) in db["piflouz_bank"].keys(), "User doesn't have an account"
+    user_id = str(user.id)
+    if user_id not in db["piflouz_bank"].keys(): db["piflouz_bank"][user_id] = 0
+    if user_id not in db["turbo_piflouz_bank"].keys(): db["turbo_piflouz_bank"][user_id] = 0
     
     balance = db["piflouz_bank"][str(user.id)]
     content = f"Balance of {user.mention}:\n{balance} {Constants.PIFLOUZ_EMOJI}"
@@ -164,7 +166,7 @@ class Cog_status_check(commands.Cog):
     for key, val in db["season_results"][user_id].items():
       if key.endswith("ranking"):
         score, rank = val
-        lines.append(f"{key} - {score} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI} - rank {rank}")
+        lines.append(f"{key} - {score} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI} - rank {rank + 1}")
         total += score
       else:
         lines.append(f"{key} - {val} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}")
