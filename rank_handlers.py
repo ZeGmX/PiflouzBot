@@ -52,6 +52,7 @@ async def update_rank_pilord(bot):
     if user_id not in db["current_pilords"]:
       user = guild.get_member(int(user_id))
       await user.add_roles(role)
+      bot.dispatch("become_pilord", user_id)
   
   db["current_pilords"] = user_ids
 

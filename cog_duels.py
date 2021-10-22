@@ -56,6 +56,7 @@ class Cog_duels(commands.Cog):
     await ctx.channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Use `/duel accept {new_duel['duel_id']}` to accept or `/duel deny {new_duel['duel_id']}` to deny.")
     await ctx.send("Done!", hidden=True)
     await utils.update_piflouz_message(self.bot)
+    self.bot.dispatch("duel_created", ctx.author_id, id_challenged, amount, duel_type)
 
 
   @cog_ext.cog_subcommand(base="duel", name="accept", description="Accept someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
@@ -100,6 +101,7 @@ class Cog_duels(commands.Cog):
     await ctx.channel.send(f"{ctx.author.mention} accepted <@{duel['user_id1']}>'s challenge! Use `/duel play {duel_type} {duel['duel_id']} [your move]`")
     await ctx.send("Done!", hidden=True)
     await utils.update_piflouz_message(self.bot)
+    self.bot.dispatch("duel_accepted", ctx.author_id, duel_id)
 
 
   @cog_ext.cog_subcommand(base="duel", name="deny", description="Deny someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
@@ -228,6 +230,7 @@ class Cog_duels(commands.Cog):
         piflouz_handlers.update_piflouz(id2, qty=duel["amount"], check_cooldown=False)
 
         await ctx.channel.send(f"<@{id1}> and <@{id2}> tied at {duel['duel_type']}! They both played {move1}! They both got their money back")
+        self.bot.dispatch("duel_tie", id1, id2, duel["amount"], duel["duel_type"])
 
       # Player 1 won
       elif win_shifumi[move1] == move2:
@@ -235,6 +238,8 @@ class Cog_duels(commands.Cog):
         piflouz_handlers.update_piflouz(self.bot.user.id, qty=money_tax, check_cooldown=False)
 
         await ctx.channel.send(f"<@{id1}> won at {duel['duel_type']} against <@{id2}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move1} vs {move2}")
+        self.bot.dispatch("duel_won", id1, id2, duel["amount"], duel["duel_type"])
+
       
       # Player 2 won
       else:
@@ -242,6 +247,8 @@ class Cog_duels(commands.Cog):
         piflouz_handlers.update_piflouz(self.bot.user.id, qty=money_tax, check_cooldown=False)
 
         await ctx.channel.send(f"<@{id2}> won at {duel['duel_type']} against <@{id1}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move2} vs {move1}")
+        self.bot.dispatch("duel_won", id2, id1, duel["amount"], duel["duel_type"])
+
 
       del db["duels"][duel_index]
       await utils.update_piflouz_message(self.bot)

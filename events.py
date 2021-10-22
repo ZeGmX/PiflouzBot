@@ -132,6 +132,7 @@ class Raffle_event(Event):
       await out_channel.send(message)
       
       await utils.update_piflouz_message(bot)
+      bot.dispatch("raffle_won", id)
 
 
   def to_str(self):

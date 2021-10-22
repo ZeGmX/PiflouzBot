@@ -102,7 +102,7 @@ async def season_task(bot):
   """
   last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
   next_begin = last_begin_time + relativedelta(months=3)
-  #await sleep_until(next_begin)
+  await sleep_until(next_begin)
 
   if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
     await end_current_season(bot)

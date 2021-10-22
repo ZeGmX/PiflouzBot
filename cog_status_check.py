@@ -149,6 +149,7 @@ class Cog_status_check(commands.Cog):
   
 
   @cog_ext.cog_slash(name="seasonresult", description="see how much you earned in the last season", guild_ids=Constants.GUILD_IDS, options=[])
+  @utils.check_message_to_be_processed
   async def seasonresult_cmd(self, ctx):
     """
     Callback for the seasonresult command

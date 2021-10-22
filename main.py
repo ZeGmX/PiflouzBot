@@ -19,6 +19,7 @@ from cog_duels import Cog_duels
 from cog_piflouz_mining import Cog_piflouz_mining
 from cog_status_check import Cog_status_check
 
+import achievement_handler
 from constant import Constants
 import embed_messages
 import events
@@ -69,7 +70,8 @@ async def on_ready():
     "mining_combo",         # the current combo for mining piflouz
     "turbo_piflouz_bank",   # money after each season
     "donation_balance",     # money donated - money received throug donations
-    "season_results"        # recap of the money earned last season
+    "season_results",       # recap of the money earned last season
+    "achievements"          # list of the achievements unlocked by a user
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -87,6 +89,29 @@ async def on_ready():
   
   if "previous_live_message_time" not in db.keys():
     db["previous_live_message_time"] = {name: 0 for name in Constants.streamers_to_check}
+  
+
+  bot.add_listener(achievement_handler.on_slash_function_listener, name="on_slash_command")
+  bot.add_listener(achievement_handler.on_component_listener, name="on_component")
+
+  custom_event = [
+    "piflexer_rank_bought",
+    "piflex_bought",
+    "donation_successful", 
+    "giveaway_successful",
+    "store_purchase_successful",
+    "raffle_participation_successful",
+    "raffle_won",
+    "become_pilord",
+    "pibox_obtained",
+    "duel_created",
+    "duel_won",
+    "duel_accepted",
+    "combo_updated"
+  ]
+
+  for event_name in custom_event:
+    achievement_handler.add_custom_listener_for_achievements(bot, event_name)
   
   # Starting the tasks
   socials.task_check_live_status.start(bot)
@@ -182,6 +207,7 @@ async def donate_cmd(ctx, user_receiver, amount):
 
   await ctx.channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}")
   await utils.update_piflouz_message(bot)
+  bot.dispatch("donation_successful", ctx.author_id)
 
   # Update the statistics to see the most generous donators
   id_sender = str(user_sender.id)
@@ -283,6 +309,7 @@ async def raffle_cmd(ctx, nb_tickets):
   await ctx.send(f"Successfully bought {nb_tickets} tickets", hidden=True)
   await current_event.update_raffle_message(bot)
   await utils.update_piflouz_message(bot)
+  bot.dispatch("raffle_participation_successful", ctx.author_id)
 
 
 @slash.slash(name="giveaway", description="launch a pibox with your own money", guild_ids=Constants.GUILD_IDS, options=[
@@ -308,6 +335,7 @@ async def giveaway_cmd(ctx, amount):
   await ctx.send("Done!", hidden=True)
 
   await utils.update_piflouz_message(bot)
+  bot.dispatch("giveaway_successful", ctx.author_id)
 
 
 @slash.slash(name="spawnPibox", description="The pibox master can spawn pibox", guild_ids=Constants.GUILD_IDS, options=[])
@@ -444,18 +472,21 @@ async def on_raw_reaction_add(playload):
         new_text_message += " " + custom_message
       await message.edit(content=new_text_message)
 
-      out_channel = bot.get_channel(db["out_channel"])
-      embed = await embed_messages.get_embed_piflouz(bot)
-      piflouz_message = await out_channel.fetch_message(int(db["piflouz_message_id"]))
-      await piflouz_message.edit(embed=embed)
+      await utils.update_piflouz_message(bot)
+      bot.dispatch("pibox_obtained", user.id, qty)
   
 
 
 if __name__ == "__main__":
   Constants.load()  # Due to import circular import issues
 
+  import achievements # to register the listeners
+  
   db["discovered_piflex"] = dict()
-  db["discovered_piflex"]["226787744058310656"] = [1, 2, 3]
+  db["discovered_piflex"]["226787744058310656"] = [1, 2]
+  db["piflouz_bank"]["226787744058310656"] += 10000
+
+  del db["achievements"]
 
   bot.add_cog(Cog_buy(bot, slash))
   bot.add_cog(Cog_duels(bot))

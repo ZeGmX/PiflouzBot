@@ -1,5 +1,4 @@
 from discord.ext import tasks
-from random import randrange
 from random import random, randrange
 from replit import db
 import functools

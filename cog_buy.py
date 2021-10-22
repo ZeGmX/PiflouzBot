@@ -60,6 +60,7 @@ class Cog_buy(commands.Cog):
       db["discovered_piflex"][str(ctx.author_id)] = list(already_discovered)
 
       await utils.update_piflouz_message(self.bot)
+      self.bot.dispatch("piflex_bought", ctx.author_id)
 
     # User doesn't have enough money
     else:
@@ -85,6 +86,7 @@ class Cog_buy(commands.Cog):
       await ctx.send(f"{member.mention} just bought the piflexer rank!")
       await utils.update_piflouz_message(self.bot)
       db["piflexers"][user_id] = int(time.time())
+      self.bot.dispatch("piflexer_rank_bought", ctx.author_id)
     else:
       # User does not have enough money
       if role not in member.roles:
@@ -129,6 +131,7 @@ class Cog_buy(commands.Cog):
     if powerup.on_buy(user_id):
       await utils.update_piflouz_message(self.bot)
       await ctx.send("Successfully bought the powerup", hidden=True)
+      self.bot.dispatch("store_purchase_successful", ctx.author_id)
     else:
       await ctx.send("Purchase failed", hidden=True)
 

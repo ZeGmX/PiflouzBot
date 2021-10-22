@@ -48,6 +48,7 @@ class Cog_piflouz_mining(commands.Cog):
     
     await ctx.send(output_text, hidden=True)
     await utils.update_piflouz_message(self.bot)
+    self.bot.dispatch("combo_updated", ctx.author_id)
 
 
   @cog_ext.cog_component(components=button_name, use_callback_name=False)
