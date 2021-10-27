@@ -1,3 +1,4 @@
+
 listeners = dict()
 
 
@@ -68,3 +69,11 @@ def add_custom_listener_for_achievements(bot, event_name):
   bot.add_listener(custom_event_listener, name="on_" + event_name)
 
 
+def get_achievements_list():
+  """
+  Returns the list of all current achievements
+  --
+  output:
+    res: Achievement list
+  """
+  return [cls() for l in listeners.values() for cls in l]
