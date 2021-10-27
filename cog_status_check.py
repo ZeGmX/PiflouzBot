@@ -14,14 +14,7 @@ import utils
 class Cog_status_check(commands.Cog):
   """
   Cog containing all the interactions related to checking information about the user
-  ---
-  fields:
-    bot: discord.ext.commands.Bot
   """
-
-  def __init__(self, bot):
-    self.bot = bot
-  
 
   @cog_ext.cog_slash(name="isLive", description="check if a certain streamer is live", guild_ids=Constants.GUILD_IDS, options=[
   create_option(name="streamer_name", description="The name of the streamer you want to check", option_type=option_type.STRING, required=True)
@@ -110,8 +103,10 @@ class Cog_status_check(commands.Cog):
     if user_id in db["powerups"].keys():
       for powerup_str in db["powerups"][user_id]:
         powerup = eval(powerup_str)
-        content += powerup.get_info_str() + '\n'
-        has_any_powerup = True
+        info = powerup.get_info_str()
+        if info != "": 
+          content +=  info + '\n'
+          has_any_powerup = True
 
     if not has_any_powerup:
       content = "You don't have any power up at the moment. Go buy one, using `/store`!"   
@@ -130,23 +125,31 @@ class Cog_status_check(commands.Cog):
     await ctx.defer(hidden=True)
     d_piflouz = dict(db["piflouz_bank"])
     d_piflex = dict(db["discovered_piflex"])
+    d_donations = dict(db["donation_balance"])
     
     res = ""
+    user_id = str(ctx.author_id)
 
-    if str(ctx.author_id) in d_piflouz.keys():
-      amount_user = d_piflouz[str(ctx.author_id)]
+    if user_id in d_piflouz.keys():
+      amount_user = d_piflouz[user_id]
       rank = len([val for val in d_piflouz.values() if val > amount_user]) + 1
       res += f"Piflouz ranking: {rank} with {amount_user} {Constants.PIFLOUZ_EMOJI}\n"
-    if str(ctx.author_id) in d_piflex.keys():
-      amount_user = len(d_piflex[str(ctx.author_id)])
+
+    if user_id in d_piflex.keys():
+      amount_user = len(d_piflex[user_id])
       rank = len([val for val in d_piflex.values() if len(val) > amount_user]) + 1
       res += f"Piflex discovery ranking: {rank} with {amount_user} discovered piflex images\n"
+
+    if user_id in db["donation_balance"].keys():
+      amount_user = d_donations[user_id]
+      rank = len([val for val in d_donations.values() if val > amount_user]) + 1
+      res += f"Piflouz donation ranking: {rank} with {amount_user} {Constants.PIFLOUZ_EMOJI}\n"
     
     if res == "":
       await ctx.send("You are not part of any ranking", hidden=True)
     else:
       await ctx.send(res, hidden=True)
-  
+    
 
   @cog_ext.cog_slash(name="seasonresult", description="see how much you earned in the last season", guild_ids=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed

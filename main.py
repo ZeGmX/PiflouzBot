@@ -14,6 +14,7 @@ from replit import db
 from math import ceil
 import logging
 
+from cog_achievements import Cog_achievements
 from cog_buy import Cog_buy
 from cog_duels import Cog_duels
 from cog_piflouz_mining import Cog_piflouz_mining
@@ -486,12 +487,15 @@ if __name__ == "__main__":
   db["discovered_piflex"]["226787744058310656"] = [1, 2]
   db["piflouz_bank"]["226787744058310656"] += 10000
 
-  del db["achievements"]
+  db["donation_balance"]["226787744058310656"] = 10
 
-  bot.add_cog(Cog_buy(bot, slash))
-  bot.add_cog(Cog_duels(bot))
-  bot.add_cog(Cog_piflouz_mining(bot, slash))
-  bot.add_cog(Cog_status_check(bot))
+  #del db["achievements"]
+
+  bot.add_cog(Cog_buy(slash))
+  bot.add_cog(Cog_duels())
+  bot.add_cog(Cog_piflouz_mining(slash))
+  bot.add_cog(Cog_status_check())
+  bot.add_cog(Cog_achievements(slash))
 
   logger = logging.getLogger('discord')
   logger.setLevel(logging.DEBUG)

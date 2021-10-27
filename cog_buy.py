@@ -22,8 +22,7 @@ class Cog_buy(commands.Cog):
   """
   store_button_name = "store_button"
 
-  def __init__(self, bot, slash):
-    self.bot = bot
+  def __init__(self, slash):
     self.slash = slash
 
     for emoji in Constants.POWERUPS_STORE:
@@ -39,6 +38,7 @@ class Cog_buy(commands.Cog):
     input:
       ctx: discord_slash.context.SlashContext
     """
+    await ctx.defer()
     user_id = str(ctx.author.id)
     
     # User has enough money
@@ -50,17 +50,20 @@ class Cog_buy(commands.Cog):
       db["mega_piflexers"][user_id] = int(t)
 
       embed, index = embed_messages.get_embed_piflex(ctx.author)
-      await ctx.send(embed=embed)
-
+      
       if str(ctx.author_id) not in db["discovered_piflex"].keys():
         db["discovered_piflex"][str(ctx.author_id)] = []
       
       already_discovered = set(db["discovered_piflex"][str(ctx.author_id)])
+      new = index not in already_discovered
       already_discovered.add(index)
       db["discovered_piflex"][str(ctx.author_id)] = list(already_discovered)
 
-      await utils.update_piflouz_message(self.bot)
-      self.bot.dispatch("piflex_bought", ctx.author_id)
+      content = None if not new else "Congratulations, this is a new image!"
+      await ctx.send(content, embed=embed)
+
+      await utils.update_piflouz_message(ctx.bot)
+      ctx.bot.dispatch("piflex_bought", ctx.author_id)
 
     # User doesn't have enough money
     else:
@@ -84,9 +87,9 @@ class Cog_buy(commands.Cog):
     if user_id in db["piflouz_bank"] and piflouz_handlers.update_piflouz(user_id, qty=-Constants.PIFLEXER_COST, check_cooldown=False) and role not in member.roles:
       await member.add_roles(role)
       await ctx.send(f"{member.mention} just bought the piflexer rank!")
-      await utils.update_piflouz_message(self.bot)
+      await utils.update_piflouz_message(ctx.bot)
       db["piflexers"][user_id] = int(time.time())
-      self.bot.dispatch("piflexer_rank_bought", ctx.author_id)
+      ctx.bot.dispatch("piflexer_rank_bought", ctx.author_id)
     else:
       # User does not have enough money
       if role not in member.roles:
@@ -129,9 +132,9 @@ class Cog_buy(commands.Cog):
     
     powerup = Constants.POWERUPS_STORE[emoji]
     if powerup.on_buy(user_id):
-      await utils.update_piflouz_message(self.bot)
+      await utils.update_piflouz_message(ctx.bot)
       await ctx.send("Successfully bought the powerup", hidden=True)
-      self.bot.dispatch("store_purchase_successful", ctx.author_id)
+      ctx.bot.dispatch("store_purchase_successful", ctx.author_id)
     else:
       await ctx.send("Purchase failed", hidden=True)
 

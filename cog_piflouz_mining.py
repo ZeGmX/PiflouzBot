@@ -12,15 +12,13 @@ class Cog_piflouz_mining(commands.Cog):
   Cog containing all the interactions related to purchasing things
   ---
   fields:
-    bot: discord.ext.commands.Bot
     slash: discord_slash.SlashCommand 
     button_name: str
   """
 
   button_name = "piflouz_mining_button"
 
-  def __init__(self, bot, slash):
-    self.bot = bot
+  def __init__(self, slash):
     self.slash = slash
   
 
@@ -47,8 +45,8 @@ class Cog_piflouz_mining(commands.Cog):
       output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(user.id)]} / {Constants.MAX_MINING_COMBO}"
     
     await ctx.send(output_text, hidden=True)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("combo_updated", ctx.author_id)
+    await utils.update_piflouz_message(ctx.bot)
+    ctx.bot.dispatch("combo_updated", ctx.author_id)
 
 
   @cog_ext.cog_component(components=button_name, use_callback_name=False)

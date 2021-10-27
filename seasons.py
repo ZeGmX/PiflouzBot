@@ -11,7 +11,7 @@ from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 import embed_messages
 import piflouz_handlers
-
+import utils
 
 
 async def start_new_season(bot):
@@ -79,10 +79,14 @@ async def end_current_season(bot):
   donations = list(db["donation_balance"].items())
   reward_turbo_piflouz_based_on_ranking(donations, bonus_ranking, "Donation ranking")
 
+  await utils.update_piflouz_message(bot)
+
   # Reseting the database
   db["piflouz_bank"] = {}
   db["discovered_piflex"] = {}
   db["donation_balance"] = {}
+  db["random_gifts"] = {}
+  db["powerups"] = {}
   db["duels"] = []
 
   # Sending the announcement message

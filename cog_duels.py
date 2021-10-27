@@ -13,16 +13,9 @@ import utils
 class Cog_duels(commands.Cog):
   """
   Cog containing all the interactions related to duels
-  ---
-  fields:
-    bot: discord.ext.commands.Bot
   """
 
-  def __init__(self, bot):
-    self.bot = bot
-  
-
-  @cog_ext.cog_subcommand(base="duel", name="challenge", description="Duel someone to earn piflouz!", guild_ids=Constants.GUILD_IDS, options=[
+  @cog_ext.cog_subcommand(base="duel", name="challenge", description="duel someone to earn piflouz!", guild_ids=Constants.GUILD_IDS, options=[
     create_option(name="amount", description="How much do you want to bet?", required=True, option_type=option_type.INTEGER),
     create_option(name="duel_type", description="What game do you want to play?", required=True, option_type=option_type.STRING, choices=[
       create_choice("Shifumi", "Shifumi")
@@ -55,11 +48,11 @@ class Cog_duels(commands.Cog):
 
     await ctx.channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Use `/duel accept {new_duel['duel_id']}` to accept or `/duel deny {new_duel['duel_id']}` to deny.")
     await ctx.send("Done!", hidden=True)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("duel_created", ctx.author_id, id_challenged, amount, duel_type)
+    await utils.update_piflouz_message(ctx.bot)
+    ctx.bot.dispatch("duel_created", ctx.author_id, id_challenged, amount, duel_type)
 
 
-  @cog_ext.cog_subcommand(base="duel", name="accept", description="Accept someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
+  @cog_ext.cog_subcommand(base="duel", name="accept", description="accept someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
     create_option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, option_type=option_type.INTEGER)
   ])
   @utils.check_message_to_be_processed
@@ -100,11 +93,11 @@ class Cog_duels(commands.Cog):
 
     await ctx.channel.send(f"{ctx.author.mention} accepted <@{duel['user_id1']}>'s challenge! Use `/duel play {duel_type} {duel['duel_id']} [your move]`")
     await ctx.send("Done!", hidden=True)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("duel_accepted", ctx.author_id, duel_id)
+    await utils.update_piflouz_message(ctx.bot)
+    ctx.bot.dispatch("duel_accepted", ctx.author_id, duel_id)
 
 
-  @cog_ext.cog_subcommand(base="duel", name="deny", description="Deny someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
+  @cog_ext.cog_subcommand(base="duel", name="deny", description="deny someone's challenge", guild_ids=Constants.GUILD_IDS, options=[
     create_option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, option_type=option_type.INTEGER)
   ])
   @utils.check_message_to_be_processed
@@ -134,10 +127,10 @@ class Cog_duels(commands.Cog):
     del db["duels"][duel_index]
     await ctx.channel.send(f"{ctx.author.mention} denied <@{duel['user_id1']}>'s challenge!")
     await ctx.send("Done", hidden=True)
-    await utils.update_piflouz_message(self.bot)
+    await utils.update_piflouz_message(ctx.bot)
 
 
-  @cog_ext.cog_subcommand(base="duel", name="cancel", description="Cancel your challenge to someone", guild_ids=Constants.GUILD_IDS, options=[
+  @cog_ext.cog_subcommand(base="duel", name="cancel", description="cancel your challenge to someone", guild_ids=Constants.GUILD_IDS, options=[
     create_option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, option_type=option_type.INTEGER)
   ])
   @utils.check_message_to_be_processed
@@ -169,10 +162,10 @@ class Cog_duels(commands.Cog):
 
     await ctx.channel.send(f"{ctx.author.mention} cancelled his/her challenge to {mention}, what a loser")
     await ctx.send("Done!", hidden=True)
-    await utils.update_piflouz_message(self.bot)
+    await utils.update_piflouz_message(ctx.bot)
 
 
-  @cog_ext.cog_subcommand(name="shifumi", base="duel", subcommand_group="play", description="Play shifumi!", guild_ids=Constants.GUILD_IDS, options=[
+  @cog_ext.cog_subcommand(name="shifumi", base="duel", subcommand_group="play", description="play shifumi!", guild_ids=Constants.GUILD_IDS, options=[
     create_option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, option_type=option_type.INTEGER),
     create_option(name="value", description="What do you want to play?", required=True, option_type=option_type.STRING, choices=[
         create_choice("Rock", "Rock"),
@@ -230,31 +223,31 @@ class Cog_duels(commands.Cog):
         piflouz_handlers.update_piflouz(id2, qty=duel["amount"], check_cooldown=False)
 
         await ctx.channel.send(f"<@{id1}> and <@{id2}> tied at {duel['duel_type']}! They both played {move1}! They both got their money back")
-        self.bot.dispatch("duel_tie", id1, id2, duel["amount"], duel["duel_type"])
+        ctx.bot.dispatch("duel_tie", id1, id2, duel["amount"], duel["duel_type"])
 
       # Player 1 won
       elif win_shifumi[move1] == move2:
         piflouz_handlers.update_piflouz(id1, qty=money_if_win, check_cooldown=False)
-        piflouz_handlers.update_piflouz(self.bot.user.id, qty=money_tax, check_cooldown=False)
+        piflouz_handlers.update_piflouz(ctx.bot.user.id, qty=money_tax, check_cooldown=False)
 
         await ctx.channel.send(f"<@{id1}> won at {duel['duel_type']} against <@{id2}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move1} vs {move2}")
-        self.bot.dispatch("duel_won", id1, id2, duel["amount"], duel["duel_type"])
+        ctx.bot.dispatch("duel_won", id1, id2, duel["amount"], duel["duel_type"])
 
       
       # Player 2 won
       else:
         piflouz_handlers.update_piflouz(id2, qty=money_if_win, check_cooldown=False)
-        piflouz_handlers.update_piflouz(self.bot.user.id, qty=money_tax, check_cooldown=False)
+        piflouz_handlers.update_piflouz(ctx.bot.user.id, qty=money_tax, check_cooldown=False)
 
         await ctx.channel.send(f"<@{id2}> won at {duel['duel_type']} against <@{id1}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move2} vs {move1}")
-        self.bot.dispatch("duel_won", id2, id1, duel["amount"], duel["duel_type"])
+        ctx.bot.dispatch("duel_won", id2, id1, duel["amount"], duel["duel_type"])
 
 
       del db["duels"][duel_index]
-      await utils.update_piflouz_message(self.bot)
+      await utils.update_piflouz_message(ctx.bot)
 
 
-  @cog_ext.cog_subcommand(base="duel", name="status", description="Check your ongoing duels", guild_ids=Constants.GUILD_IDS, options=[])
+  @cog_ext.cog_subcommand(base="duel", name="status", description="check your ongoing duels", guild_ids=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
   async def duel_status_cmd(self, ctx):
     """
