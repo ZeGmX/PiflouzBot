@@ -100,12 +100,13 @@ class Powerups:
     return ""
 
 
-  def on_buy(self, user_id):
+  def on_buy(self, user_id, current_time):
     """
     Actions to be done when buying the powerup
     --
     input:
       user_id: int/str -> id of the user who bought the powerup
+      current_time: int -> when the interaction was created
     --
     output:
       res: bool -> wether it succeded or not
@@ -133,7 +134,7 @@ class Powerups_non_permanent(Powerups):
     self.duration = duration
     self.buy_date = buy_date
   
-  def on_buy(self, user_id):
+  def on_buy(self, user_id, current_time):
     user_id = str(user_id)
     if user_id not in db["powerups"].keys():
         db["powerups"][user_id] = []
@@ -148,7 +149,7 @@ class Powerups_non_permanent(Powerups):
     if i is not None and eval(db["powerups"][user_id][i][len(__name__) + 1:]).is_active():
       return False  # User already has an active power of the same type
     
-    self.buy_date = int(time.time())
+    self.buy_date = current_time
     powerup_str = self.to_str()
 
     if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
@@ -225,7 +226,7 @@ class Powerups_permanent(Powerups):
     self.qty = qty  # How many of this powerup does the user have
     self.max_qty = max_qty  # How many of this powerup can the user get
   
-  def on_buy(self, user_id):
+  def on_buy(self, user_id, current_time):
     user_id = str(user_id)
     if user_id not in db["powerups"].keys():
         db["powerups"][user_id] = []

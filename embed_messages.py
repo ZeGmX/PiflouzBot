@@ -103,7 +103,11 @@ def get_embed_help_message():
     name="`/seasonresult`",
     value="check how good you were last season"
   )
-  
+  embed.add_field(
+    name="`/achievements list`",
+    value="check what you need to do to get some achievements"
+  )
+
   embed.add_field(
     name="Things I do in the background",
     value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\

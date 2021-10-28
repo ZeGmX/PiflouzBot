@@ -34,11 +34,12 @@ class Cog_piflouz_mining(commands.Cog):
     await ctx.defer(hidden=True)
     user = ctx.author
 
-    piflouz_handlers.update_combo(ctx.author_id)
-    successful_update, qty = piflouz_handlers.update_piflouz(user.id)
+    current_time = int(ctx.created_at.timestamp())
+    piflouz_handlers.update_combo(ctx.author_id, current_time)
+    successful_update, qty = piflouz_handlers.update_piflouz(user.id, current_time=current_time)
     
     if not successful_update:
-      timer = utils.get_timer(user.id)
+      timer = utils.get_timer(user.id, current_time)
       
       output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
@@ -71,7 +72,8 @@ class Cog_piflouz_mining(commands.Cog):
       ctx: discord_slash.context.SlashContext
     """
     user = ctx.author
-    timer = utils.get_timer(user.id)
+    current_time = int(ctx.created_at.timestamp())
+    timer = utils.get_timer(user.id, current_time)
     if timer > 0 :
       output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:

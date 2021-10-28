@@ -105,6 +105,7 @@ async def on_ready():
     "raffle_won",
     "become_pilord",
     "pibox_obtained",
+    "pibox_failed",
     "duel_created",
     "duel_won",
     "duel_accepted",
@@ -208,7 +209,7 @@ async def donate_cmd(ctx, user_receiver, amount):
 
   await ctx.channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}")
   await utils.update_piflouz_message(bot)
-  bot.dispatch("donation_successful", ctx.author_id)
+  bot.dispatch("donation_successful", ctx.author_id, amount, user_receiver.id)
 
   # Update the statistics to see the most generous donators
   id_sender = str(user_sender.id)
@@ -247,6 +248,7 @@ async def setup_channel_main_cmd(ctx):
   # Piflouz mining message
   message = await ctx.channel.send(embed=embed, components=[action_row])
   db["piflouz_message_id"] = message.id
+  db["current_season_message_id"] = message.id
   await message.pin()
 
 
@@ -310,7 +312,7 @@ async def raffle_cmd(ctx, nb_tickets):
   await ctx.send(f"Successfully bought {nb_tickets} tickets", hidden=True)
   await current_event.update_raffle_message(bot)
   await utils.update_piflouz_message(bot)
-  bot.dispatch("raffle_participation_successful", ctx.author_id)
+  bot.dispatch("raffle_participation_successful", ctx.author_id, nb_tickets)
 
 
 @slash.slash(name="giveaway", description="launch a pibox with your own money", guild_ids=Constants.GUILD_IDS, options=[
@@ -475,6 +477,8 @@ async def on_raw_reaction_add(playload):
 
       await utils.update_piflouz_message(bot)
       bot.dispatch("pibox_obtained", user.id, qty)
+    else:
+      bot.dispatch("pibox_failed", user.id, qty)
   
 
 
@@ -482,15 +486,10 @@ if __name__ == "__main__":
   Constants.load()  # Due to import circular import issues
 
   import achievements # to register the listeners
+
+
+  db["last_begin_time"] = 1629028800
   
-  db["discovered_piflex"] = dict()
-  db["discovered_piflex"]["226787744058310656"] = [1, 2]
-  db["piflouz_bank"]["226787744058310656"] += 10000
-
-  db["donation_balance"]["226787744058310656"] = 10
-
-  #del db["achievements"]
-
   bot.add_cog(Cog_buy(slash))
   bot.add_cog(Cog_duels())
   bot.add_cog(Cog_piflouz_mining(slash))

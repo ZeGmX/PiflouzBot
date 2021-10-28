@@ -1,5 +1,4 @@
 import requests
-import time
 import datetime
 import asyncio
 import pickle
@@ -30,7 +29,7 @@ def get_new_joke():
   return joke
 
 
-def get_timer(user_id):
+def get_timer(user_id, current_time):
   """
   This function returns the amount of time needed before being able to earn more piflouz
   --
@@ -39,13 +38,13 @@ def get_timer(user_id):
   --
   output:
     time_needed: int -> time remaining before the end of cooldown
+    current_time: int -> the time at which the interaction was created
   """
   user_id = str(user_id)
   if user_id not in db["timers_react"].keys():
     db["timers_react"][user_id] = 0
 
   old_time = db["timers_react"][user_id]
-  current_time = int(time.time())
   differential = current_time - old_time
 
   cooldown = get_total_cooldown(user_id)
@@ -143,12 +142,13 @@ def check_message_to_be_processed(ctx):
     return True
 
 
-def get_total_piflouz_multiplier(user_id):
+def get_total_piflouz_multiplier(user_id, current_time):
   """
   Returns the amount earned with a /get, taking into account the user powerups, the current event, the user combo and the accuracy
   --
   input:
     user_id: int/str - the id of the user having the powerups
+    current_time: int -> the time at which the interaction was created
   --
   output:
     qty: the pilouz amount
@@ -165,7 +165,7 @@ def get_total_piflouz_multiplier(user_id):
 
   combo_bonus = min(db["mining_combo"][str(user_id)], Constants.MAX_MINING_COMBO) * Constants.PIFLOUZ_PER_MINING_COMBO
 
-  return qty + combo_bonus + piflouz_handlers.get_mining_accuracy_bonus(user_id)
+  return qty + combo_bonus + piflouz_handlers.get_mining_accuracy_bonus(user_id, current_time)
 
 
 def observed_to_py(obj):

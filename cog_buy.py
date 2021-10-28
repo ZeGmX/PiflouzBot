@@ -3,7 +3,6 @@ from discord_slash import cog_ext
 from discord_slash.utils.manage_components import create_button, spread_to_rows
 from discord_slash.model import ButtonStyle
 from replit import db
-import time
 
 from constant import Constants
 import embed_messages
@@ -46,7 +45,7 @@ class Cog_buy(commands.Cog):
       role = ctx.guild.get_role(Constants.MEGA_PIFLEXER_ROLE_ID)
       member = ctx.author
       await member.add_roles(role)
-      t = time.time()
+      t = int(ctx.created_at.timestamp())
       db["mega_piflexers"][user_id] = int(t)
 
       embed, index = embed_messages.get_embed_piflex(ctx.author)
@@ -88,7 +87,7 @@ class Cog_buy(commands.Cog):
       await member.add_roles(role)
       await ctx.send(f"{member.mention} just bought the piflexer rank!")
       await utils.update_piflouz_message(ctx.bot)
-      db["piflexers"][user_id] = int(time.time())
+      db["piflexers"][user_id] = int(ctx.created_at.timestamp())
       ctx.bot.dispatch("piflexer_rank_bought", ctx.author_id)
     else:
       # User does not have enough money
@@ -126,12 +125,13 @@ class Cog_buy(commands.Cog):
     """
     await ctx.defer(hidden=True)
     user_id = str(ctx.author.id)
+    current_time = int(ctx.created_at.timestamp())
 
     if user_id not in db["powerups"].keys():
       db["powerups"][user_id] = []
     
     powerup = Constants.POWERUPS_STORE[emoji]
-    if powerup.on_buy(user_id):
+    if powerup.on_buy(user_id, current_time):
       await utils.update_piflouz_message(ctx.bot)
       await ctx.send("Successfully bought the powerup", hidden=True)
       ctx.bot.dispatch("store_purchase_successful", ctx.author_id)

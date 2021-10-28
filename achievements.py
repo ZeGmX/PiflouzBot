@@ -86,6 +86,28 @@ class Achievement_raffle_participation(Achievement):
   reward = 10
 
 
+@listen_to("raffle_participation_successful")
+class Achievement_raffle_participation_20(Achievement):
+  name = "Intermediate gambler"
+  description = "Put at least 20 tickets in a single raffle"
+  reward = 50
+
+  async def check(self, user_id, *args, **kwargs):
+    if db["raffle_participation"][str(user_id)] >= 20:
+      self.validate(user_id)
+
+
+@listen_to("raffle_participation_successful")
+class Achievement_raffle_participation_100(Achievement):
+  name = "Intermediate gambler"
+  description = "Put at least 100 tickets in a single raffle"
+  reward = 300
+
+  async def check(self, user_id, *args, **kwargs):
+    if db["raffle_participation"][str(user_id)] >= 100:
+      self.validate(user_id)
+
+
 @listen_to("raffle_won")
 class Achievement_won_raffle(Achievement):
   name = "The lucky winer"
@@ -142,7 +164,7 @@ class Achievement_3_piflex(Achievement):
   reward = 2000
 
   async def check(self, user_id, *args, **kwargs):
-    if len(db["discovered_piflex"][str(user_id)]) == 3:
+    if len(db["discovered_piflex"][str(user_id)]) >= 3:
       self.validate(user_id)
 
 
@@ -153,7 +175,7 @@ class Achievement_6_piflex(Achievement):
   reward = 3000
 
   async def check(self, user_id, *args, **kwargs):
-    if len(db["discovered_piflex"][str(user_id)]) == 6:
+    if len(db["discovered_piflex"][str(user_id)]) >= 6:
       self.validate(user_id)
 
 
@@ -164,7 +186,7 @@ class Achievement_9_piflex(Achievement):
   reward = 4000
 
   async def check(self, user_id, *args, **kwargs):
-    if len(db["discovered_piflex"][str(user_id)]) == 9:
+    if len(db["discovered_piflex"][str(user_id)]) >= 9:
       self.validate(user_id)
 
 
@@ -175,12 +197,12 @@ class Achievement_12_piflex(Achievement):
   reward = 5000
 
   async def check(self, user_id, *args, **kwargs):
-    if len(db["discovered_piflex"][str(user_id)]) == 12:
+    if len(db["discovered_piflex"][str(user_id)]) >= 12:
       self.validate(user_id)
 
 
 @listen_to("become_pilord")
-class Achievement_piflor(Achievement):
+class Achievement_pilord(Achievement):
   name = "The richest one"
   description = "Become pilord"
   reward = 2000
@@ -210,8 +232,9 @@ class Achievement_2_temporary_powerups_active(Achievement):
     for powerup in db["powerups"][str(user_id)]:
       if isinstance(eval(powerup), powerups.Powerups_non_permanent):
         count += 1
-      if count == 2: break
-    if count == 2: self.validate(user_id)
+      if count == 2: 
+        self.validate(user_id)
+        return
 
 
 @listen_to("pibox_obtained")
@@ -254,13 +277,75 @@ class Achievement_win_duel(Achievement):
 
 
 @listen_to("combo_updated")
+class Achievement_combo_1(Achievement):
+  name = "Discovering combos"
+  description = "Reach a combo of 1"
+  reward = 10
+
+  async def check(self, user_id, *args, **kwargs):
+    if db["mining_combo"][str(user_id)] >= 1:
+      self.validate(user_id)
+
+
+@listen_to("combo_updated")
 class Achievement_combo_max(Achievement):
   name = "The addict"
-  description = "Reach the maximum combo"
+  description = "Reach the maximum rewardable combo"
   reward = 100
 
-  async def check(self, user_id):
-    if db["mining_combo"][str(user_id)] == Constants.MAX_MINING_COMBO:
+  async def check(self, user_id, *args, **kwargs):
+    if db["mining_combo"][str(user_id)] >= Constants.MAX_MINING_COMBO:
       self.validate(user_id)
+
+
+@listen_to("combo_updated")
+class Achievement_combo_2max(Achievement):
+  name = "The addict"
+  description = "Reach a combo of twice the maximum rewardable combo"
+  reward = 400
+
+  async def check(self, user_id, *args, **kwargs):
+    if db["mining_combo"][str(user_id)] >= 2 * Constants.MAX_MINING_COMBO:
+      self.validate(user_id)
+
+
+@listen_to("combo_updated")
+class Achievement_combo_3max(Achievement):
+  name = "The addict"
+  description = "Reach a combo of three times the maximum rewardable combo"
+  reward = 1000
+
+  async def check(self, user_id, *args, **kwargs):
+    if db["mining_combo"][str(user_id)] >= 3 * Constants.MAX_MINING_COMBO:
+      self.validate(user_id)
+
+
+@listen_to("donation_successful")
+class Achievement_donate_1(Achievement):
+  name = "Not so generous"
+  description = "Donate 1 piflouz to someone (which is taken by Pibot as a tax)"
+  reward = 1
+
+  async def check(self, user_id, amount, *args, **kwargs):
+    if amount == 1:
+      self.validate(user_id)
+
+
+@listen_to("donation_successful")
+class Achievement_donate_to_pibot(Achievement):
+  name = "Give me more piflouz!"
+  description = "Donate piflouz to Pibot"
+  reward = 10
+
+  async def check(self, user_id, amount, id_receiver, *args, **kwargs):
+    if id_receiver == Constants.BOT_ID:
+      self.validate(user_id)
+
+
+@listen_to("pibox_failed")
+class Achievement_fail_pibox(Achievement):
+  name = "So fast but not so accurate"
+  description = "React to an unclaimed pibox with the wrong emoji"
+  reward = 100
 
 

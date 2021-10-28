@@ -74,6 +74,7 @@ class Constants:
   TURBO_PIFLOUZ_ANIMATED_EMOJI = f"<a:turbo_piflouz:{TURBO_PIFLOUZ_ANIMATED_EMOJI_ID}>"
   TURBO_PIFLOUZ_ANIMATED_URL = os.getenv("TURBO_PIFLOUZ_ANIMATED_URL")
 
+  BOT_ID = int(os.getenv("BOT_ID"))
 
   @staticmethod
   def load():
