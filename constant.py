@@ -92,7 +92,10 @@ If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TI
 
   greetings = [ "Greetings {}! Nice to meet you!",
                 "Hello there {}, how are you doing today ?",
-                "Hello, oh great {}. Hope you are doing great"]
+                "Hello, oh great {}. Hope you are doing great",
+                "Oh, I didn't see you there {}. Hello!",
+                "Hello {}! How are you today?",
+                "Greetings {}, I hove you have a great day today."]
   
   streamers_to_check = eval(os.getenv("STREAMERS"))
   

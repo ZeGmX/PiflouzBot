@@ -167,7 +167,7 @@ class Raffle_event(Event):
     The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone!"
 
     embed = discord.Embed(
-      title="New raffle!",
+      title="New Raffle!",
       description=desc,
       colour=discord.Colour.random()
     )

@@ -223,7 +223,7 @@ class Achievement_full_miner(Achievement):
 
 @listen_to("store_purchase_successful")
 class Achievement_2_temporary_powerups_active(Achievement):
-  name = "Powerup addict"
+  name = "Powerup Addict"
   description = "Have two temporary powerups active at the same time"
   reward = 100
 
@@ -239,14 +239,14 @@ class Achievement_2_temporary_powerups_active(Achievement):
 
 @listen_to("pibox_obtained")
 class Achievement_pibox_obtained(Achievement):
-  name = "The fastest clicker in the west"
+  name = "The Fastest Clicker In The West"
   description = "Be the first to get a pibox"
   reward = 100
 
 
 @listen_to("pibox_obtained")
 class Achievement_empty_pibox(Achievement):
-  name = "So fast, but for what?"
+  name = "So Fast, But For What?"
   description = "Get a pibox with 0 piflouz"
   reward = 100
 
@@ -257,14 +257,14 @@ class Achievement_empty_pibox(Achievement):
 
 @listen_to("duel_created")
 class Achievement_create_duel(Achievement):
-  name = "Let's fight! (1)"
+  name = "Let the Battles Begin! (1)"
   description = "Create a new duel"
   reward = 50
 
 
 @listen_to("duel_accepted")
 class Achievement_accept_duel(Achievement):
-  name = "Let's fight! (2)"
+  name = "Let the Battles Begin! (2)"
   description = "Accept a duel"
   reward = 50
 

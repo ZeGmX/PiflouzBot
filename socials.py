@@ -59,7 +59,7 @@ async def task_check_live_status(bot):
 
 async def send_new_live_message(bot, stream, streamer_name):
   """
-  Sends a message saying pibou421 is now live
+  Sends a message saying a streamer is now live
   --
   input:
     bot: discord.ext.commands.Bot
