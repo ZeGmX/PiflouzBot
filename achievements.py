@@ -41,7 +41,7 @@ class Achievement:
 
   def is_validated(self, user_id):
     """
-    Checks in the datbase to see if a given user has validated the event
+    Checks in the database to see if a given user has validated the event
     --
     input:
       user_id: int/str
@@ -60,14 +60,14 @@ class Achievement:
 
 @listen_to("help")
 class Achievement_help(Achievement):
-  name = "Getting to know me"
+  name = "Hello World"
   description = "Use the `/help` command"
   reward = 10
 
 
 @listen_to("hello")
 class Achievement_hello(Achievement):
-  name = "Well hello there!"
+  name = "Well Hello There!"
   description = "Use the `/hello` command"
   reward = 10
 
@@ -81,14 +81,14 @@ class Achievement_pilord_cmd(Achievement):
 
 @listen_to("raffle_participation_successful")
 class Achievement_raffle_participation(Achievement):
-  name = "Test your luck"
+  name = "Get Lucky"
   description = "Participate to a raffle event"
   reward = 10
 
 
 @listen_to("raffle_participation_successful")
 class Achievement_raffle_participation_20(Achievement):
-  name = "Intermediate gambler"
+  name = "Intermediate Gambler"
   description = "Put at least 20 tickets in a single raffle"
   reward = 50
 
@@ -99,7 +99,7 @@ class Achievement_raffle_participation_20(Achievement):
 
 @listen_to("raffle_participation_successful")
 class Achievement_raffle_participation_100(Achievement):
-  name = "Intermediate gambler"
+  name = "Intermediate Gambler"
   description = "Put at least 100 tickets in a single raffle"
   reward = 300
 
@@ -110,28 +110,28 @@ class Achievement_raffle_participation_100(Achievement):
 
 @listen_to("raffle_won")
 class Achievement_won_raffle(Achievement):
-  name = "The lucky winer"
+  name = "The Lucky Winner"
   description = "Win a raffle"
   reward = 1000
 
 
 @listen_to("donation_successful")
 class Achievement_donate(Achievement):
-  name = "How generous level 1"
+  name = "How Generous! (1)"
   description = "Donate piflouz to someone"
   reward = 100
 
 
 @listen_to("giveaway_successful")
 class Achievement_giveaway(Achievement):
-  name = "How generous level 2"
+  name = "How Generous! (2)"
   description = "Create a giveaway"
   reward = 100
 
 
 @listen_to("get")
 class Achievement_slash_get(Achievement):
-  name = "Piflouz mining"
+  name = "Piflouz Mining"
   description = "Use the `/get` command"
   reward = 10
 
@@ -145,21 +145,21 @@ class Achievement_buy_store(Achievement):
 
 @listen_to("piflexer_rank_bought")
 class Achievement_rank_pilexer(Achievement):
-  name = "Piflex level 1"
+  name = "Piflex Level 1"
   description = "Buy the piflexer rank to show how cool you are"
   reward = 500
 
 
 @listen_to("piflex_bought")
 class Achievement_piflex(Achievement):
-  name = "Piflex level 2"
+  name = "Piflex Level 2"
   description = "Make a piflex!"
   reward = 1000
 
 
 @listen_to("piflex_bought")
 class Achievement_3_piflex(Achievement):
-  name = "Piflex novice"
+  name = "Piflex Novice"
   description = "Discover 3 piflex images"
   reward = 2000
 
@@ -170,7 +170,7 @@ class Achievement_3_piflex(Achievement):
 
 @listen_to("piflex_bought")
 class Achievement_6_piflex(Achievement):
-  name = "Piflex adept"
+  name = "Piflex Adept"
   description = "Discover 6 piflex images"
   reward = 3000
 
@@ -181,7 +181,7 @@ class Achievement_6_piflex(Achievement):
 
 @listen_to("piflex_bought")
 class Achievement_9_piflex(Achievement):
-  name = "Piflex expert"
+  name = "Piflex Expert"
   description = "Discover 9 piflex images"
   reward = 4000
 
@@ -203,14 +203,14 @@ class Achievement_12_piflex(Achievement):
 
 @listen_to("become_pilord")
 class Achievement_pilord(Achievement):
-  name = "The richest one"
+  name = "The Richest One"
   description = "Become pilord"
   reward = 2000
 
 
 @listen_to("store_purchase_successful")
 class Achievement_full_miner(Achievement):
-  name = "Dedicated miner"
+  name = "Diggy Diggy Hole"
   description = "Buy the maximum amount of miners"
   reward = 1000
 
@@ -257,28 +257,28 @@ class Achievement_empty_pibox(Achievement):
 
 @listen_to("duel_created")
 class Achievement_create_duel(Achievement):
-  name = "Let's fight - 1"
+  name = "Let's fight! (1)"
   description = "Create a new duel"
   reward = 50
 
 
 @listen_to("duel_accepted")
 class Achievement_accept_duel(Achievement):
-  name = "Let's fight - 2"
+  name = "Let's fight! (2)"
   description = "Accept a duel"
   reward = 50
 
 
 @listen_to("duel_won")
 class Achievement_win_duel(Achievement):
-  name = "The undefeatable"
+  name = "The Undefeatable"
   description = "Win a duel"
   reward = 100
 
 
 @listen_to("combo_updated")
 class Achievement_combo_1(Achievement):
-  name = "Discovering combos"
+  name = "Discovering Combos"
   description = "Reach a combo of 1"
   reward = 10
 
@@ -289,7 +289,7 @@ class Achievement_combo_1(Achievement):
 
 @listen_to("combo_updated")
 class Achievement_combo_max(Achievement):
-  name = "The addict"
+  name = "The Addict (1)"
   description = "Reach the maximum rewardable combo"
   reward = 100
 
@@ -300,7 +300,7 @@ class Achievement_combo_max(Achievement):
 
 @listen_to("combo_updated")
 class Achievement_combo_2max(Achievement):
-  name = "The addict"
+  name = "The Addict (2)"
   description = "Reach a combo of twice the maximum rewardable combo"
   reward = 400
 
@@ -311,7 +311,7 @@ class Achievement_combo_2max(Achievement):
 
 @listen_to("combo_updated")
 class Achievement_combo_3max(Achievement):
-  name = "The addict"
+  name = "The Addict (3)"
   description = "Reach a combo of three times the maximum rewardable combo"
   reward = 1000
 
@@ -322,7 +322,7 @@ class Achievement_combo_3max(Achievement):
 
 @listen_to("donation_successful")
 class Achievement_donate_1(Achievement):
-  name = "Not so generous"
+  name = "Not So Generous"
   description = "Donate 1 piflouz to someone (which is taken by Pibot as a tax)"
   reward = 1
 
@@ -333,7 +333,7 @@ class Achievement_donate_1(Achievement):
 
 @listen_to("donation_successful")
 class Achievement_donate_to_pibot(Achievement):
-  name = "Give me more piflouz!"
+  name = "Give Me More Piflouz!"
   description = "Donate piflouz to Pibot"
   reward = 10
 
@@ -344,7 +344,7 @@ class Achievement_donate_to_pibot(Achievement):
 
 @listen_to("pibox_failed")
 class Achievement_fail_pibox(Achievement):
-  name = "So fast but not so accurate"
+  name = "So Fast But Not So Accurate"
   description = "React to an unclaimed pibox with the wrong emoji"
   reward = 100
 

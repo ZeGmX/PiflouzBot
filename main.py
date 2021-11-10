@@ -487,9 +487,6 @@ if __name__ == "__main__":
 
   import achievements # to register the listeners
 
-
-  db["last_begin_time"] = 1629028800
-  
   bot.add_cog(Cog_buy(slash))
   bot.add_cog(Cog_duels())
   bot.add_cog(Cog_piflouz_mining(slash))

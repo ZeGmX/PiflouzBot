@@ -57,7 +57,7 @@ async def on_component_listener(ctx):
 
 def add_custom_listener_for_achievements(bot, event_name):
   """
-  Adds a new listener to the bot which is used to check achicvement progress
+  Adds a new listener to the bot which is used to check achievement progress
   --
   input:
     bot: discord.ext.commands.Bot

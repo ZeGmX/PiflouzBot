@@ -79,6 +79,8 @@ class Cog_buy(commands.Cog):
     input:
       ctx: discord_slash.context.SlashContext
     """
+    await ctx.defer(hidden=True)
+
     user_id = str(ctx.author.id)
     member = ctx.author
     role = ctx.guild.get_role(Constants.PIFLEXER_ROLE_ID)
