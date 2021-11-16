@@ -134,6 +134,7 @@ class Powerups_non_permanent(Powerups):
     self.duration = duration
     self.buy_date = buy_date
   
+  
   def on_buy(self, user_id, current_time):
     user_id = str(user_id)
     if user_id not in db["powerups"].keys():
@@ -242,6 +243,7 @@ class Powerups_permanent(Powerups):
     if i is not None and eval(db["powerups"][user_id][i][len(__name__) + 1:]).qty == self.max_qty:
       return False  # User already has the maximum number of this powerup
     
+    self.qty += 1
     powerup_str = self.to_str()
 
     if not piflouz_handlers.update_piflouz(user_id, qty=-self.price, check_cooldown=False):
@@ -255,7 +257,7 @@ class Powerups_permanent(Powerups):
 
   
   def to_str(self):
-    return f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.max_qty}, {self.qty + 1})"
+    return f"{__name__}.{type(self).__name__}({self.price}, {self.value}, {self.max_qty}, {self.qty})"
 
 
   def is_active(self):

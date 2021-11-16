@@ -3,6 +3,7 @@ from discord_slash import cog_ext
 from discord_slash.utils.manage_components import create_button, spread_to_rows
 from discord_slash.model import ButtonStyle
 from replit import db
+import copy
 
 from constant import Constants
 import embed_messages
@@ -132,7 +133,8 @@ class Cog_buy(commands.Cog):
     if user_id not in db["powerups"].keys():
       db["powerups"][user_id] = []
     
-    powerup = Constants.POWERUPS_STORE[emoji]
+    # we take a copy of the powerup in order not to modify the fields when buying
+    powerup = copy.copy(Constants.POWERUPS_STORE[emoji])
     if powerup.on_buy(user_id, current_time):
       await utils.update_piflouz_message(ctx.bot)
       await ctx.send("Successfully bought the powerup", hidden=True)
