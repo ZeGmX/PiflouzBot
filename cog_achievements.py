@@ -1,7 +1,4 @@
-from discord.ext import commands
-from discord_slash import cog_ext
-from discord_slash.utils.manage_components import create_button, spread_to_rows
-from discord_slash.model import ButtonStyle
+from interactions import extension_command, Extension, Emoji, Option, OptionType, Button, ButtonStyle
 from math import ceil
 from replit import db
 
@@ -10,37 +7,46 @@ from constant import Constants
 import utils
 
 
-class Cog_achievements(commands.Cog):
+class Cog_achievements(Extension):
   """
   Cog containing all the interactions related to purchasing things
   ---
   fields:
-    slash: discord_slash.SlashCommand 
+    bot: interactions.Client
     achievements_per_page: int
     achievements: Achievement list
     nb_pages: int
+  --
+  Slash commands:
+    /achievements list
+  Components:
+    page_achievements_list-{i}, i = 0...self.pages - 1
   """
   achievements_per_page = 10
 
-  def __init__(self, slash):
-    self.slash = slash
+  def __init__(self, bot):
+    self.bot = bot
     self.achievements = get_achievements_list()
     self.nb_pages = ceil(len(self.achievements) / self.achievements_per_page)
 
+    # Register the callbacks for the page arrow components
     for i in range(self.nb_pages):
-      slash.add_component_callback(self.callback_from_page(i), components=f"page_achievements_list-{i}", use_callback_name=False)
+      self.bot.component(f"page_achievements_list-{i}")(self.callback_from_page(i))
 
 
-  @cog_ext.cog_subcommand(base="achievements", name="list", description="Check all the statuses", guild_ids=Constants.GUILD_IDS, options=[])
+  @extension_command(name="achievements", description="TBD", scope=Constants.GUILD_IDS, options=[
+    Option(name="list", description="Check your achievements", type=OptionType.SUB_COMMAND, options=[])
+  ])
   @utils.check_message_to_be_processed
   async def achiev_list_cmd(self, ctx, page=0):
     """
     Callback for the achievements list command
     --
     input:
-      ctx: discord_slash.context.SlashContext
+      ctx: interactions.CommandContext
+      page: int
     """
-    user_id = str(ctx.author_id)
+    user_id = str(ctx.author.id)
 
     if user_id not in db["achievements"].keys(): db["achievements"][user_id] = []
 
@@ -56,12 +62,15 @@ class Cog_achievements(commands.Cog):
     # Getting the buttons
     buttons = []
     if page != 0 : # not the first page
-      buttons.append(create_button(style=ButtonStyle.gray, label="", custom_id=f"page_achievements_list-{page - 1}", emoji="⬅️"))
+      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="⬅️")._json, custom_id=f"page_achievements_list-{page - 1}"))
+      
     if page < self.nb_pages - 1: # not the last page
-      buttons.append(create_button(style=ButtonStyle.gray, label="", custom_id=f"page_achievements_list-{page + 1}", emoji="➡️"))
-    components = spread_to_rows(*buttons)
-    
-    await ctx.send(s, components=components, hidden=True)
+      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️")._json, custom_id=f"page_achievements_list-{page + 1}"))
+    # components = spread_to_rows(*buttons)
+    print("sending")
+    print(s)
+    print(buttons)
+    await ctx.send(s, components=buttons, ephemeral=True)
     
 
   def callback_from_page(self, page):
@@ -75,5 +84,9 @@ class Cog_achievements(commands.Cog):
       callback function
     """
     async def callback(ctx):
-      await self.slash.invoke_command(self.achiev_list_cmd, ctx, {"page": page})
+      await self.achiev_list_cmd(ctx, page=page)
     return callback
+
+
+def setup(bot):
+  Cog_achievements(bot)

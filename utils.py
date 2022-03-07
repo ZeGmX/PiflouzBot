@@ -5,6 +5,7 @@ import pickle
 from replit import db
 from replit.database.database import ObservedList, ObservedDict, Database
 from discord.ext import commands, tasks
+from interactions import Channel
 
 from constant import Constants
 import embed_messages
@@ -20,8 +21,7 @@ def get_new_joke():
   output:
     joke: str -> the formatted joke
   """
-  #r = requests.get("https://official-joke-api.appspot.com/random_joke").json()
-  r = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=racist,sexist").json()  
+  r = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist").json()  
   if r["type"] == "twopart":
     joke = r["setup"] + "\n||**" + r["delivery"] + "**||"
   else:
@@ -80,12 +80,12 @@ async def update_piflouz_message(bot):
   Updates the piflouz message with the rankings
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
-  channel = bot.get_channel(db["out_channel"])
+  channel = await bot.get_channel(db["out_channel"])
   embed = embed_messages.get_embed_piflouz(bot)
-  piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
-  await piflouz_message.edit(embed=embed)
+  piflouz_message = await channel.get_message(db["piflouz_message_id"])
+  await piflouz_message.edit(embeds=embed)
 
 
 def create_duel(id_challenger, id_challenged, amount, duel_type):
@@ -132,14 +132,14 @@ async def wait_until(then):
 
 @commands.check
 def check_message_to_be_processed(ctx):
-    """
-    Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
-    --
-    input:
-      ctx: discord.ext.commands.Context
-    """
-    assert not (ctx.author == ctx.bot.user or "out_channel" not in db.keys() or ctx.bot.get_channel(db["out_channel"]) != ctx.channel), "Command attempt in the wrong channel"
-    return True
+  """
+  Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
+  --
+  input:
+    ctx: interactions.CommandContext
+  """
+  assert not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel"
+  return True
 
 
 def get_total_piflouz_multiplier(user_id, current_time):
@@ -254,14 +254,14 @@ def seconds_to_formatted_string(s):
 
 
 def get_new_duel_id():
-    """
-    Creates a new unique id to represent a duel
-    --
-    output:
-      res: int
-    """
-    if "last_duel_id" not in db.keys():
-      db["last_duel_id"] = -1
-    
-    db["last_duel_id"] += 1
-    return db["last_duel_id"]
+  """
+  Creates a new unique id to represent a duel
+  --
+  output:
+    res: int
+  """
+  if "last_duel_id" not in db.keys():
+    db["last_duel_id"] = -1
+  
+  db["last_duel_id"] += 1
+  return db["last_duel_id"]

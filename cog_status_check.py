@@ -1,8 +1,5 @@
-from discord.ext import commands
-from discord_slash import cog_ext
-from discord_slash.utils.manage_commands import create_option
-from discord_slash.model import SlashCommandOptionType as option_type
 from discord.utils import escape_markdown
+from interactions import extension_command, Extension, Option, OptionType
 from replit import db
 
 from constant import Constants
@@ -11,13 +8,24 @@ import socials
 import utils
 
 
-class Cog_status_check(commands.Cog):
+class Cog_status_check(Extension):
   """
   Cog containing all the interactions related to checking information about the user
+  --
+  Slash commands:
+    /is-live
+    /balance
+    /pilord
+    /powerups
+    /ranking
+    /season-result
   """
+ 
+  def __init__(self, bot):
+    pass
 
-  @cog_ext.cog_slash(name="isLive", description="check if a certain streamer is live", guild_ids=Constants.GUILD_IDS, options=[
-  create_option(name="streamer_name", description="The name of the streamer you want to check", option_type=option_type.STRING, required=True)
+  @extension_command(name="is-live", description="Check if a certain streamer is live", scope=Constants.GUILD_IDS, options=[
+  Option(name="streamer_name", description="The name of the streamer you want to check", type=OptionType.STRING, required=True)
   ])
   @utils.check_message_to_be_processed
   async def is_live_cmd(self, ctx, streamer_name):
@@ -25,7 +33,7 @@ class Cog_status_check(commands.Cog):
     Callback for the isLive command
     --
     input:
-      ctx: discord_slash.context.SlashContext
+      ctx: interactions.CommandContext
       streamer_name: str
     """
     stream = socials.get_live_status(streamer_name)
@@ -39,8 +47,8 @@ class Cog_status_check(commands.Cog):
       await ctx.send(msg)
   
 
-  @cog_ext.cog_slash(name="balance", description=f"check how many piflouz you have. Kind of a low-cost Piflex", guild_ids=Constants.GUILD_IDS, options=[
-    create_option(name="user", description="the person you want to check. Leave empty to check your own balance", option_type=option_type.USER, required=False)
+  @extension_command(name="balance", description="Check how many piflouz you have", scope=Constants.GUILD_IDS, options=[
+    Option(name="user", description="The person you want to check. Leave empty to check your own balance", type=OptionType.USER, required=False)
   ])
   @utils.check_message_to_be_processed
   async def balance_cmd(self, ctx, user=None):
@@ -48,7 +56,7 @@ class Cog_status_check(commands.Cog):
     Callback for the balance command
     --
     input:
-      ctx: discord_slash.context.SlashContext
+      ctx: interactions.CommandContext
     """
     if user is None: user = ctx.author
 
@@ -62,41 +70,41 @@ class Cog_status_check(commands.Cog):
     if str(user.id) in db["turbo_piflouz_bank"].keys():
       content += f"\n{db['turbo_piflouz_bank'][str(user.id)]} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}"
 
-    await ctx.send(content, hidden=True)
+    await ctx.send(content, ephemeral=True)
 
 
-  @cog_ext.cog_slash(name="pilord", description="see how much you need to farm to flex with your rank", guild_ids=Constants.GUILD_IDS, options=[])
+  @extension_command(name="pilord", description="See how much you need to farm to flex with your rank", scope=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
   async def pilord_cmd(self, ctx):
     """
     Callback for the pilord command
     --
     input:
-      ctx: discord_slash.context.SlashContext
+      ctx: interactions.CommandContext
     """
     user_id = str(ctx.author.id)
     if user_id not in db["piflouz_bank"].keys():
       db["piflouz_bank"][user_id] = 0
 
     if user_id in db["current_pilords"]:
-      await ctx.send("You are currently a pilord. Kinda flexing right now!", hidden=True)
+      await ctx.send("You are currently a pilord. Kinda flexing right now!", ephemeral=True)
     else:
       amount = db["piflouz_bank"][user_id]
       max_amount = db["piflouz_bank"][db["current_pilords"][0]]
-      await ctx.send(f"You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!", hidden=True)  
+      await ctx.send(f"You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!", ephemeral=True)  
   
 
-  @cog_ext.cog_slash(name="powerups", description="see how powerful you are", guild_ids=Constants.GUILD_IDS, options=[])
+  @extension_command(name="powerups", description="See how powerful you are", scope=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
   async def powerups_cmd(self, ctx):
     """
     Callback for the powerups command
     --
     input:
-      ctx: discord_slash.context.SlashContext
+      ctx: interactions.CommandContext
     """
-    await ctx.defer(hidden=True)
-    user_id = str(ctx.author_id)
+    await ctx.defer(ephemeral=True)
+    user_id = str(ctx.author.id)
     content = "Here is the list of powerups you have at the moment:\n"
     has_any_powerup = False
 
@@ -110,25 +118,25 @@ class Cog_status_check(commands.Cog):
 
     if not has_any_powerup:
       content = "You don't have any power up at the moment. Go buy one, using `/store`!"   
-    await ctx.send(content, hidden=True)
+    await ctx.send(content, ephemeral=True)
 
   
-  @cog_ext.cog_slash(name="ranking", description="See how worthy you are", guild_ids=Constants.GUILD_IDS, options=[])
+  @extension_command(name="ranking", description="See how worthy you are", scope=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
   async def ranking_cmd(self, ctx):
     """
     Callback for the ranking command
     --
     input:
-    ctx: discord.ext.commands.Context
+    ctx: interactions.CommandContext
     """
-    await ctx.defer(hidden=True)
+    await ctx.defer(ephemeral=True)
     d_piflouz = dict(db["piflouz_bank"])
     d_piflex = dict(db["discovered_piflex"])
     d_donations = dict(db["donation_balance"])
     
     res = ""
-    user_id = str(ctx.author_id)
+    user_id = str(ctx.author.id)
 
     if user_id in d_piflouz.keys():
       amount_user = d_piflouz[user_id]
@@ -146,23 +154,23 @@ class Cog_status_check(commands.Cog):
       res += f"Piflouz donation ranking: {rank} with {amount_user} {Constants.PIFLOUZ_EMOJI}\n"
     
     if res == "":
-      await ctx.send("You are not part of any ranking", hidden=True)
+      await ctx.send("You are not part of any ranking", ephemeral=True)
     else:
-      await ctx.send(res, hidden=True)
+      await ctx.send(res, ephemeral=True)
     
 
-  @cog_ext.cog_slash(name="seasonresult", description="see how much you earned in the last season", guild_ids=Constants.GUILD_IDS, options=[])
+  @extension_command(name="season-result", description="See how much you earned in the last season", scope=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
   async def seasonresult_cmd(self, ctx):
     """
     Callback for the seasonresult command
     --
     input:
-    ctx: discord.ext.commands.Context
+    ctx: interactions.CommandContext
     """
-    await ctx.defer(hidden=True)
+    await ctx.defer(ephemeral=True)
 
-    user_id = str(ctx.author_id)
+    user_id = str(ctx.author.id)
     assert user_id in db["season_results"].keys(), "You did not participate to the previous season"
 
     lines = ["Last season you earned the following:"]
@@ -178,5 +186,8 @@ class Cog_status_check(commands.Cog):
     lines.append(f"Total - {total}")
   
     msg = "\n".join(lines)
-    await ctx.send(msg, hidden=True)
+    await ctx.send(msg, ephemeral=True)
       
+
+def setup(bot):
+  Cog_status_check(bot)

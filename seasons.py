@@ -4,8 +4,7 @@ from math import sqrt
 from replit import db
 import datetime
 from dateutil.relativedelta import relativedelta
-from discord_slash.utils.manage_components import create_button, create_actionrow
-from discord_slash.model import ButtonStyle
+from interactions import Emoji, Button, ButtonStyle
 
 from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
@@ -19,20 +18,19 @@ async def start_new_season(bot):
   Announces the beginning of a new season
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   --
   output:
-    msg: discord.Message -> the message sent
+    msg: interactions.Message -> the message sent
   """
   if "out_channel" in db.keys():
-    channel = bot.get_channel(db["out_channel"])
+    channel = await bot.get_channel(db["out_channel"])
 
-    emoji = await bot.guilds[0].fetch_emoji(Constants.PIFLOUZ_EMOJI_ID)
+    emoji = Emoji(id=Constants.PIFLOUZ_EMOJI_ID)
 
-    piflouz_button = create_button(style=ButtonStyle.gray, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji)
-    action_row = create_actionrow(piflouz_button)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji._json)
 
-    msg = await channel.send(embed=embed_messages.get_embed_piflouz(bot), components=[action_row])
+    msg = await channel.send(embeds=embed_messages.get_embed_piflouz(bot), components=piflouz_button)
     return msg
 
 
@@ -41,7 +39,7 @@ async def end_current_season(bot):
   Announces the end of the current season and computes the amount of turbo piflouz earned
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
   # Reseting the previous stats for the season results
   db["season_results"] = {}
@@ -66,7 +64,6 @@ async def end_current_season(bot):
   # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
   reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
 
-  
   bonus_ranking = [100, 50, 30]
 
   # Adding piflouz based on the ranking in piflouz
@@ -92,8 +89,8 @@ async def end_current_season(bot):
   # Sending the announcement message
   if "out_channel" in db.keys():
     embed = await embed_messages.get_embed_end_season(bot)
-    channel = bot.get_channel(db["out_channel"])
-    await channel.send(embed=embed)
+    channel = await bot.get_channel(db["out_channel"])
+    await channel.send(embeds=embed)
   
 
 @tasks.loop(hours=24)
@@ -102,7 +99,7 @@ async def season_task(bot):
   Starts and ends seasons
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
   last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
   next_begin = last_begin_time + relativedelta(months=3)
@@ -110,14 +107,15 @@ async def season_task(bot):
 
   if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
     await end_current_season(bot)
-    old_message = await bot.get_channel(db["out_channel"]).fetch_message(db["current_season_message_id"])
+    channel = await bot.get_channel(db["out_channel"])
+    old_message = await channel.get_message(db["current_season_message_id"])
     await old_message.unpin()
   
   db["last_begin_time"] = int(next_begin.timestamp())
   msg = await start_new_season(bot)
   await msg.pin()
-  db["current_season_message_id"] = msg.id
-  db["piflouz_message_id"] = msg.id
+  db["current_season_message_id"] = int(msg.id)
+  db["piflouz_message_id"] = int(msg.id)
   
 
 

@@ -15,7 +15,7 @@ async def handle_actions_every_hour(bot):
   Callback for handling powerups that have an action every hour (such as miners)
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
   # Waiting for the next hour
   now = datetime.datetime.now()

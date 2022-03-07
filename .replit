@@ -1,0 +1,2 @@
+[packager]
+ignoredPackages=["discord", "replit"]

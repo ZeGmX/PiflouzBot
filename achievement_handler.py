@@ -1,3 +1,5 @@
+from interactions import InteractionType
+
 
 listeners = dict()
 
@@ -35,24 +37,17 @@ async def dispatch_to_achievements(event, user_id, *args, **kwargs):
         pass
 
 
-async def on_slash_function_listener(ctx):
+async def on_interaction_create_listener(ctx):
   """
-  Listener that is called when a slash command interaction is created
+  Listener that is called when an interaction is created
   --
   input:
-    ctx: discord_slash.context.SlashContext
+    ctx: interactions.MessageContext
   """
-  await dispatch_to_achievements(ctx.name, ctx.author_id,ctx)
-
-
-async def on_component_listener(ctx):
-  """
-  Listener that is called when a component interaction is created
-  --
-  input:
-    ctx: discord_slash.context.ComponentContext
-  """
-  await dispatch_to_achievements(ctx.custom_id, ctx.author_id, ctx)
+  if ctx.type == InteractionType.APPLICATION_COMMAND:
+    await dispatch_to_achievements(ctx.data.name, int(ctx.author.id), ctx)
+  elif ctx.type == InteractionType.MESSAGE_COMPONENT:
+    await dispatch_to_achievements(ctx.custom_id, int(ctx.author.id), ctx)
 
 
 def add_custom_listener_for_achievements(bot, event_name):
@@ -60,13 +55,13 @@ def add_custom_listener_for_achievements(bot, event_name):
   Adds a new listener to the bot which is used to check achievement progress
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
     event_name: str
   """
   async def custom_event_listener(user_id, *args, **kwargs):
     await dispatch_to_achievements(event_name, user_id, *args, **kwargs)
-  
-  bot.add_listener(custom_event_listener, name="on_" + event_name)
+
+  bot.register_listener(custom_event_listener, name=event_name)
 
 
 def get_achievements_list():

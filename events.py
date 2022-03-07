@@ -1,9 +1,11 @@
 from discord.ext import tasks
+from discord import Color
 import random
 from replit import db
-import discord
+# import discord
 import asyncio
 from math import floor
+from interactions import Embed, EmbedField, EmbedImageStruct
 
 from constant import Constants
 import piflouz_handlers
@@ -20,14 +22,15 @@ async def event_handlers(bot):
     current_event = eval(db["current_event"][len(__name__) + 1:])
     await current_event.on_end(bot)
 
-    old_message = await bot.get_channel(db["out_channel"]).fetch_message(db["current_event_message_id"])
+    channel = await bot.get_channel(db["out_channel"])
+    old_message = await channel.get_message(db["current_event_message_id"])
     await old_message.unpin()
 
   # Chose the new event of the day
   new_event = random.choice(Constants.RANDOM_EVENTS)
   message = await new_event.on_begin(bot)
   await message.pin()
-  db["current_event_message_id"] = message.id
+  db["current_event_message_id"] = int(message.id)
   db["current_event"] = new_event.to_str()
   
 
@@ -91,12 +94,12 @@ class Raffle_event(Event):
   async def on_begin(self, bot):
     if "out_channel" not in db.keys():
       return
-    
-    out_channel = bot.get_channel(db["out_channel"])
+
+    out_channel = await bot.get_channel(db["out_channel"])
 
     # Starting new raffle
     embed = await self.get_embed_raffle(bot)
-    message = await out_channel.send(embed=embed)
+    message = await out_channel.send(embeds=embed)
     return message
   
 
@@ -104,7 +107,7 @@ class Raffle_event(Event):
     if "out_channel" not in db.keys():
       return
 
-    out_channel = bot.get_channel(db["out_channel"])
+    out_channel = await bot.get_channel(db["out_channel"])
     participation = db["raffle_participation"]
 
     # Computing the winner for the last raffle
@@ -124,7 +127,7 @@ class Raffle_event(Event):
 
       # Giving the tax to the bot
       tax_value = total_tickets * self.ticket_price - prize
-      piflouz_handlers.update_piflouz(bot.user.id, qty=tax_value, check_cooldown=False)
+      piflouz_handlers.update_piflouz(bot.me.id, qty=tax_value, check_cooldown=False)
 
       message = f"Congratulations to <@{id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!"
 
@@ -149,10 +152,10 @@ class Raffle_event(Event):
     if "current_event_message_id" not in db.keys():
       return
 
-    channel = bot.get_channel(db["out_channel"])
+    channel = await bot.get_channel(db["out_channel"])
     embed = await self.get_embed_raffle(bot)
-    raffle_message = await channel.fetch_message(db["current_event_message_id"])
-    await raffle_message.edit(embed=embed)
+    raffle_message = await channel.get_message(db["current_event_message_id"])
+    await raffle_message.edit(embeds=embed)
 
 
   async def get_embed_raffle(self, bot):
@@ -166,14 +169,8 @@ class Raffle_event(Event):
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
     The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone!"
 
-    embed = discord.Embed(
-      title="New Raffle!",
-      description=desc,
-      colour=discord.Colour.random()
-    )
-
-    embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
-
+    fields = []
+    
     if "raffle_participation" in db.keys() and len(db["raffle_participation"]) > 0:
       participation = db["raffle_participation"]
 
@@ -187,16 +184,24 @@ class Raffle_event(Event):
       
       total_prize = self.get_raffle_total_prize()
 
-      embed.add_field(  
+      fields.append(EmbedField(  
         name="Current tickets bought",
         value=val,
         inline=False
-      )
-      embed.add_field(
+      ))
+      fields.append(EmbedField( 
         name="Total prize",
         value=f"The winner will earn {total_prize} {Constants.PIFLOUZ_EMOJI}!",
         inline=False
-      )
+      ))
+
+    embed = Embed(
+      title="New Raffle!",
+      description=desc,
+      color=Color.random().value,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      fields=fields
+    )
     
     return embed
   
@@ -225,11 +230,11 @@ class Event_from_powerups(Event):
     if "out_channel" not in db.keys():
       return
 
-    out_channel = bot.get_channel(db["out_channel"])
+    out_channel = await bot.get_channel(db["out_channel"])
 
     # Starting new event
     embed = self.get_embed()
-    message = await out_channel.send(embed=embed)
+    message = await out_channel.send(embeds=embed)
     await message.pin()
     return message
   
@@ -249,17 +254,19 @@ class Event_from_powerups(Event):
     output:
       embed: discord.Embed
     """
-    embed = discord.Embed(
-      title="Event of the day",
-      colour=discord.Colour.random()
-    )
     descriptions = [p.get_info_str() for p in self.powerups]
     content = "\n".join(descriptions)
-    embed.add_field(
+    field = EmbedField(
       name="The following powerups are active:",
       value=content
     )
-    embed.set_thumbnail(url=Constants.PIBOU4STONKS_URL)
+    
+    embed = Embed(
+      title="Event of the day",
+      color=Color.random().value,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      fields=[field]
+    )
     return embed
   
 

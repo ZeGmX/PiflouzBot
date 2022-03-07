@@ -2,6 +2,7 @@ from discord.ext import tasks
 from random import random, randrange
 from replit import db
 import functools
+from interactions import Role
 
 from constant import Constants
 import events  # Used in eval()
@@ -20,7 +21,7 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
   --
   output:
     res: boolean -> if the update succeded
-    qty: int -> the amount actually sent/received (only returned if check_cooldown = Try(corresponding to a /get))
+    qty: int -> the amount actually sent/received (only returned if check_cooldown = True (corresponding to a /get))
     current_time: int -> the time at which the interaction was created
   """
   if "piflouz_bank" not in db.keys():
@@ -46,19 +47,6 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
   if (not check_cooldown or cooldown == 0) and balance + qty >= 0:
     db["piflouz_bank"][user_id] = balance + qty
     if check_cooldown:
-      """
-      if user_id not in db["stats"].keys():
-        db["stats"][user_id] = {"nb": 0, "times": []}
-        
-      cooldown = utils.update_with_powerup(Constants.REACT_TIME_INTERVAL, user, "cooldown_reduction")
-      differential = abs(db["timers_react"][user_id] + cooldown - new_time)
-      
-      db["stats"][user_id]["nb"] += 1
-      db["stats"][user_id]["times"].append(differential)
-
-      print(db["stats"])
-      """
-    
       db["timers_react"][user_id] = current_time
       return True, qty
     return True
@@ -68,33 +56,30 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
   return False
 
 
-async def spawn_pibox(bot, piflouz_quantity, custom_message=None, ctx=None):
+async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
   """
   Generates a pibox of the amount passed in argument.
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
     amount: int, positive
-    custom_message: either None, or a custom message to add at the end.
-    ctx: discord_slash.context.SlashContext -> None if not a giveway
+    custom_message: either None, or a custom message (str) to add at the end.
   """
-  out_channel = bot.get_channel(db["out_channel"])
+  out_channel = await bot.get_channel(db["out_channel"])
 
   index = randrange(len(Constants.EMOJI_IDS_FOR_PIBOX))
   emoji_id = Constants.EMOJI_IDS_FOR_PIBOX[index]
   emoji_name = Constants.EMOJI_NAMES_FOR_PIBOX[index]
   emoji = f"<:{emoji_name}:{emoji_id}>"
 
-  role = bot.guilds[0].get_role(Constants.PIBOX_NOTIF_ROLE_ID)
+  role = Role(id=Constants.PIBOX_NOTIF_ROLE_ID)
 
   text_output = f"{role.mention} Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !" 
   if custom_message is not None:
     text_output += " " + custom_message
-  if ctx is not None:
-    out_channel = ctx.channel # To reply to the sender of a giveaway
   message = await out_channel.send(text_output)
   
-  db["random_gifts"][str(message.id)] = [emoji, piflouz_quantity, custom_message]
+  db["random_gifts"][str(message.id)] = [emoji_id, piflouz_quantity, custom_message]
 
 
 @tasks.loop(seconds=30)
@@ -121,8 +106,8 @@ async def random_gift(bot):
   if random() < drop_rate:
     # Piflouz with the bot's money
     piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
-    if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
-      await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
+    if update_piflouz(bot.me.id, qty=-piflouz_quantity, check_cooldown=False):
+      await spawn_pibox(bot, piflouz_quantity, custom_message=f"<@{bot.me.id}> spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
 
 
 def update_combo(user_id, current_time):
