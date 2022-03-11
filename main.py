@@ -4,8 +4,7 @@ import sys
 subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.1",])
 
 
-import interactions
-from interactions import Intents
+from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
 import logging
 from replit import db
 
@@ -23,11 +22,9 @@ import utils
 
 intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE_REACTIONS | Intents.DIRECT_MESSAGES | Intents.GUILDS
 
-presence_button = interactions.PresenceButtons(label="Click here to earn more piflouz!", url="https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-presence = interactions.PresenceActivity(name="Piflouz generator", type=interactions.PresenceActivityType.GAME, buttons=presence_button)
+presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
 
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=interactions.ClientPresence(activities=[presence]))
-# TODO: Change presence
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
 
 
 @bot.event
@@ -91,7 +88,7 @@ async def on_ready():
   for event_name in custom_event:
     achievement_handler.add_custom_listener_for_achievements(bot, event_name)
 
-  bot.register_listener(achievement_handler.on_interaction_create_listener, name="on_interaction_create")
+  bot.register_listener(achievement_handler.on_interaction_create_listener, name="on_interaction_create")  # Note: we could use two different listeners with events 'on_command' and 'on_component'
 
   events.event_handlers.start(bot)
   piflouz_handlers.random_gift.start(bot)
@@ -186,7 +183,8 @@ if __name__ == "__main__":
   bot.load("cog_piflouz_mining")
   bot.load("cog_status_check")
 
-  # logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
+  logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
+  
 
   while 1:
     try:

@@ -142,32 +142,6 @@ def check_message_to_be_processed(ctx):
   return True
 
 
-def get_total_piflouz_multiplier(user_id, current_time):
-  """
-  Returns the amount earned with a /get, taking into account the user powerups, the current event, the user combo and the accuracy
-  --
-  input:
-    user_id: int/str - the id of the user having the powerups
-    current_time: int -> the time at which the interaction was created
-  --
-  output:
-    qty: the pilouz amount
-  """
-  if str(user_id) not in db["mining_combo"].keys():
-    db["mining_combo"][str(user_id)] = 0
-
-  current_event = eval(db["current_event"])
-  powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
-  powerups_event = current_event.get_powerups()
-
-  qty = Constants.BASE_MINING_AMOUNT * (1 + sum(p.get_piflouz_multiplier_value() - 1 for p in powerups_user + powerups_event))
-  qty = round(qty)
-
-  combo_bonus = min(db["mining_combo"][str(user_id)], Constants.MAX_MINING_COMBO) * Constants.PIFLOUZ_PER_MINING_COMBO
-
-  return qty + combo_bonus + piflouz_handlers.get_mining_accuracy_bonus(user_id, current_time)
-
-
 def observed_to_py(obj):
   """
   Turns an "Observed" object (from the database) into a classic Python object
@@ -246,11 +220,15 @@ def seconds_to_formatted_string(s):
   min = (s // 60) % 60
   hours = s // (60 * 60)
   if hours > 0:
-    return f"{hours}h {min}min {seconds}s"
+    if min > 0:
+        if seconds > 0: return f"{hours}h {min}min {seconds}s"
+        return f"{hours}h {min}min"
+    elif seconds > 0: return f"{hours}h {seconds}s"
+    return f"{hours}h"
   elif min > 0:
-    return f"{min}min {seconds}s"
-  else:
-    return f"{seconds}s"
+    if seconds > 0: return f"{min}min {seconds}s"
+    return f"{min}min"
+  return f"{seconds}s"
 
 
 def get_new_duel_id():

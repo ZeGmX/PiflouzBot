@@ -294,7 +294,7 @@ class Achievement_combo_max(Achievement):
   reward = 100
 
   async def check(self, user_id, *args, **kwargs):
-    if db["mining_combo"][str(user_id)] >= Constants.MAX_MINING_COMBO:
+    if db["mining_combo"][str(user_id)] >= piflouz_handlers.get_max_rewardable_combo(user_id):
       self.validate(user_id)
 
 
@@ -305,7 +305,7 @@ class Achievement_combo_2max(Achievement):
   reward = 400
 
   async def check(self, user_id, *args, **kwargs):
-    if db["mining_combo"][str(user_id)] >= 2 * Constants.MAX_MINING_COMBO:
+    if db["mining_combo"][str(user_id)] >= 2 * piflouz_handlers.get_max_rewardable_combo(user_id):
       self.validate(user_id)
 
 
@@ -316,7 +316,7 @@ class Achievement_combo_3max(Achievement):
   reward = 1000
 
   async def check(self, user_id, *args, **kwargs):
-    if db["mining_combo"][str(user_id)] >= 3 * Constants.MAX_MINING_COMBO:
+    if db["mining_combo"][str(user_id)] >= 3 * piflouz_handlers.get_max_rewardable_combo(user_id):
       self.validate(user_id)
 
 

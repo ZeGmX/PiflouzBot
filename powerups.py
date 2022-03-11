@@ -69,6 +69,26 @@ class Powerups:
       res: float
     """
     return 1
+
+
+  def get_max_combo_increase(self):
+    """
+    Returns the max combo increase of the powerup
+    --
+    output:
+      res: int
+    """
+    return 0
+
+
+  def get_combo_reward_multiplier(self):
+    """
+    Returns the combo reward multiplier of the powerup
+    --
+    output:
+      res: int
+    """
+    return 1
   
 
   def get_info_str(self):
@@ -88,6 +108,16 @@ class Powerups:
       res: str
     """
     return ""
+
+
+  def get_event_str(self):
+    """
+    Returns the string to be shown when the powerup is part of an event
+    --
+    output:
+      res: str
+    """
+    return self.get_info_str()
 
 
   def to_str(self):
@@ -174,20 +204,23 @@ class Powerups_non_permanent(Powerups):
 class Cooldown_reduction(Powerups_non_permanent):
   """
   Cooldown reduction powerup
-  Powerup is multiplicative
+  The powerup is multiplicative
   """
   def get_cooldown_multiplier_value(self):
     return 1 - self.value / 100 if self.is_active() else 1
   
 
   def get_info_str(self):
-    if self.duration is None:
-      return f"Cooldown reduction - {self.value}%"
-
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
-      return f"Cooldown reduction - {self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
+      sign = "+" if self.value < 0 else ""
+      return f"Cooldown • {sign}{-self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
     return ""
+
+
+  def get_event_str(self):
+    sign = "+" if self.value < 0 else ""
+    return f"Cooldown • {sign}{-self.value}%"
   
 
   def get_store_str(self):
@@ -197,20 +230,23 @@ class Cooldown_reduction(Powerups_non_permanent):
 class Piflouz_multiplier(Powerups_non_permanent):
   """
   Piflouz multiplier for /get powerup
-  Powerup is multiplicative
+  The powerup is multiplicative
   """
   def get_piflouz_multiplier_value(self):
     return 1 + self.value / 100 if self.is_active() else 1
   
 
   def get_info_str(self):
-    if self.duration is None:
-      return f"Piflouz multiplier - {self.value}%"
-
     dt = self.duration - int(time.time()) + self.buy_date
     if dt >= 0:
-      return f"Piflouz multiplier - {self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
+      sign = "+" if self.value > 0 else ""
+      return f"Piflouz multiplier • {sign}{self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
     return ""
+
+
+  def get_event_str(self):
+    sign = "+" if self.value > 0 else ""
+    return f"Piflouz multiplier • {sign}{self.value}%"
   
 
   def get_store_str(self):
@@ -275,7 +311,7 @@ class Miner_powerup(Powerups_permanent):
   def get_info_str(self):
     if self.qty == 0:
       return ""
-    return f"Miners - {self.qty} - Permanent"
+    return f"Miners • {self.qty} • Expires at the end of the season"
 
 
   def get_store_str(self):
@@ -292,6 +328,7 @@ class Pibox_drop_rate_multiplier(Powerups_permanent):
   """
   Powerup that changes the drop rate of piboxes
   Should only be used in events
+  The powerup is multiplicative
   """
   def __init__(self, value):
     self.value = value
@@ -302,8 +339,55 @@ class Pibox_drop_rate_multiplier(Powerups_permanent):
   
 
   def get_info_str(self):
-    return f"Increased pibox drop rate - {self.value}%"
+    sign = "+" if self.value > 0 else ""
+    return f"Increased pibox drop rate • {sign}{self.value}%"
   
 
+  def to_str(self):
+    return f"{__name__}.{type(self).__name__}({self.value})"
+
+
+class Combo_max_increase(Powerups_permanent):
+  """
+  Powerup that changes the maximum rewardable combo
+  Should only be used in events
+  The powerup is additive
+  """
+  def __init__(self, value):
+    self.value = value
+  
+
+  def get_max_combo_increase(self):
+    return self.value
+  
+
+  def get_info_str(self):
+    sign = "+" if self.value > 0 else ""
+    return f"Maximum rewardable combo increased • {sign}{self.value}"
+  
+
+  def to_str(self):
+    return f"{__name__}.{type(self).__name__}({self.value})"
+
+
+class Combo_reward_multiplier(Powerups_permanent):
+  """
+  Powerup that changes the reward for each combo
+  Should only be used in events
+  The powerup is multiplicative
+  """
+  def __init__(self, value):
+    self.value = value
+  
+  
+  def get_combo_reward_multiplier(self):
+    return 1 + self.value / 100
+  
+  
+  def get_info_str(self):
+    sign = "+" if self.value > 0 else ""
+    return f"Combo reward multiplier • {sign}{self.value}%"
+  
+  
   def to_str(self):
     return f"{__name__}.{type(self).__name__}({self.value})"

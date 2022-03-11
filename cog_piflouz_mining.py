@@ -37,18 +37,17 @@ class Cog_piflouz_mining(Extension):
       ctx: interactions.CommandContext
     """
     await ctx.defer(ephemeral=True)
-    user = ctx.author
 
     current_time = int(ctx.id.epoch)
     piflouz_handlers.update_combo(ctx.author.id, current_time)
-    successful_update, qty = piflouz_handlers.update_piflouz(user.id, current_time=current_time)
+    successful_update, qty = piflouz_handlers.update_piflouz(ctx.author.id, current_time=current_time)
     
     if not successful_update:
-      timer = utils.get_timer(user.id, current_time)
+      timer = utils.get_timer(ctx.author.id, current_time)
       
       output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
     else:
-      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(user.id)]} / {Constants.MAX_MINING_COMBO}"
+      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(ctx.author.id)]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
     
     await ctx.send(output_text, ephemeral=True)
     await utils.update_piflouz_message(self.bot)

@@ -254,7 +254,7 @@ class Event_from_powerups(Event):
     output:
       embed: discord.Embed
     """
-    descriptions = [p.get_info_str() for p in self.powerups]
+    descriptions = [p.get_event_str() for p in self.powerups]
     content = "\n".join(descriptions)
     field = EmbedField(
       name="The following powerups are active:",
@@ -291,3 +291,10 @@ class Cooldown_reduction_event(Event_from_powerups):
   def __init__(self, value):
     p = powerups.Cooldown_reduction(None, value, None)
     super().__init__(p)
+
+
+class Combo_event(Event_from_powerups):
+  def __init__(self, val_max_combo, val_multi_combo):
+    p1 = powerups.Combo_max_increase(val_max_combo)
+    p2 = powerups.Combo_reward_multiplier(val_multi_combo)
+    super().__init__(p1, p2)

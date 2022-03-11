@@ -31,7 +31,7 @@ class Client(interactions.Client):
 
   def register_listener(self, *args, **kwargs):
     """
-    registers a new listener
+    Registers a new listener
     The first argument should be the corresponding coroutine, and the "name" argument should be the name of the event
     """
     self._websocket._dispatch.register(*args, **kwargs)
