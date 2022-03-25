@@ -10,6 +10,7 @@ class Constants:
   REDDIT_ID = os.getenv("REDDIT_ID")
   REDDIT_SECRET = os.getenv("REDDIT_SECRET")
   REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT")
+  IMGUR_CLIENT_ID = os.getenv("IMGUR_CLIENT_ID")
 
   ### Role ids
   TWITCH_NOTIF_ROLE_ID = int(os.getenv("TWITCH_NOTIF_ROLE_ID"))

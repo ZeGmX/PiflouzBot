@@ -2,3 +2,4 @@ __pycache__/
 discord.log
 .breakpoints
 backups_db/
+wordle_tmp.png

@@ -6,9 +6,7 @@ from replit import db
 from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 import embed_messages
-import events
 import piflouz_handlers
-import powerups  # Used in eval
 import utils
 
 
@@ -25,7 +23,6 @@ class Cog_misc(Extension):
     /setup-channel [main | twitch]
     /donate
     /joke
-    /raffle
     /giveaway
     /spawn-pibox
     /role [get | remove]
@@ -139,7 +136,7 @@ class Cog_misc(Extension):
     user_sender = ctx.author 
   
     # Trading
-    assert piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to donate"
+    await utils.custom_assert(piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to donate", ctx)
   
     qty_tax = ceil(Constants.DONATE_TAX_RATIO / 100 * amount)
     qty_receiver = amount - qty_tax
@@ -180,41 +177,6 @@ class Cog_misc(Extension):
     await ctx.send(output_message)
 
 
-  @extension_command(name="raffle", description=f"Buy raffle tickets to test your luck /!\ Costs piflouz", scope=Constants.GUILD_IDS, options=[
-    Option(name="nb_tickets", description="How many tickets?", type=OptionType.INTEGER, required=True, min_value=1)
-  ])
-  @utils.check_message_to_be_processed
-  async def raffle_cmd(self, ctx, nb_tickets):
-    """
-    Callback for the raffle command
-    --
-    input:
-      ctx: interactions.CommandContext
-      nb_tickets: int
-    """
-    await ctx.defer(ephemeral=True)
-    assert "current_event" in db.keys(), "No current event registered"
-  
-    current_event = eval(db["current_event"])
-    assert isinstance(current_event, events.Raffle_event), "Current event is not a raffle"
-  
-    price = nb_tickets * current_event.ticket_price
-    
-    user_id = str(ctx.author.id)
-  
-    # user doesn't have enough money
-    assert piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False), f"User {ctx.author} doesn't have enough money to buy {nb_tickets} tickets"
-    
-    if not user_id in db["raffle_participation"].keys():
-      db["raffle_participation"][user_id] = 0
-    db["raffle_participation"][user_id] += nb_tickets
-  
-    await ctx.send(f"Successfully bought {nb_tickets} tickets", ephemeral=True)
-    await current_event.update_raffle_message(self.bot)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("raffle_participation_successful", ctx.author.id, nb_tickets)
-
-
   @extension_command(name="giveaway", description="Drop a pibox with your own money", scope=Constants.GUILD_IDS, options=[
     Option(name="amount", description="How many piflouz are inside the pibox", type=OptionType.INTEGER, required=True, min_value=1)
   ])
@@ -232,7 +194,7 @@ class Cog_misc(Extension):
     user_sender = ctx.author 
     
     # Trading
-    assert piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to giveaway"
+    await utils.custom_assert(piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to giveaway", ctx)
     custom_message = f"This is a gift from the great {user_sender.mention}, be sure to thank them! "
     await piflouz_handlers.spawn_pibox(self.bot, amount, custom_message=custom_message)
     await ctx.send("Done!", ephemeral=True)
@@ -250,7 +212,7 @@ class Cog_misc(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    assert int(ctx.author.id) == Constants.PIBOX_MASTER_ID, "Only the pibox master can use this command"
+    await utils.custom_assert(int(ctx.author.id) == Constants.PIBOX_MASTER_ID, "Only the pibox master can use this command", ctx)
     piflouz_quantity = random.randrange(Constants.MAX_PIBOX_AMOUNT)
     custom_message = "It was spawned by the pibox master"
     await piflouz_handlers.spawn_pibox(self.bot, piflouz_quantity, custom_message)

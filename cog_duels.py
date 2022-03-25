@@ -102,9 +102,9 @@ class Cog_duels(Extension):
       user: interactions.User -> the person challenged
     """
     await ctx.defer(ephemeral=True)
-    assert user is None or int(ctx.author.id) != int(user.id), "You can't challenge yourself!"
+    await utils.custom_assert(user is None or int(ctx.author.id) != int(user.id), "You can't challenge yourself!", ctx)
 
-    assert piflouz_handlers.update_piflouz(ctx.author.id, qty=-amount, check_cooldown=False), "You don't have enough piflouz to do that"
+    await utils.custom_assert(piflouz_handlers.update_piflouz(ctx.author.id, qty=-amount, check_cooldown=False), "You don't have enough piflouz to do that", ctx)
 
     id_challenged = -1 if user is None else int(user.id)  
 
@@ -137,19 +137,19 @@ class Cog_duels(Extension):
         break
     
     # Check the duel exists
-    assert duel_index is not None, "This duel does not exist"
+    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
 
     # Check that the duel is still available
-    assert not duel["accepted"], "This challenge has already been accepted"
+    await utils.custom_assert(not duel["accepted"], "This challenge has already been accepted", ctx)
 
     # Check that you are a target of the duel
-    assert duel["user_id2"] == int(ctx.author.id) or duel["user_id2"] == -1, "You are not targeted by this duel"
+    await utils.custom_assert(duel["user_id2"] == int(ctx.author.id) or duel["user_id2"] == -1, "You are not targeted by this duel", ctx)
 
     # Check that you are not the one who made the challenge
-    assert duel["user_id1"] != int(ctx.author.id), "You can't challenge yourself!"
+    await utils.custom_assert(duel["user_id1"] != int(ctx.author.id), "You can't challenge yourself!", ctx)
 
     # Check the user has enough money
-    assert piflouz_handlers.update_piflouz(ctx.author.id, qty=-duel["amount"], check_cooldown=False), "You don't have enough piflouz to do that"
+    await utils.custom_assert(piflouz_handlers.update_piflouz(ctx.author.id, qty=-duel["amount"], check_cooldown=False), "You don't have enough piflouz to do that", ctx)
 
     db["duels"][duel_index]["accepted"] = True
     db["duels"][duel_index]["user_id2"] = int(ctx.author.id)
@@ -177,10 +177,10 @@ class Cog_duels(Extension):
         duel_index = i
         break
     
-    assert duel_index is not None, "This duel does not exist"
-    assert not duel["accepted"], "You already accepted this challenge"
-    assert duel["user_id2"] != -1 , "You can't deny a challenge at anyone"
-    assert duel["user_id2"] == int(ctx.author.id), "You are not targeted by this duel"
+    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
+    await utils.custom_assert(not duel["accepted"], "You already accepted this challenge", ctx)
+    await utils.custom_assert(duel["user_id2"] != -1 , "You can't deny a challenge at anyone", ctx)
+    await utils.custom_assert(duel["user_id2"] == int(ctx.author.id), "You are not targeted by this duel", ctx)
 
     # Give back the money to the challenger
     piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
@@ -207,9 +207,9 @@ class Cog_duels(Extension):
         duel_index = i
         break
     
-    assert duel_index is not None, "This duel does not exist"
-    assert not duel["accepted"], "The duel was already accepted"
-    assert duel["user_id1"] == int(ctx.author.id), "You did not create this challenge"
+    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
+    await utils.custom_assert(not duel["accepted"], "The duel was already accepted", ctx)
+    await utils.custom_assert(duel["user_id1"] == int(ctx.author.id), "You did not create this challenge", ctx)
 
     # Give back the money to the challenger
     piflouz_handlers.update_piflouz(ctx.author.id, qty=duel["amount"], check_cooldown=False)
@@ -240,17 +240,17 @@ class Cog_duels(Extension):
         duel_index = i
         break
     
-    assert duel_index is not None, "This duel does not exist"
-    assert duel["accepted"], "This duel is not accepted yet"
-    assert int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]], "You are not part of this challenge"
+    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
+    await utils.custom_assert(duel["accepted"], "This duel is not accepted yet", ctx)
+    await utils.custom_assert(int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]], "You are not part of this challenge", ctx)
 
     if duel["user_id1"] == ctx.author.id:
-      assert duel["move1"] is None, "You already played!"
+      await utils.custom_assert(duel["move1"] is None, "You already played!", ctx)
       db["duels"][duel_index]["move1"] = value
       id1 = int(ctx.author.id)
       id2 = duel["user_id2"]
     else:
-      assert duel["move2"] is None, "You already played!"
+      await utils.custom_assert(duel["move2"] is None, "You already played!", ctx)
       db["duels"][duel_index]["move2"] = value
       id1 = duel["user_id1"]
       id2 = int(ctx.author.id)

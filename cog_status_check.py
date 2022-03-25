@@ -171,7 +171,7 @@ class Cog_status_check(Extension):
     await ctx.defer(ephemeral=True)
 
     user_id = str(ctx.author.id)
-    assert user_id in db["season_results"].keys(), "You did not participate to the previous season"
+    await utils.custom_assert(user_id in db["season_results"].keys(), "You did not participate to the previous season", ctx)
 
     lines = ["Last season you earned the following:"]
     total = 0

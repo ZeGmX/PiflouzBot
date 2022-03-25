@@ -2,7 +2,6 @@ from discord.ext import tasks
 from discord import Color
 import random
 from replit import db
-# import discord
 import asyncio
 from math import floor
 from interactions import Embed, EmbedField, EmbedImageStruct
@@ -11,6 +10,7 @@ from constant import Constants
 import piflouz_handlers
 import powerups
 import utils
+import wordle
 
 
 @tasks.loop(hours=24)
@@ -44,7 +44,7 @@ class Event:
     Actions to be done when the event starts
     --
     input:
-      bot: discord.ext.commands.Bot
+      bot: interactions.Client
     --
     output:
       msg: int -> id of the message announcing the event
@@ -57,7 +57,7 @@ class Event:
     Actions to be done when the event ends
     --
     input:
-      bot: discord.ext.commands.Bot
+      bot: interactions.Client
     """
     pass
   
@@ -147,7 +147,7 @@ class Raffle_event(Event):
     Updates the piflouz message with the rankings
     --
     input:
-      bot: discord.ext.commands.Bot
+      bot: interactions.Client
     """
     if "current_event_message_id" not in db.keys():
       return
@@ -163,9 +163,9 @@ class Raffle_event(Event):
     Returns an embed message corresponding to the raffle message
     --
     input:
-      bot: discord.ext.commands.Bot
+      bot: interactions.Client
     """
-    desc = f"Here is the new raffle! Use `/raffle n` to buy `n` tickets!\n\
+    desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
     The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone!"
 
@@ -185,7 +185,7 @@ class Raffle_event(Event):
       total_prize = self.get_raffle_total_prize()
 
       fields.append(EmbedField(  
-        name="Current tickets bought",
+        name="Current 🎟️ bought",
         value=val,
         inline=False
       ))
@@ -239,10 +239,6 @@ class Event_from_powerups(Event):
     return message
   
 
-  async def on_end(self, bot):
-    pass
-  
-
   def get_powerups(self):
     return self.powerups
   
@@ -252,7 +248,7 @@ class Event_from_powerups(Event):
     Returns an embed to announce the event
     --
     output:
-      embed: discord.Embed
+      embed: interactions.Embed
     """
     descriptions = [p.get_event_str() for p in self.powerups]
     content = "\n".join(descriptions)
@@ -298,3 +294,50 @@ class Combo_event(Event_from_powerups):
     p1 = powerups.Combo_max_increase(val_max_combo)
     p2 = powerups.Combo_reward_multiplier(val_multi_combo)
     super().__init__(p1, p2)
+
+
+class Wordle_event(Event):
+  def __init__(self, reward=200):
+    self.reward = reward
+
+
+  def get_embed(self):
+    """
+    Returns an embed to announce the event
+    --
+    output:
+      embed: interactions.Embed
+    """
+    desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn {self.reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
+    
+    embed = Embed(
+      title="New Wordle!",
+      description=desc,
+      color=Color.random().value,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      fields=[]
+    )
+    return embed
+
+
+  async def on_begin(self, bot):
+    if "out_channel" not in db.keys():
+      return
+
+    out_channel = await bot.get_channel(db["out_channel"])
+
+    db["word_of_the_day"] = wordle.Wordle().solution
+
+    # Starting new event
+    embed = self.get_embed()
+    message = await out_channel.send(embeds=embed)
+    await message.pin()
+    return message
+
+
+  async def on_end(self, bot):
+    db["wordle_guesses"] = dict()
+
+
+  def to_str(self):
+    return f"{__name__}.{Wordle_event.__name__}({self.reward})"

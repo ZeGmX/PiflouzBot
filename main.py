@@ -25,6 +25,7 @@ intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE
 presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
 
 bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
+# bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
 
 
 @bot.event
@@ -49,7 +50,8 @@ async def on_ready():
     "turbo_piflouz_bank",   # money after each season
     "donation_balance",     # money donated - money received throug donations
     "season_results",       # recap of the money earned last season
-    "achievements"          # list of the achievements unlocked by a user
+    "achievements",         # list of the achievements unlocked by a user
+    "wordle_guesses"        # list of the wordle guesses by a user
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -98,24 +100,6 @@ async def on_ready():
   socials.task_check_live_status.start(bot)
   utils.backup_db.start()
   rank_handlers.update_ranks.start(bot)
-
-
-@bot.event
-async def on_slash_command_error(ctx, error):
-  """
-  Callback called when an error occurs while dealing with a command
-  --
-  input:
-    ctx: interactions.CommandContext
-    error: Exception
-  """
-  print(f"Got error from slash command: {error}")
-  await ctx.send(f"Got an error while dealing with your command, sorry :'(\n{error}", ephemeral=True)
-
-
-@bot.event
-async def on_error(event, *args, **kwargs):
-  print(f"Error dealing with event {event}, with args {args} and kwargs {kwargs}")
 
 
 @bot.event
@@ -179,15 +163,16 @@ if __name__ == "__main__":
   bot.load("cog_achievements")
   bot.load("cog_buy")
   bot.load("cog_duels")
+  bot.load("cog_event")
   bot.load("cog_misc")
   bot.load("cog_piflouz_mining")
   bot.load("cog_status_check")
 
   logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
-  
 
   while 1:
     try:
       bot.start()
-    except:
+    except Exception as e:
+      print(e)
       print("got error")

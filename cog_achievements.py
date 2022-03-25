@@ -67,9 +67,6 @@ class Cog_achievements(Extension):
     if page < self.nb_pages - 1: # not the last page
       buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️")._json, custom_id=f"page_achievements_list-{page + 1}"))
     # components = spread_to_rows(*buttons)
-    print("sending")
-    print(s)
-    print(buttons)
     await ctx.send(s, components=buttons, ephemeral=True)
     
 

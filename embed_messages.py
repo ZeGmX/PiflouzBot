@@ -69,12 +69,12 @@ def get_embed_help_message():
       ),
       EmbedField(
         name="`/piflex`",
-        value=f"When you have too many {Constants.PIFLOUZ_EMOJI}\n /!\ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
+        value=f"When you have too many {Constants.PIFLOUZ_EMOJI}\n ⚠️ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
         inline=True
       ),
       EmbedField(
         name="`/buy-rank-piflex`",
-        value=f"Flex with a custom rank\n /!\ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEXROLE_DURATION)}",
+        value=f"Flex with a custom rank\n ⚠️ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEXROLE_DURATION)}",
         inline=True
       ),
       EmbedField(
@@ -89,7 +89,7 @@ def get_embed_help_message():
       ),
       EmbedField(
         name="`/raffle n`",
-        value="Buy raffle tickets to test your luck",
+        value="Buy raffle tickets to test your luck ⚠️ Only works during a raffle event ",
         inline=True
       ),
       EmbedField(
@@ -130,6 +130,16 @@ def get_embed_help_message():
       EmbedField(
         name="`/achievements list`",
         value="Check what you need to do to get some achievements",
+        inline=True
+      ),
+      EmbedField(
+        name="`/wordle guess`",
+        value="Try to solve today's wordle ⚠️ Only works during raffle events",
+        inline=True
+      ),
+      EmbedField(
+        name="`/wordle status`",
+        value="Check how your wordle is going ⚠️ Only works during raffle events",
         inline=True
       ),
       EmbedField(

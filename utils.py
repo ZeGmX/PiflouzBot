@@ -5,7 +5,7 @@ import pickle
 from replit import db
 from replit.database.database import ObservedList, ObservedDict, Database
 from discord.ext import commands, tasks
-from interactions import Channel
+from pyimgur import Imgur
 
 from constant import Constants
 import embed_messages
@@ -131,14 +131,14 @@ async def wait_until(then):
 
 
 @commands.check
-def check_message_to_be_processed(ctx):
+async def check_message_to_be_processed(ctx):
   """
   Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
   --
   input:
     ctx: interactions.CommandContext
   """
-  assert not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel"
+  await custom_assert(not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel", ctx)
   return True
 
 
@@ -243,3 +243,33 @@ def get_new_duel_id():
   
   db["last_duel_id"] += 1
   return db["last_duel_id"]
+
+
+async def custom_assert(condition, msg, ctx):
+  """
+  Respond to an interaction with an error message if the condition is not met
+  This also raises an exception to stop the coroutine handling the interaction
+  --
+  input:
+    cont: bool
+    msg: str
+    ctx: interactions.CommandContext
+  """
+  if not condition:
+    await ctx.send(msg)
+    raise Exception()
+
+
+def upload_image_to_imgur(path):
+  """
+  Uploads an image file to imgur and returns the link
+  --
+  input:
+    path: str
+  --
+  output:
+    res: str
+  """
+  imgur = Imgur(Constants.IMGUR_CLIENT_ID)
+  img = imgur.upload_image(path)
+  return img.link
