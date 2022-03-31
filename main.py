@@ -51,7 +51,10 @@ async def on_ready():
     "donation_balance",     # money donated - money received throug donations
     "season_results",       # recap of the money earned last season
     "achievements",         # list of the achievements unlocked by a user
-    "wordle_guesses"        # list of the wordle guesses by a user
+    "wordle_guesses",       # list of the wordle guesses by a user
+    "last_birthday_delivery",    # for the birthday event
+    "birthday_event_ingredients",# also for the birthday event
+    "baked_cakes"                # also for the birthday event
   ]:
     if key not in db.keys():
       db[key] = dict()
@@ -59,7 +62,8 @@ async def on_ready():
   for key in [
     "current_pilords",      # list of the current pilords
     "duels",                # list of active duels
-    "current_piflex_masters"# list of the current piflex masters
+    "current_piflex_masters",  # list of the current piflex masters
+    "birthday_raffle_participation"  # for the birthday raffle event
   ]:
     if key not in db.keys():
       db[key] = []
@@ -168,8 +172,8 @@ if __name__ == "__main__":
   bot.load("cog_piflouz_mining")
   bot.load("cog_status_check")
 
-  logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
-
+  # logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
+  
   while 1:
     try:
       bot.start()

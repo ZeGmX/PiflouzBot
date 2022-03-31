@@ -224,12 +224,14 @@ class Cog_misc(Extension):
       Option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
         Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
         Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
+        Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
       ])
     ]),
     Option(name="remove", description="Remove a role", type=OptionType.SUB_COMMAND, options=[
       Option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
         Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
-        Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications")
+        Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
+        Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
       ])
     ])
   ])

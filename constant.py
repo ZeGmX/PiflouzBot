@@ -20,6 +20,7 @@ class Constants:
   PIBOX_MASTER_ID = int(os.getenv("PIBOX_MASTER_ID"))  # Not actually a discord role
   PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
   PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
+  BIRTHDAY_NOTIF_ROLE_ID = int(os.getenv("BIRTHDAY_NOTIF_ROLE_ID"))
   
   ### Emojis
   PIFLOUZ_EMOJI_ID = int(os.getenv("PIFLOUZ_EMOJI_ID"))
@@ -30,6 +31,8 @@ class Constants:
   EMOJI_NAMES_FOR_PIBOX = eval(os.getenv("EMOJI_NAMES_FOR_PIBOX"))
   TURBO_PIFLOUZ_ANIMATED_EMOJI_ID = int(os.getenv("TURBO_PIFLOUZ_ANIMATED_EMOJI_ID"))
   TURBO_PIFLOUZ_ANIMATED_EMOJI = f"<a:turbo_piflouz:{TURBO_PIFLOUZ_ANIMATED_EMOJI_ID}>"
+  BIRTHDAY_EMOJI_ID = int(os.getenv("BIRTHDAY_EMOJI_ID"))
+  BIRTHDAY_EMOJI = f"<:pibou4Birthday:{BIRTHDAY_EMOJI_ID}>"
 
   ### Image URLs
   PIFLOUZ_URL = os.getenv("PIFLOUZ_URL")
@@ -38,6 +41,7 @@ class Constants:
   PIBOU_TWITCH_THUMBNAIL_URL = os.getenv("PIBOU_TWITCH_THUMBNAIL_URL")
   PIFLEX_IMAGES_URL = eval(os.getenv("PIFLEX_IMAGES_URL"))
   TURBO_PIFLOUZ_ANIMATED_URL = os.getenv("TURBO_PIFLOUZ_ANIMATED_URL")
+  PIBOU4BIRTHDAY_URL = os.getenv("PIBOU4BIRTHDAY_URL")
 
   ### Dates and durations
   REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))  # How many seconds between each react to earn piflouz
