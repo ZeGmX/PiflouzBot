@@ -4,7 +4,7 @@ import asyncio
 import pickle
 from replit import db
 from replit.database.database import ObservedList, ObservedDict, Database
-from discord.ext import commands, tasks
+from discord.ext import tasks
 from pyimgur import Imgur
 
 from constant import Constants
@@ -65,7 +65,7 @@ def get_total_cooldown(user_id):
     cooldown: the time in seconds
   """
   if str(user_id) not in db["powerups"].keys():
-    db["powerups"][user_id] = []
+    db["powerups"][int(user_id)] = []
 
   current_event = eval(db["current_event"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
@@ -130,16 +130,21 @@ async def wait_until(then):
   await asyncio.sleep(dt.total_seconds() % (24 * 3600))
 
 
-@commands.check
-async def check_message_to_be_processed(ctx):
+def check_message_to_be_processed(fun):
   """
   Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
   --
   input:
-    ctx: interactions.CommandContext
+    fun: async function for a function defined in an extension, taking a context as first argument
+  --
+  output:
+    wrapper: async function
   """
-  await custom_assert(not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel", ctx)
-  return True
+  async def wrapper(self, ctx, *args, **kwargs):
+    await custom_assert(not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel", ctx)
+    return await fun(self, ctx, *args, **kwargs)
+  
+  return wrapper
 
 
 def observed_to_py(obj):
@@ -256,8 +261,8 @@ async def custom_assert(condition, msg, ctx):
     ctx: interactions.CommandContext
   """
   if not condition:
-    await ctx.send(msg)
-    raise Exception()
+    await ctx.send(msg, ephemeral=True)
+    raise Exception(msg)
 
 
 def upload_image_to_imgur(path):

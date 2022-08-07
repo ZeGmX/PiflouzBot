@@ -118,7 +118,7 @@ class Cog_buy(Extension):
     """
     embed = embed_messages.get_embed_store_ui()
 
-    buttons = [Button(style=ButtonStyle.SECONDARY, label="", custom_id=emoji, emoji=Emoji(name=emoji)._json) for emoji in Constants.POWERUPS_STORE.keys()]
+    buttons = [Button(style=ButtonStyle.SECONDARY, label="", custom_id=emoji, emoji=Emoji(name=emoji)) for emoji in Constants.POWERUPS_STORE.keys()]
 
     await ctx.send(embeds=embed, components=buttons, ephemeral=True)
   

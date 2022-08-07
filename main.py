@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.1",])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.2.1",])
 
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
@@ -27,6 +27,12 @@ presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.
 bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
 # bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
 
+"""
+@bot.event
+async def on_command_error(*args, **kwargs):
+  print("in")
+  print(args, kwargs)
+"""
 
 @bot.event
 async def on_ready():

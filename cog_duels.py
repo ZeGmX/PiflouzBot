@@ -219,7 +219,7 @@ class Cog_duels(Extension):
     mention = "anyone" if duel["user_id2"] == -1 else f"<@{duel['user_id2']}>"
 
     await ctx.get_channel()
-    await ctx.channel.send(f"{ctx.author.mention} cancelled his/her challenge to {mention}, what a loser")
+    await ctx.channel.send(f"{ctx.author.mention} cancelled their challenge to {mention}, what a loser")
     await ctx.send("Done!", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
 

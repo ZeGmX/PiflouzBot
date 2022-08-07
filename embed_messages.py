@@ -20,7 +20,7 @@ def get_embed_help_message():
   embed = Embed(
     title="Need help?",
     color=Color.red().value,
-    thumbnail=EmbedImageStruct(url=Constants.PIBOU4LOVE_URL)._json,
+    thumbnail=EmbedImageStruct(url=Constants.PIBOU4LOVE_URL),
     fields=[
       EmbedField(
         name="`/help`",
@@ -74,7 +74,7 @@ def get_embed_help_message():
       ),
       EmbedField(
         name="`/buy-rank-piflex`",
-        value=f"Flex with a custom rank\n ⚠️ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEXROLE_DURATION)}",
+        value=f"Flex with a custom rank\n ⚠️ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}",
         inline=True
       ),
       EmbedField(
@@ -180,8 +180,6 @@ You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the 
 If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`.\n\n\
 This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
-  fields = []
-  
     # Rankings
   if "piflouz_bank" in db.keys():
     d_piflouz = dict(db["piflouz_bank"])
@@ -191,22 +189,21 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
     ranking_balance = get_ranking_str(list(d_piflouz.items()))
     ranking_piflex = get_ranking_str(d_piflex)
     ranking_donations = get_ranking_str(d_donations)
-    
-    if ranking_balance != "":
-      fields.append(EmbedField(name="Balance", value=ranking_balance, inline=True))
-    if ranking_piflex != "":
-      fields.append(EmbedField(name="Piflex Discovery", value=ranking_piflex, inline=True))
-    if ranking_donations != "":
-      fields.append(EmbedField(name="Donations", value=ranking_donations, inline=False))
 
-  embed = Embed(
+    embed = Embed(
     title=f"Come get some {Constants.PIFLOUZ_EMOJI}!",
     description=desc,
-    thumbnail = EmbedImageStruct(url=Constants.PIFLOUZ_URL)._json,
-    fields=fields,
+    thumbnail = EmbedImageStruct(url=Constants.PIFLOUZ_URL),
     color=Color.gold().value
   )
     
+    if ranking_balance != "":
+      embed.add_field(name="Balance", value=ranking_balance, inline=True)
+    if ranking_piflex != "":
+      embed.add_field(name="Piflex Discovery", value=ranking_piflex, inline=True)
+    if ranking_donations != "":
+      embed.add_field(name="Donations", value=ranking_donations, inline=False)
+
   return embed
 
 
@@ -243,7 +240,7 @@ def get_embed_twitch_notif():
     title="Twitch notification role",
     description="React to get/remove the Twitch notifications role",
     color=Color.purple().value,
-    thumbnail=EmbedImageStruct(url=Constants.PIBOU_TWITCH_THUMBNAIL_URL)._json
+    thumbnail=EmbedImageStruct(url=Constants.PIBOU_TWITCH_THUMBNAIL_URL)
   )
   return embed
 
@@ -266,8 +263,8 @@ def get_embed_piflex(user):
     title="PIFLEX",
     description=f"Look how much piflouz {user.mention} has. So much piflouz that they are flexing on you poor peasants! They are so cool and rich that they can just take a bath in piflouz. You mad?",
     color=Color.gold().value,
-    thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
-    image=EmbedImageStruct(url=image_url)._json
+    thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL),
+    image=EmbedImageStruct(url=image_url)
   )
   
   print(f"Piflex with {image_url}")
@@ -281,20 +278,18 @@ def get_embed_store_ui():
   output:
     embed: interactions.Embed
   """
-  fields = []
-  for emoji, powerup in Constants.POWERUPS_STORE.items():
-    fields.append(EmbedField(
-      name=emoji,
-      value=powerup.get_store_str(),
-      inline=True
-    ))
-
   embed = Embed(
     title="Piflouz shop",
     description="Here you can buy useful upgrades!",
     color=Color.dark_magenta().value,
-    fields=fields
   )
+  
+  for emoji, powerup in Constants.POWERUPS_STORE.items():
+    embed.add_field(
+      name=emoji,
+      value=powerup.get_store_str(),
+      inline=True
+    )
 
   return embed
 
@@ -310,7 +305,7 @@ async def get_embed_otter():
   embed = Embed(
     title="Otter image of the day!",
     color=Color.from_rgb(101, 67, 33).value,  # brown
-    image=EmbedImageStruct(url=url)._json
+    video=EmbedImageStruct(url=url)
   )
   return embed
 
@@ -324,14 +319,13 @@ async def get_embed_end_season(bot):
   """
   channel = await bot.get_channel(db["out_channel"])
   msg = await channel.get_message(db["piflouz_message_id"])
-  url = f"https://discord.com/channels/{channel.guild_id}/{channel.id}/{msg.id}"
-  print(url)
+  url = msg.url
   
   embed = Embed(
     title="The season is over!",
     description=f"The last season has ended! Use the `/seasonresults` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
     color=Color.purple().value,
-    thumbnail=EmbedImageStruct(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)._json
+    thumbnail=EmbedImageStruct(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
   )
 
   return embed

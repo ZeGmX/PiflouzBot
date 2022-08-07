@@ -46,7 +46,7 @@ class Cog_misc(Extension):
       ctx: interactions.CommandContext
     """
     await ctx.send(f"Here is some help. Hopes you understand me better after reading this! {Constants.PIFLOUZ_EMOJI}\n", embeds=embed_messages.get_embed_help_message(), ephemeral=True)
-
+    
 
   @extension_command(name="hello", description="Say hi!", scope=Constants.GUILD_IDS, options=[])
   @utils.check_message_to_be_processed
@@ -65,14 +65,14 @@ class Cog_misc(Extension):
     Option(name="main", description="Change my default channel", type=OptionType.SUB_COMMAND, options=[]),
     Option(name="twitch", description="Change the channel where I announce new lives", type=OptionType.SUB_COMMAND, options=[])
   ])
-  async def setup_channel_cmd_group_dispatch(self, ctx):
+  async def setup_channel_cmd_group_dispatch(self, ctx, sub_command):
     """
     Dispatches the interaction for a /setup-channel depending on the sub command
     --
     input:
       ctx: interactions.CommandContext
     """
-    sub_command = ctx.data.options[0].name
+    #sub_command = ctx.data.options[0].name
     if sub_command == "main":
       await self.setup_channel_main_cmd(ctx)
     elif sub_command == "twitch":
@@ -95,7 +95,7 @@ class Cog_misc(Extension):
   
     await channel.send("This channel is now my default channel")
   
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Emoji(id=Constants.PIFLOUZ_EMOJI_ID)._json)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Emoji(id=Constants.PIFLOUZ_EMOJI_ID))
     
     embed = embed_messages.get_embed_piflouz(self.bot)
   

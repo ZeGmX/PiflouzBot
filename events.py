@@ -45,7 +45,7 @@ async def event_handlers(bot):
   if now.month == 4 and now.day == 1:
     new_event = Birthday_event()
   elif now.month == 4 and now.day == 2:
-    new_event = Birthday_raffle_event(db["baked_cakes"]["total"])
+    new_event = Birthday_raffle_event(db["baked_cakes"]["total"] * Birthday_event.reward_per_cake)
   elif now.month == 4 and now.day == 3:
     new_event = Wordle_event()
   elif now.month == 4 and now.day == 4:
@@ -56,10 +56,10 @@ async def event_handlers(bot):
   message = await new_event.on_begin(bot)
   await message.pin()
 
-  if now.month == 4 and now.day == 1:
-    await message.edit(content="This event will can return in the future!")
-  elif now.month == 4 and now.day == 1:
-    await message.edit(content="This event will can return in the future!")
+  if now.month == 4 and now.day == 3:
+    await message.edit(content="This event will return in the future!")
+  elif now.month == 4 and now.day == 4:
+    await message.edit(content="This event will return in the future!")
   
   db["current_event_message_id"] = int(message.id)
   db["current_event"] = new_event.to_str()
@@ -239,7 +239,7 @@ class Raffle_event(Event):
       title="New Raffle!",
       description=desc,
       color=Color.random().value,
-      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL),
       fields=fields
     )
     
@@ -300,7 +300,7 @@ class Event_from_powerups(Event):
     embed = Embed(
       title="Event of the day",
       color=Color.random().value,
-      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL),
       fields=[field]
     )
     return embed
@@ -354,7 +354,7 @@ class Wordle_event(Event):
       title="New Wordle!",
       description=desc,
       color=Color.random().value,
-      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)._json,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL),
       fields=[]
     )
     return embed
@@ -439,8 +439,8 @@ class Birthday_event(Event):
       title="Happy birthday Pibot!",
       thumbnail=EmbedImageStruct(
         url=Constants.PIBOU4BIRTHDAY_URL
-      )._json,
-      description=f"Today is Pibot's 1 year anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {', '.join(f'{nb} {e}' for e, nb in self.ingredients_per_cake.items())} to be baked. Pibot will earn {self.reward_per_cake} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
+      ),
+      description=f"Today is Pibot's 1 year anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {', '.join(f'{nb} {e}' for e, nb in self.ingredients_per_cake.items())} to be baked. Pibot will earn {self.reward_per_cake} {Constants.PIFLOUZ_EMOJI} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
       color=Color.from_rgb(255, 255, 255).value,  # white
     )
     return embed
@@ -458,8 +458,8 @@ class Birthday_event(Event):
       title="The baking is over!",
       thumbnail=EmbedImageStruct(
         url=Constants.PIBOU4BIRTHDAY_URL
-      )._json,
-      description=f"Congratulations, you managed to bake {nb_cakes}. Pibot will invest the earned {nb_cakes * self.reward_per_cake} {Constants.PIFLOUZ_EMOJI} in the next event! 👀",
+      ),
+      description=f"Congratulations, you managed to bake {nb_cakes} cakes. Pibot will invest the earned {nb_cakes * self.reward_per_cake} {Constants.PIFLOUZ_EMOJI} in the next event! 👀",
       color=Color.from_rgb(255, 255, 255).value  # white
     )
     return embed
@@ -480,7 +480,7 @@ class Birthday_event(Event):
     return Button(
       style=ButtonStyle.SECONDARY,
       label = str(nb),
-      emoji=Emoji(name=emoji)._json,
+      emoji=Emoji(name=emoji),
       custom_id=emoji,
       disabled=disabled
     )
@@ -633,32 +633,29 @@ class Birthday_raffle_event(Event):
     input:
       bot: interactions.Client
     """
-    desc = f"Today's raffle is special! Click the button below to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake! The first winner will earn 50%, the second one wille get 30% and the third winner wille get 20%!"
-
-    fields = []
+    desc = f"Today's raffle is special! Click the button below to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake! The first winner will earn 50%, the second one will get 30% and the third winner will get 20%!"
+    
+    embed = Embed(
+      title="Birthday Special Raffle!",
+      description=desc,
+      color=Color.random().value,
+      thumbnail=EmbedImageStruct(url=Constants.PIBOU4BIRTHDAY_URL)
+    )
     
     if "birthday_raffle_participation" in db.keys() and len(db["birthday_raffle_participation"]) > 0:
       participation = list(db["birthday_raffle_participation"])
       val = "\n".join(f"• <@{user_id}>" for user_id in participation)
       
-      fields.append(EmbedField(
+      embed.add_field(
         name="Current participants",
         value=val,
         inline=False
-      ))
-      fields.append(EmbedField( 
+      )
+      embed.add_field( 
         name="Total prize",
         value=f"The three winners will earn 50%, 30% and 20% of the total jackpot of {self.reward} {Constants.PIFLOUZ_EMOJI}!",
         inline=False
-      ))
-
-    embed = Embed(
-      title="Birthday Special Raffle!",
-      description=desc,
-      color=Color.random().value,
-      thumbnail=EmbedImageStruct(url=Constants.PIBOU4BIRTHDAY_URL)._json,
-      fields=fields
-    )
+      )
     
     return embed
 
@@ -673,6 +670,6 @@ class Birthday_raffle_event(Event):
     res = Button(
       style=ButtonStyle.SECONDARY,
       custom_id=self.button_id,
-      emoji=Emoji(name=self.button_id)._json
+      emoji=Emoji(name=self.button_id)
     )
     return res

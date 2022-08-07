@@ -1,5 +1,6 @@
 from interactions import extension_command, extension_component, Extension, Option, OptionType, Embed, EmbedImageStruct
 from discord import Color
+#from discord import Color
 from replit import db
 import os
 
@@ -66,7 +67,6 @@ class Cog_event(Extension):
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("raffle_participation_successful", ctx.author.id, nb_tickets)
 
-
   @extension_command(name="wordle", description="TBD", scope=Constants.GUILD_IDS, options=[
     Option(name="guess", description="Take a guess on the word the day", type=OptionType.SUB_COMMAND, options=[
       Option(name="word", description="5-letter english word", type=OptionType.STRING, required=True)
@@ -74,7 +74,7 @@ class Cog_event(Extension):
     Option(name="status", description="Check how your wordle is going", type=OptionType.SUB_COMMAND, options=[])
   ])
   @utils.check_message_to_be_processed
-  async def wordle_cmd_group_dispatch(self, ctx, sub_command="status", word=None): # If the subcommand does not have options, the sub_command parameter is not sent
+  async def wordle_cmd_group_dispatch(self, ctx, sub_command, word=None): # If the subcommand does not have options, the sub_command parameter is not sent
     """
     Dispatches the interaction for a /wordle depending on the sub command
     --
@@ -119,7 +119,7 @@ class Cog_event(Extension):
     header_str = "\n".join(wordle.guess(w) for w in guesses)
 
     if guesses[-1] == wordle.solution:
-      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.nb_trials} trials!\nYou earnt {current_event.reward}{Constants.PIFLOUZ_EMOJI}"
+      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.nb_trials} trials!\nYou earned {current_event.reward}{Constants.PIFLOUZ_EMOJI}"
       piflouz_handlers.update_piflouz(user_id, current_event.reward, check_cooldown=False)
     elif len(guesses) == wordle.nb_trials:
       header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
@@ -185,7 +185,7 @@ class Cog_event(Extension):
       title="Wordle",
       description=header_str,
       color = color.value,
-      image=EmbedImageStruct(url=link)._json
+      image=EmbedImageStruct(url=link)
     )
     await ctx.send(embeds=embed, ephemeral=True)
 

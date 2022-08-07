@@ -38,7 +38,7 @@ class Cog_achievements(Extension):
     Option(name="list", description="Check your achievements", type=OptionType.SUB_COMMAND, options=[])
   ])
   @utils.check_message_to_be_processed
-  async def achiev_list_cmd(self, ctx, page=0):
+  async def achiev_list_cmd(self, ctx, sub_command, page=0):
     """
     Callback for the achievements list command
     --
@@ -62,10 +62,10 @@ class Cog_achievements(Extension):
     # Getting the buttons
     buttons = []
     if page != 0 : # not the first page
-      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="⬅️")._json, custom_id=f"page_achievements_list-{page - 1}"))
+      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="⬅️"), custom_id=f"page_achievements_list-{page - 1}"))
       
     if page < self.nb_pages - 1: # not the last page
-      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️")._json, custom_id=f"page_achievements_list-{page + 1}"))
+      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️"), custom_id=f"page_achievements_list-{page + 1}"))
     # components = spread_to_rows(*buttons)
     await ctx.send(s, components=buttons, ephemeral=True)
     
@@ -81,7 +81,7 @@ class Cog_achievements(Extension):
       callback function
     """
     async def callback(ctx):
-      await self.achiev_list_cmd(ctx, page=page)
+      await self.achiev_list_cmd(ctx, "", page=page)
     return callback
 
 

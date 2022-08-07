@@ -28,7 +28,7 @@ async def start_new_season(bot):
 
     emoji = Emoji(id=Constants.PIFLOUZ_EMOJI_ID)
 
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji._json)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji)
 
     msg = await channel.send(embeds=embed_messages.get_embed_piflouz(bot), components=piflouz_button)
     return msg
