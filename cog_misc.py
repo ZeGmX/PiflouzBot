@@ -27,6 +27,7 @@ class Cog_misc(Extension):
     /spawn-pibox
     /role [get | remove]
     /pichapouche
+    /wouldyourather
   Message commands:
     Du quoi?
     Du tarpin !
@@ -311,6 +312,28 @@ class Cog_misc(Extension):
     ctx.target._client = self.bot._http
     await ctx.target.reply("Du tarpin !")
     await ctx.send("Done!", ephemeral=True)
+
+
+  @extension_command(name="wouldyourather", description="Create a custom wouldyourather", scope=Constants.GUILD_IDS, options=[
+    Option(name="option_a", description="Option A", type=OptionType.STRING, required=True),
+    Option(name="option_b", description="Option B", type=OptionType.STRING, required=True)
+  ])
+  async def wouldyourather_cmd(self, ctx, option_a, option_b):
+    """
+    Trials for a custom wouldyourather with easier formating
+    --
+    input:
+      ctx: interactions.CommandContext
+      option_a : str
+      option_b : str
+    """
+    await ctx.defer()
+    
+    text_output = f"> **Would you rather...**\n> :regional_indicator_a: {option_a}\n> **or**\n> :regional_indicator_b: {option_b}"
+    msg = await ctx.send(text_output)
+
+    for emoji_id in ["🇦", "🇧"]:
+        await msg.create_reaction(emoji_id)
 
 
 def setup(bot):

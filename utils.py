@@ -141,7 +141,7 @@ def check_message_to_be_processed(fun):
     wrapper: async function
   """
   async def wrapper(self, ctx, *args, **kwargs):
-    await custom_assert(not ("out_channel" not in db.keys() or db["out_channel"] != int(ctx.channel_id)), "Command attempt in the wrong channel", ctx)
+    await custom_assert("out_channel" in db.keys() and db["out_channel"] == int(ctx.channel_id), "Command attempt in the wrong channel", ctx)
     return await fun(self, ctx, *args, **kwargs)
   
   return wrapper

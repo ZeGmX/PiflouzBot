@@ -148,6 +148,11 @@ def get_embed_help_message():
         inline=True
       ),
       EmbedField(
+        name="`/wouldyourather`",
+        value="Create a 'Would you rather?' poll",
+        inline=True
+      ),
+      EmbedField(
         name="Things I do in the background",
         value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\
