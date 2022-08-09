@@ -302,10 +302,11 @@ async def get_embed_otter():
     embed: interactions.Embed
   """ 
   url = await socials.get_otter_image()
+
   embed = Embed(
     title="Otter image of the day!",
     color=Color.from_rgb(101, 67, 33).value,  # brown
-    video=EmbedImageStruct(url=url)
+    image=EmbedImageStruct(url=url)
   )
   return embed
 

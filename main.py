@@ -164,7 +164,7 @@ async def on_message_reaction_add(reac):
     else:
       bot.dispatch("pibox_failed", user.id, qty)
   
-  
+
 if __name__ == "__main__":
   Constants.load()  # Due to import circular import issues
  
