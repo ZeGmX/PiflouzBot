@@ -28,11 +28,11 @@ presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.
 bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
 
 
-# @bot.event
-# async def on_command_error(*args, **kwargs):
-#   print("in error handler")
-#   print(args, kwargs)
-#   print(args[1].message)
+@bot.event
+async def on_command_error(*args, **kwargs):
+  print("in error handler")
+  print(args, kwargs)
+  print(args[1].message)
 
 
 @bot.event
@@ -61,7 +61,8 @@ async def on_start():
     "wordle_guesses",       # list of the wordle guesses by a user
     "last_birthday_delivery",    # for the birthday event
     "birthday_event_ingredients",# also for the birthday event
-    "baked_cakes"                # also for the birthday event
+    "baked_cakes",               # also for the birthday event
+    "wyr_edit"              # to keep track of the "Would you rather?" message being updated
   ]:
     if key not in db.keys():
       db[key] = dict()
