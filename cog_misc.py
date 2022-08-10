@@ -1,7 +1,8 @@
-from interactions import extension_command, Extension, Emoji, Option, OptionType, Button, ButtonStyle, Choice, ApplicationCommandType
+from interactions import extension_command, Extension, Emoji, OptionType, Button, ButtonStyle, Choice, ApplicationCommandType, autodefer, option
 from math import ceil
 import random
 from replit import db
+import re
 
 from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
@@ -37,7 +38,8 @@ class Cog_misc(Extension):
     self.bot = bot
 
 
-  @extension_command(name="help", description="Show the help message", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="help", description="Show the help message", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def help_cmd(self, ctx):
     """
@@ -49,7 +51,8 @@ class Cog_misc(Extension):
     await ctx.send(f"Here is some help. Hopes you understand me better after reading this! {Constants.PIFLOUZ_EMOJI}\n", embeds=embed_messages.get_embed_help_message(), ephemeral=True)
     
 
-  @extension_command(name="hello", description="Say hi!", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="hello", description="Say hi!", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def hello_cmd(self, ctx):
     """
@@ -62,24 +65,20 @@ class Cog_misc(Extension):
     await ctx.send(Constants.GREETINGS[index].format(ctx.author.user.mention))
 
 
-  @extension_command(name="setup-channel", description="TBD", scope=Constants.GUILD_IDS, options=[
-    Option(name="main", description="Change my default channel", type=OptionType.SUB_COMMAND, options=[]),
-    Option(name="twitch", description="Change the channel where I announce new lives", type=OptionType.SUB_COMMAND, options=[])
-  ])
-  async def setup_channel_cmd_group_dispatch(self, ctx, sub_command):
+  @extension_command(name="setup-channel", description="TBD", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
+  async def setup_channel_cmd(self, ctx):
     """
-    Dispatches the interaction for a /setup-channel depending on the sub command
+    Callback for the /setup-channel command
     --
     input:
       ctx: interactions.CommandContext
     """
-    #sub_command = ctx.data.options[0].name
-    if sub_command == "main":
-      await self.setup_channel_main_cmd(ctx)
-    elif sub_command == "twitch":
-      await self.setup_channel_twitch_cmd(ctx)
+    pass
+    
 
-
+  @setup_channel_cmd.subcommand(name="main", description="Change my default channel")
+  @autodefer(ephemeral=True)
   async def setup_channel_main_cmd(self, ctx):
     """
     Callback for the setup-channnel main command
@@ -106,7 +105,9 @@ class Cog_misc(Extension):
     db["current_season_message_id"] = int(message.id)
     await message.pin()
   
-  
+
+  @setup_channel_cmd.subcommand(name="twitch", description="Change the channel where I announce new lives")
+  @autodefer(ephemeral=True)
   async def setup_channel_twitch_cmd(self, ctx):
     """
     Callback for the setup-channnel twitch command
@@ -118,10 +119,10 @@ class Cog_misc(Extension):
     await ctx.send("Done!", ephemeral=True)
 
 
-  @extension_command(name="donate", description="Be generous to others", scope=Constants.GUILD_IDS, options=[
-    Option(name="user_receiver", description="Revceiver", type=OptionType.USER, required=True),
-    Option(name="amount", description="How much you want to give", type=OptionType.INTEGER, required=True, min_value=1)
-  ])
+  @extension_command(name="donate", description="Be generous to others", scope=Constants.GUILD_IDS)
+  @option(name="user_receiver", description="Revceiver", type=OptionType.USER, required=True)
+  @option(name="amount", description="How much you want to give", type=OptionType.INTEGER, required=True, min_value=1)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def donate_cmd(self, ctx, user_receiver, amount):
     """
@@ -132,8 +133,6 @@ class Cog_misc(Extension):
       user_receiver: interactions.User
       amount: int
     """
-    await ctx.defer(ephemeral=True)
-  
     user_sender = ctx.author 
   
     # Trading
@@ -164,7 +163,8 @@ class Cog_misc(Extension):
     db["donation_balance"][id_receiver] -= qty_receiver
 
 
-  @extension_command(name="joke", description="To laugh your ass off (or not, manage your expectations)", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="joke", description="To laugh your ass off (or not, manage your expectations)", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def joke_cmd(self, ctx):
     """
@@ -178,9 +178,9 @@ class Cog_misc(Extension):
     await ctx.send(output_message)
 
 
-  @extension_command(name="giveaway", description="Drop a pibox with your own money", scope=Constants.GUILD_IDS, options=[
-    Option(name="amount", description="How many piflouz are inside the pibox", type=OptionType.INTEGER, required=True, min_value=1)
-  ])
+  @extension_command(name="giveaway", description="Drop a pibox with your own money", scope=Constants.GUILD_IDS)
+  @option(name="amount", description="How many piflouz are inside the pibox", type=OptionType.INTEGER, required=True, min_value=1)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def giveaway_cmd(self, ctx, amount):
     """
@@ -190,8 +190,6 @@ class Cog_misc(Extension):
       ctx: interactions.CommandContext
       amount: int -> how many piflouz given
     """
-    await ctx.defer(ephemeral=True)
-  
     user_sender = ctx.author 
     
     # Trading
@@ -204,7 +202,8 @@ class Cog_misc(Extension):
     self.bot.dispatch("giveaway_successful", ctx.author.id)
 
 
-  @extension_command(name="spawn-pibox", description="The pibox master can spawn a pibox", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="spawn-pibox", description="The pibox master can spawn a pibox", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def spawn_pibox_cmd(self, ctx):
     """
@@ -220,36 +219,25 @@ class Cog_misc(Extension):
     await ctx.send("Done!", ephemeral=True)
 
 
-  @extension_command(name="role", description="TBD", scope=Constants.GUILD_IDS, options=[
-    Option(name="get", description="Get a role", type=OptionType.SUB_COMMAND, options=[
-      Option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
-        Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
-        Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
-        Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
-      ])
-    ]),
-    Option(name="remove", description="Remove a role", type=OptionType.SUB_COMMAND, options=[
-      Option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
-        Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
-        Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
-        Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
-      ])
-    ])
-  ])
-  @utils.check_message_to_be_processed
-  async def role_cmd_group_dispatch(self, ctx, sub_command, role):
+  @extension_command(name="role", description="TBD", scope=Constants.GUILD_IDS)
+  async def role_cmd(self, ctx):
     """
-    Dispatches the interaction for a /role depending on the subcommand
+    Callback for the /role command
     --
     input:
       ctx: interactions.CommandContext
-      sub_command: str
-      role: str
     """
-    if sub_command == "get": await self.get_role_cmd(ctx, role)
-    elif sub_command == "remove": await self.remove_role_cmd(ctx, role)
+    pass
+    
 
-
+  @role_cmd.subcommand(name="get", description="Get a role")
+  @option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
+    Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
+    Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
+    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
+  ])
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def get_role_cmd(self, ctx, role):
     """
     Gives a role to the user
@@ -262,7 +250,15 @@ class Cog_misc(Extension):
     await member.add_role(role=int(role), guild_id=ctx.guild_id)
     await ctx.send("Done!", ephemeral=True)
   
-  
+
+  @role_cmd.subcommand(name="remove", description="Remove a role")
+  @option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
+    Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
+    Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
+    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
+  ])
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def remove_role_cmd(self, ctx, role):
     """
     Gives a role to the user
@@ -276,7 +272,8 @@ class Cog_misc(Extension):
     await ctx.send("Done!", ephemeral=True)
 
 
-  @extension_command(name="pichapouche", description="Picha picha!", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="pichapouche", description="Picha picha!", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def pichapouche_cmd(self, ctx):
     """
@@ -289,6 +286,7 @@ class Cog_misc(Extension):
 
 
   @extension_command(type=ApplicationCommandType.MESSAGE, name="Du quoi ?", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   async def du_quoi_context_app(self, ctx):
     """
     Answers "Du quoi ?" to a message (probably in response to message containing the word "tarpin")
@@ -302,6 +300,7 @@ class Cog_misc(Extension):
   
   
   @extension_command(type=ApplicationCommandType.MESSAGE, name="Du tarpin !", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   async def du_tarpin_context_app(self, ctx):
     """
     Answers "Du tarpin !" to a message (probably in response to message containing "Du quoi ?")
@@ -312,29 +311,7 @@ class Cog_misc(Extension):
     ctx.target._client = self.bot._http
     await ctx.target.reply("Du tarpin !")
     await ctx.send("Done!", ephemeral=True)
-
-
-  @extension_command(name="wouldyourather", description="Create a custom wouldyourather", scope=Constants.GUILD_IDS, options=[
-    Option(name="option_a", description="Option A", type=OptionType.STRING, required=True),
-    Option(name="option_b", description="Option B", type=OptionType.STRING, required=True)
-  ])
-  async def wouldyourather_cmd(self, ctx, option_a, option_b):
-    """
-    Trials for a custom wouldyourather with easier formating
-    --
-    input:
-      ctx: interactions.CommandContext
-      option_a : str
-      option_b : str
-    """
-    await ctx.defer()
     
-    text_output = f"> **Would you rather...**\n> :regional_indicator_a: {option_a}\n> **or**\n> :regional_indicator_b: {option_b}"
-    msg = await ctx.send(text_output)
-
-    for emoji_id in ["🇦", "🇧"]:
-        await msg.create_reaction(emoji_id)
-
 
 def setup(bot):
   Cog_misc(bot)

@@ -1,4 +1,4 @@
-from interactions import extension_command, Extension, Emoji, Option, OptionType, Button, ButtonStyle
+from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer
 from math import ceil
 from replit import db
 
@@ -34,13 +34,29 @@ class Cog_achievements(Extension):
       self.bot.component(f"page_achievements_list-{i}")(self.callback_from_page(i))
 
 
-  @extension_command(name="achievements", description="TBD", scope=Constants.GUILD_IDS, options=[
-    Option(name="list", description="Check your achievements", type=OptionType.SUB_COMMAND, options=[])
-  ])
+  @extension_command(name="achievements", description="TBD", scope=Constants.GUILD_IDS)
+  async def achievements_cmd(self, ctx):
+    print("in cmd")
+    pass
+
+  
+  @achievements_cmd.subcommand(name="list", description="Check your achievements")
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
-  async def achiev_list_cmd(self, ctx, sub_command, page=0):
+  async def achiev_list_cmd(self, ctx, page=0):
     """
     Callback for the achievements list command
+    --
+    input:
+      ctx: interactions.CommandContext
+      page: int
+    """
+    await self.send_achievements_page(ctx, 0)
+    
+
+  async def send_achievements_page(self, ctx, page):
+    """
+    Common callback for the achievements list command and buttons
     --
     input:
       ctx: interactions.CommandContext
@@ -66,7 +82,7 @@ class Cog_achievements(Extension):
       
     if page < self.nb_pages - 1: # not the last page
       buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️"), custom_id=f"page_achievements_list-{page + 1}"))
-    # components = spread_to_rows(*buttons)
+    
     await ctx.send(s, components=buttons, ephemeral=True)
     
 
@@ -80,8 +96,9 @@ class Cog_achievements(Extension):
     output:
       callback function
     """
+    @autodefer(ephemeral=True)
     async def callback(ctx):
-      await self.achiev_list_cmd(ctx, "", page=page)
+      await self.send_achievements_page(ctx, page=page)
     return callback
 
 

@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.2.1",])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/EdVraz/I-am-spending-way-too-many-time-on-this-lol@fix_autodefer_in_extensions",])
 
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
@@ -24,18 +24,19 @@ intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE
 
 presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
 
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
-# bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
+# bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
 
-"""
-@bot.event
-async def on_command_error(*args, **kwargs):
-  print("in")
-  print(args, kwargs)
-"""
+
+# @bot.event
+# async def on_command_error(*args, **kwargs):
+#   print("in error handler")
+#   print(args, kwargs)
+#   print(args[1].message)
+
 
 @bot.event
-async def on_ready():
+async def on_start():
   """
   Function executed when the bot correctly connected to Discord
   """
@@ -120,6 +121,8 @@ async def on_message_create(message):
   input:
     message: interactions.Message -> the message sent
   """
+  if message.author.id == int(bot.me.id): return
+  
   message._client = bot._http
   message = await (await message.get_channel()).get_message(message.id)
   
@@ -177,6 +180,7 @@ if __name__ == "__main__":
   bot.load("cog_misc")
   bot.load("cog_piflouz_mining")
   bot.load("cog_status_check")
+  bot.load("cog_would_you_rather")
 
   # logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
   

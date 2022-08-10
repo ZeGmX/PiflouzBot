@@ -1,4 +1,4 @@
-from interactions import extension_command, extension_listener, Extension, Option, OptionType, Choice
+from interactions import extension_command, Extension, OptionType, Choice, option, autodefer
 from replit import db
 from math import ceil
 
@@ -27,73 +27,28 @@ class Cog_duels(Extension):
     self.bot = bot
 
 
-  @extension_listener
-  async def on_slash_command_error(*args, **kwargs):
-    print("in")
-    print(args, kwargs)
-  
-
-  @extension_command(name="duel", description="TBD", scope=Constants.GUILD_IDS, options=[
-    
-    Option(name="challenge", description="Duel someone to earn piflouz!", type=OptionType.SUB_COMMAND, options=[
-      Option(name="amount", description="How much do you want to bet?", required=True, type=OptionType.INTEGER, min_value=1),
-      Option(name="duel_type", description="What game do you want to play?", required=True, type=OptionType.STRING, choices=[
-        Choice(name="Shifumi", value="Shifumi")
-      ]),
-      Option(name="user", description="Who do you want to duel? Leave empty to duel anyone", required=False, type=OptionType.USER)
-    ]),
-    
-    Option(name="accept", description="Accept someone's challenge", type=OptionType.SUB_COMMAND, options=[
-      Option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
-    ]),
-
-    Option(name="deny", description="Deny someone's challenge", type=OptionType.SUB_COMMAND, options=[
-      Option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
-    ]),
-
-    Option(name="cancel", description="Cancel your challenge to someone", type=OptionType.SUB_COMMAND, options=[
-      Option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
-    ]),
-
-    Option(name="play", description="TBD", type=OptionType.SUB_COMMAND_GROUP, options=[
-      Option(name="shifumi", description="Play shifumi!", type=OptionType.SUB_COMMAND, options=[
-        Option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER),
-        Option(name="value", description="What do you want to play?", required=True, type=OptionType.STRING, choices=[
-          Choice(name="Rock", value="Rock"),
-          Choice(name="Paper", value="Paper"),
-          Choice(name="Scissors", value="Scissors")
-        ])
-      ])
-    ]),
-
-    Option(name="status", description="Check your ongoing duels", type=OptionType.SUB_COMMAND, options=[])
-  ])
-  @utils.check_message_to_be_processed
-  async def duel_cmd_group_dispatch(self, ctx, sub_command=None, sub_command_group=None, amount=None, duel_type=None, user=None, duel_id=None, value=None):
+  @extension_command(name="duel", description="TBD", scope=Constants.GUILD_IDS)
+  async def duel_cmd(self, ctx):
     """
-    Dispatches the interaction for a /duel depending on the subcommand
+    Callback for the duel command
     --
     input:
       ctx: interactions.CommandContext
-      sub_command: str
-      amount: int
-      duel_type: str
-      user: interactions.User
-      duel_id: int
-      value: str
     """
-    sub_command = ctx.data.options[0].name
-    if sub_command == "challenge": await self.duel_challenge_cmd(ctx, amount, duel_type, user)
-    elif sub_command == "accept": await self.duel_accept_cmd(ctx, duel_id)
-    elif sub_command == "deny": await self.duel_deny_cmd(ctx, duel_id)
-    elif sub_command == "cancel": await self.duel_cancel_cmd(ctx, duel_id)
-    elif sub_command == "play": await self.duel_play_shifumi_cmd(ctx, duel_id, value)
-    elif sub_command == "status": await self.duel_status_cmd(ctx)
-
+    pass
   
+
+  @duel_cmd.subcommand(name="challenge", description="Duel someone to earn piflouz!")
+  @option(name="amount", description="How much do you want to bet?", required=True, type=OptionType.INTEGER, min_value=1)
+  @option(name="duel_type", description="What game do you want to play?", required=True, type=OptionType.STRING, choices=[
+        Choice(name="Shifumi", value="Shifumi")
+      ])
+  @option(name="user", description="Who do you want to duel? Leave empty to duel anyone", required=False, type=OptionType.USER)
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_challenge_cmd(self, ctx, amount, duel_type, user=None):
     """
-    Callback for the duel challenge command
+    Callback for the duel challenge subcommand
     --
     input:
       ctx: interactions.CommandContext
@@ -101,7 +56,6 @@ class Cog_duels(Extension):
       duel_type: string -> what kind of duel
       user: interactions.User -> the person challenged
     """
-    await ctx.defer(ephemeral=True)
     await utils.custom_assert(user is None or int(ctx.author.id) != int(user.id), "You can't challenge yourself!", ctx)
 
     await utils.custom_assert(piflouz_handlers.update_piflouz(ctx.author.id, qty=-amount, check_cooldown=False), "You don't have enough piflouz to do that", ctx)
@@ -120,16 +74,18 @@ class Cog_duels(Extension):
     self.bot.dispatch("duel_created", ctx.author.id, id_challenged, amount, duel_type)
 
 
+  @duel_cmd.subcommand(name="accept", description="Accept someone's challenge")
+  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_accept_cmd(self, ctx, duel_id):
     """
-    Callback for the duel accept command
+    Callback for the duel accept subcommand
     --
     input:
       ctx: interactions.CommandContext
       duel_id: int
     """
-    await ctx.defer(ephemeral=True)
-
     duel_index = None
     for i, duel in enumerate(db["duels"]):
       if duel["duel_id"] == duel_id:
@@ -162,15 +118,18 @@ class Cog_duels(Extension):
     self.bot.dispatch("duel_accepted", int(ctx.author.id), duel_id)
 
 
+  @duel_cmd.subcommand(name="deny", description="Deny someone's challenge")
+  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_deny_cmd(self, ctx, duel_id):
     """
-    Callback for the duel deny command
+    Callback for the duel deny subcommand
     --
     input:
       ctx: interactions.CommandContext
       duel_id: int
     """
-    await ctx.defer(ephemeral=True)
     duel_index = None
     for i, duel in enumerate(db["duels"]):
       if duel["duel_id"] == duel_id:
@@ -192,15 +151,18 @@ class Cog_duels(Extension):
     await utils.update_piflouz_message(self.bot)
 
 
+  @duel_cmd.subcommand(name="cancel", description="Cancel your challenge to someone")
+  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_cancel_cmd(self, ctx, duel_id):
     """
-    Callback for the duel cancel command
+    Callback for the duel cancel subcommand
     --
     input:
       ctx: interactions.CommandContext
       duel_id: int
     """
-    await ctx.defer(ephemeral=True)
     duel_index = None
     for i, duel in enumerate(db["duels"]):
       if duel["duel_id"] == duel_id:
@@ -224,16 +186,35 @@ class Cog_duels(Extension):
     await utils.update_piflouz_message(self.bot)
 
 
+  @duel_cmd.group(name="play", description="TBD")
+  async def duel_cmd_group_cmd(self, ctx):
+    """
+    Callback for the duel play command group
+    --
+    input:
+      ctx: interactions.CommandContext
+    """
+    pass
+
+
+  @duel_cmd_group_cmd.subcommand(name="shifumi", description="Play shifumi!")
+  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @option(name="value", description="What do you want to play?", required=True, type=OptionType.STRING, choices=[
+    Choice(name="Rock", value="Rock"),
+    Choice(name="Paper", value="Paper"),
+    Choice(name="Scissors", value="Scissors")
+  ])
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_play_shifumi_cmd(self, ctx, duel_id, value):
     """
-    Callback for the duel accept command
+    Callback for the duel play shifumi subcommand
     --
     input:
       ctx: interactions.CommandContext
       duel_id: int
       value: string -> the move played by the player
     """
-    await ctx.defer(ephemeral=True)
     duel_index = None
     for i, duel in enumerate(db["duels"]):
       if duel["duel_id"] == duel_id:
@@ -296,15 +277,16 @@ class Cog_duels(Extension):
       await utils.update_piflouz_message(self.bot)
 
 
+  @duel_cmd.subcommand(name="status", description="Check your ongoing duels")
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
   async def duel_status_cmd(self, ctx):
     """
-    Callback for the duel status command
+    Callback for the duel subcommand command
     --
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
-
     my_duels = filter(lambda duel: int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]] or duel["user_id2"] == -1, db["duels"])
 
     msgs = []

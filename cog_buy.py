@@ -1,4 +1,4 @@
-from interactions import extension_command, Extension, Emoji, Button, ButtonStyle
+from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer
 from replit import db
 import copy
 
@@ -32,7 +32,8 @@ class Cog_buy(Extension):
       self.bot.component(emoji)(self.callback_from_emoji(emoji))
 
   
-  @extension_command(name="piflex", description=f"When you have too many piflouz /!\ Costs {Constants.PIFLEX_COST} piflouz", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="piflex", description=f"When you have too many piflouz /!\ Costs {Constants.PIFLEX_COST} piflouz", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def piflex_cmd(self, ctx):
     """
@@ -41,7 +42,9 @@ class Cog_buy(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
+    import asyncio
+    await asyncio.sleep(8)
+    
     user_id = str(ctx.author.id)
     
     # User has enough money
@@ -74,7 +77,8 @@ class Cog_buy(Extension):
       await ctx.send(f"You need {Constants.PIFLEX_COST - balance} more {Constants.PIFLOUZ_EMOJI} to piflex!", ephemeral=True)
 
 
-  @extension_command(name="buy-rank-piflex", description=f"Flex with a custom rank /!\ Costs {Constants.PIFLEXER_COST} piflouz, lasts for {Constants.PIFLEX_ROLE_DURATION} seconds", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="buy-rank-piflex", description=f"Flex with a custom rank /!\ Costs {Constants.PIFLEXER_COST} piflouz, lasts for {Constants.PIFLEX_ROLE_DURATION} seconds", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def buy_rank_piflex_cmd(self, ctx):
     """
@@ -83,8 +87,6 @@ class Cog_buy(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
-
     user_id = str(ctx.author.id)
     member = ctx.author
     role_id = Constants.PIFLEXER_ROLE_ID
@@ -107,7 +109,8 @@ class Cog_buy(Extension):
         await ctx.send("You already have the rank!", ephemeral=True)
 
 
-  @extension_command(name="store", description="Buy fun upgrades", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="store", description="Buy fun upgrades", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def store_cmd(self, ctx):
     """
@@ -131,7 +134,6 @@ class Cog_buy(Extension):
       ctx: interactions.CommandContext
       emoji: str
     """
-    await ctx.defer(ephemeral=True)
     user_id = str(ctx.author.id)
     current_time = int(ctx.id.epoch)
 
@@ -158,6 +160,7 @@ class Cog_buy(Extension):
     output:
       callback function
     """
+    @autodefer(ephemeral=True)
     async def callback(ctx):
       await self.store_button_callback(ctx, emoji)
     return callback

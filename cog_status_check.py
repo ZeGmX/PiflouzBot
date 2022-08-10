@@ -1,5 +1,5 @@
 from discord.utils import escape_markdown
-from interactions import extension_command, Extension, Option, OptionType
+from interactions import extension_command, Extension, OptionType, option, autodefer
 from replit import db
 
 from constant import Constants
@@ -24,9 +24,9 @@ class Cog_status_check(Extension):
   def __init__(self, bot):
     pass
 
-  @extension_command(name="is-live", description="Check if a certain streamer is live", scope=Constants.GUILD_IDS, options=[
-  Option(name="streamer_name", description="The name of the streamer you want to check", type=OptionType.STRING, required=True)
-  ])
+  @extension_command(name="is-live", description="Check if a certain streamer is live", scope=Constants.GUILD_IDS)
+  @option(name="streamer_name", description="The name of the streamer you want to check", type=OptionType.STRING, required=True)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def is_live_cmd(self, ctx, streamer_name):
     """
@@ -47,9 +47,9 @@ class Cog_status_check(Extension):
       await ctx.send(msg)
   
 
-  @extension_command(name="balance", description="Check how many piflouz you have", scope=Constants.GUILD_IDS, options=[
-    Option(name="user", description="The person you want to check. Leave empty to check your own balance", type=OptionType.USER, required=False)
-  ])
+  @extension_command(name="balance", description="Check how many piflouz you have", scope=Constants.GUILD_IDS)
+  @option(name="user", description="The person you want to check. Leave empty to check your own balance", type=OptionType.USER, required=False)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def balance_cmd(self, ctx, user=None):
     """
@@ -73,7 +73,8 @@ class Cog_status_check(Extension):
     await ctx.send(content, ephemeral=True)
 
 
-  @extension_command(name="pilord", description="See how much you need to farm to flex with your rank", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="pilord", description="See how much you need to farm to flex with your rank", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def pilord_cmd(self, ctx):
     """
@@ -94,7 +95,8 @@ class Cog_status_check(Extension):
       await ctx.send(f"You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!", ephemeral=True)  
   
 
-  @extension_command(name="powerups", description="See how powerful you are", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="powerups", description="See how powerful you are", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def powerups_cmd(self, ctx):
     """
@@ -103,7 +105,6 @@ class Cog_status_check(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
     user_id = str(ctx.author.id)
     content = "Here is the list of powerups you have at the moment:\n"
     has_any_powerup = False
@@ -121,7 +122,8 @@ class Cog_status_check(Extension):
     await ctx.send(content, ephemeral=True)
 
   
-  @extension_command(name="ranking", description="See how worthy you are", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="ranking", description="See how worthy you are", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def ranking_cmd(self, ctx):
     """
@@ -130,7 +132,6 @@ class Cog_status_check(Extension):
     input:
     ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
     d_piflouz = dict(db["piflouz_bank"])
     d_piflex = dict(db["discovered_piflex"])
     d_donations = dict(db["donation_balance"])
@@ -159,7 +160,8 @@ class Cog_status_check(Extension):
       await ctx.send(res, ephemeral=True)
     
 
-  @extension_command(name="season-result", description="See how much you earned in the last season", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="season-result", description="See how much you earned in the last season", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def seasonresult_cmd(self, ctx):
     """
@@ -168,8 +170,6 @@ class Cog_status_check(Extension):
     input:
     ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
-
     user_id = str(ctx.author.id)
     await utils.custom_assert(user_id in db["season_results"].keys(), "You did not participate to the previous season", ctx)
 

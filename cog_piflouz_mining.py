@@ -1,4 +1,4 @@
-from interactions import extension_command, extension_component, Extension
+from interactions import extension_command, extension_component, Extension, autodefer
 from replit import db
 
 from constant import Constants
@@ -27,7 +27,8 @@ class Cog_piflouz_mining(Extension):
     self.bot = bot
   
 
-  @extension_command(name="get", description="For the lazy ones", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="get", description="For the lazy ones", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def get_cmd(self, ctx):
     """
@@ -36,8 +37,6 @@ class Cog_piflouz_mining(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
-
     current_time = int(ctx.id.epoch)
     piflouz_handlers.update_combo(ctx.author.id, current_time)
     successful_update, qty = piflouz_handlers.update_piflouz(ctx.author.id, current_time=current_time)
@@ -55,6 +54,7 @@ class Cog_piflouz_mining(Extension):
 
 
   @extension_component(component=button_name)
+  @autodefer(ephemeral=True)
   async def mining_button_callback(self, ctx):
     """
     Callback for the button under the mining message
@@ -66,7 +66,8 @@ class Cog_piflouz_mining(Extension):
     await self.get_cmd(ctx)
     
 
-  @extension_command(name="cooldown", description="When your addiction is stronger than your sense of time", scope=Constants.GUILD_IDS, options=[])
+  @extension_command(name="cooldown", description="When your addiction is stronger than your sense of time", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def cooldown_cmd(self, ctx):
     """
