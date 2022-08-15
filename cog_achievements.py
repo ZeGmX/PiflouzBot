@@ -51,17 +51,6 @@ class Cog_achievements(Extension):
       ctx: interactions.CommandContext
       page: int
     """
-    await self.send_achievements_page(ctx, 0)
-    
-
-  async def send_achievements_page(self, ctx, page):
-    """
-    Common callback for the achievements list command and buttons
-    --
-    input:
-      ctx: interactions.CommandContext
-      page: int
-    """
     user_id = str(ctx.author.id)
 
     if user_id not in db["achievements"].keys(): db["achievements"][user_id] = []
@@ -98,7 +87,8 @@ class Cog_achievements(Extension):
     """
     @autodefer(ephemeral=True)
     async def callback(ctx):
-      await self.send_achievements_page(ctx, page=page)
+      # invoking the /achievements list command
+      await self.achievements_cmd.coroutines["list"](ctx, page)
     return callback
 
 
