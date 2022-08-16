@@ -186,6 +186,41 @@ class Cog_duels(Extension):
     await utils.update_piflouz_message(self.bot)
 
 
+  @duel_cmd.subcommand(name="status", description="Check your ongoing duels")
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
+  async def duel_status_cmd(self, ctx):
+    """
+    Callback for the duel subcommand command
+    --
+    input:
+      ctx: interactions.CommandContext
+    """
+    my_duels = filter(lambda duel: int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]] or duel["user_id2"] == -1, db["duels"])
+
+    msgs = []
+    for duel in my_duels:
+      mention = "anyone" if duel["user_id2"] == -1 else f"<@{duel['user_id2']}>"
+      s = f"id: {duel['duel_id']} - <@{duel['user_id1']}> vs {mention} - {duel['duel_type']} - {duel['amount']} {Constants.PIFLOUZ_EMOJI}\n"
+      
+      if not duel["accepted"]:
+        s += f"Waiting on {mention} to accept\n"
+      else:
+        if duel["move1"] is None:
+          s += f"Waiting on <@{duel['user_id1']}> to play\n"
+        if duel["move2"] is None:
+          s += f"Waiting on <@{duel['user_id2']}> to play\n"
+      
+      msgs.append(s)
+    
+    if len(msgs) == 0:
+      await ctx.send("You have no ongoing duels", ephemeral=True)
+    
+    else:
+      msg = "Here are your ongoing duels:\n" + "\n".join(msgs)
+      await ctx.send(msg, ephemeral=True)
+
+
   @duel_cmd.group(name="play", description="TBD")
   async def duel_cmd_group_cmd(self, ctx):
     """
@@ -275,41 +310,6 @@ class Cog_duels(Extension):
 
       del db["duels"][duel_index]
       await utils.update_piflouz_message(self.bot)
-
-
-  @duel_cmd.subcommand(name="status", description="Check your ongoing duels")
-  @autodefer(ephemeral=True)
-  @utils.check_message_to_be_processed
-  async def duel_status_cmd(self, ctx):
-    """
-    Callback for the duel subcommand command
-    --
-    input:
-      ctx: interactions.CommandContext
-    """
-    my_duels = filter(lambda duel: int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]] or duel["user_id2"] == -1, db["duels"])
-
-    msgs = []
-    for duel in my_duels:
-      mention = "anyone" if duel["user_id2"] == -1 else f"<@{duel['user_id2']}>"
-      s = f"id: {duel['duel_id']} - <@{duel['user_id1']}> vs {mention} - {duel['duel_type']} - {duel['amount']} {Constants.PIFLOUZ_EMOJI}\n"
-      
-      if not duel["accepted"]:
-        s += f"Waiting on {mention} to accept\n"
-      else:
-        if duel["move1"] is None:
-          s += f"Waiting on <@{duel['user_id1']}> to play\n"
-        if duel["move2"] is None:
-          s += f"Waiting on <@{duel['user_id2']}> to play\n"
-      
-      msgs.append(s)
-    
-    if len(msgs) == 0:
-      await ctx.send("You have no ongoing duels", ephemeral=True)
-    
-    else:
-      msg = "Here are your ongoing duels:\n" + "\n".join(msgs)
-      await ctx.send(msg, ephemeral=True)
 
 
 def setup(bot):

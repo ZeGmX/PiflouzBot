@@ -23,6 +23,9 @@ class Cog_event(Extension):
     /raffle
     /wordle guess
     /wordle status
+    /birthday
+  Components
+    events.Birthday_raffle_event.button_id
   """
 
   def __init__(self, bot):
@@ -32,9 +35,12 @@ class Cog_event(Extension):
     for emoji in events.Birthday_event.ingredients:
       self.bot.component(emoji)(self.callback_from_emoji(emoji))
 
+  
 
+    
   @extension_command(name="raffle", description=f"Buy raffle 🎟️ to test your luck /!\ Costs piflouz", scope=Constants.GUILD_IDS)
   @option(name="nb_tickets", description="How many tickets?", type=OptionType.INTEGER, required=True, min_value=1)
+  # @option(description="How many tickets?", min_value=1)
   @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def raffle_cmd(self, ctx, nb_tickets):
@@ -45,7 +51,6 @@ class Cog_event(Extension):
       ctx: interactions.CommandContext
       nb_tickets: int
     """
-    await ctx.defer(ephemeral=True)
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
   
     current_event = eval(db["current_event"])
@@ -235,6 +240,7 @@ class Cog_event(Extension):
 
 
   @extension_command(name="birthday", description=f"Check how your baking skills are going", scope=Constants.GUILD_IDS, options=[])
+  @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def birthday_cmd(self, ctx):
     """
@@ -243,7 +249,6 @@ class Cog_event(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    await ctx.defer(ephemeral=True)
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
   
     current_event = eval(db["current_event"])

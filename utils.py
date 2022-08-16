@@ -2,6 +2,7 @@ import requests
 import datetime
 import asyncio
 import pickle
+from inspect import signature
 from replit import db
 from replit.database.database import ObservedList, ObservedDict, Database
 from discord.ext import tasks
@@ -140,7 +141,29 @@ def check_message_to_be_processed(fun):
   output:
     wrapper: async function
   """
-  async def wrapper(self, ctx, *args, **kwargs):
+  # async def wrapper(self, ctx): # the other parameters will be added later
+
+  #   await custom_assert("out_channel" in db.keys() and db["out_channel"] == int(ctx.channel_id), "Command attempt in the wrong channel", ctx)
+
+  #   # We recover the actual values for the different parameters to call the function
+  #   params = list(signature(wrapper).parameters.keys())
+  #   loc = locals()
+  #   param_values = [loc[param] for param in params]
+  #   kwargs = dict(zip(params, param_values))
+
+  #   return await fun(**kwargs)
+
+  # # Modify the name of the arguments of the wrapper so that they correspond to the arguments of the original function
+  # old_params = tuple(signature(fun).parameters.keys())
+  # new_varnames = old_params + wrapper.__code__.co_varnames[wrapper.__code__.co_argcount:] # new parameters + inside variables
+
+  # wrapper.__code__ = wrapper.__code__.replace(co_argcount=len(old_params), co_varnames=new_varnames)
+
+  import functools
+  
+  @functools.wraps(fun)
+  async def wrapper(self, ctx, *args, **kwargs): # the other parameters will be added later
+
     await custom_assert("out_channel" in db.keys() and db["out_channel"] == int(ctx.channel_id), "Command attempt in the wrong channel", ctx)
     return await fun(self, ctx, *args, **kwargs)
   

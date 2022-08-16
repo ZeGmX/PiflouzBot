@@ -8,6 +8,7 @@ from interactions import Embed, EmbedField, EmbedImageStruct, Button, ButtonStyl
 import datetime
 
 from constant import Constants
+import embed_messages
 import piflouz_handlers
 import powerups
 import utils
@@ -168,11 +169,10 @@ class Raffle_event(Event):
       # Giving the tax to the bot
       tax_value = total_tickets * self.ticket_price - prize
       piflouz_handlers.update_piflouz(bot.me.id, qty=tax_value, check_cooldown=False)
-
-      message = f"Congratulations to <@{id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!"
-
+      
       piflouz_handlers.update_piflouz(id, prize, check_cooldown=False)
-      await out_channel.send(message)
+      embed = await embed_messages.get_embed_end_raffle(bot, id, prize)
+      await out_channel.send(embeds=embed)
       
       await utils.update_piflouz_message(bot)
       bot.dispatch("raffle_won", id)

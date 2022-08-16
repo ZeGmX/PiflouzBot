@@ -29,7 +29,7 @@ class Cog_misc(Extension):
     /role [get | remove]
     /pichapouche
     /otter
-    Message commands:
+  Message commands:
     Du quoi?
     Du tarpin !
   """

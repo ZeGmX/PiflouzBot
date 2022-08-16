@@ -328,6 +328,9 @@ async def get_embed_end_season(bot):
   """
   Returns an embed announcing the end of a season
   --
+  input:
+    bot: interactions.Client
+  --
   output:
     embed: interactions.Embed
   """
@@ -340,6 +343,32 @@ async def get_embed_end_season(bot):
     description=f"The last season has ended! Use the `/season-results` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
     color=Color.purple().value,
     thumbnail=EmbedImageStruct(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
+  )
+
+  return embed
+
+
+async def get_embed_end_raffle(bot, winner_id, prize):
+  """
+  Returns an embed announcing the end of a raffle
+  --
+  input:
+    bot: interactions.Client
+    winner_id: str/int
+    prize: int
+  --
+  output:
+    embed: interactions.Embed
+  """
+  channel = await bot.get_channel(db["out_channel"])
+  msg = await channel.get_message(db["current_event_message_id"])
+  url = msg.url
+  
+  embed = Embed(
+    title="The raffle is over!",
+    description=f"The raffle has ended! Congratulations to <@{winner_id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!\nClick [here]({url}) to see the final participation.",
+    color=Color.random().value,
+    thumbnail=EmbedImageStruct(url=Constants.PIBOU4STONKS_URL)
   )
 
   return embed
