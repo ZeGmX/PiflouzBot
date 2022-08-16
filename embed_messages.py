@@ -153,6 +153,11 @@ def get_embed_help_message():
         inline=True
       ),
       EmbedField(
+        name="`/otter`",
+        value="Finally something good in this world",
+        inline=True
+      ),
+      EmbedField(
         name="Things I do in the background",
         value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\
@@ -299,9 +304,12 @@ def get_embed_store_ui():
   return embed
 
 
-async def get_embed_otter():
+async def get_embed_otter(title="Otter image of the day!"):
   """
   Returns an embed corresponding to a random otter image
+  --
+  input:
+    title: str -> title of the embed
   --
   output:
     embed: interactions.Embed
@@ -309,7 +317,7 @@ async def get_embed_otter():
   url = await socials.get_otter_image()
 
   embed = Embed(
-    title="Otter image of the day!",
+    title=title,
     color=Color.from_rgb(101, 67, 33).value,  # brown
     image=EmbedImageStruct(url=url)
   )
@@ -329,7 +337,7 @@ async def get_embed_end_season(bot):
   
   embed = Embed(
     title="The season is over!",
-    description=f"The last season has ended! Use the `/seasonresults` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
+    description=f"The last season has ended! Use the `/season-results` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
     color=Color.purple().value,
     thumbnail=EmbedImageStruct(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
   )

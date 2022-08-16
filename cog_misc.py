@@ -1,4 +1,4 @@
-from interactions import extension_command, Extension, Emoji, OptionType, Button, ButtonStyle, Choice, ApplicationCommandType, autodefer, option
+from interactions import extension_command, Extension, Emoji, OptionType, Button, ButtonStyle, Choice, autodefer, option, extension_message_command
 from math import ceil
 import random
 from replit import db
@@ -28,8 +28,8 @@ class Cog_misc(Extension):
     /spawn-pibox
     /role [get | remove]
     /pichapouche
-    /wouldyourather
-  Message commands:
+    /otter
+    Message commands:
     Du quoi?
     Du tarpin !
   """
@@ -261,7 +261,7 @@ class Cog_misc(Extension):
   @utils.check_message_to_be_processed
   async def remove_role_cmd(self, ctx, role):
     """
-    Gives a role to the user
+    Removes a role from the user
     --
     input:
       ctx: interactions.CommandContext
@@ -285,7 +285,7 @@ class Cog_misc(Extension):
     await ctx.send("Picha picha! <:pikadab:687208856719196161>")
 
 
-  @extension_command(type=ApplicationCommandType.MESSAGE, name="Du quoi ?", scope=Constants.GUILD_IDS)
+  @extension_message_command(name="Du quoi ?", scope=Constants.GUILD_IDS)
   @autodefer(ephemeral=True)
   async def du_quoi_context_app(self, ctx):
     """
@@ -299,7 +299,7 @@ class Cog_misc(Extension):
     await ctx.send("Done!", ephemeral=True)
   
   
-  @extension_command(type=ApplicationCommandType.MESSAGE, name="Du tarpin !", scope=Constants.GUILD_IDS)
+  @extension_message_command(name="Du tarpin !", scope=Constants.GUILD_IDS)
   @autodefer(ephemeral=True)
   async def du_tarpin_context_app(self, ctx):
     """
@@ -311,6 +311,20 @@ class Cog_misc(Extension):
     ctx.target._client = self.bot._http
     await ctx.target.reply("Du tarpin !")
     await ctx.send("Done!", ephemeral=True)
+
+
+  @extension_command(name="otter", description="Get a cute otter image", scope=Constants.GUILD_IDS)
+  @autodefer(ephemeral=True)
+  @utils.check_message_to_be_processed
+  async def otter_cmd(self, ctx):
+    """
+    Callback for the /otter command
+    --
+    input:
+      ctx: interactions.CommandContext
+    """
+    embed = await embed_messages.get_embed_otter(title="Look at this cute otter!")
+    await ctx.send(embeds=embed)
     
 
 def setup(bot):
