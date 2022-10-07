@@ -1,4 +1,4 @@
-from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer
+from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer, option, OptionType
 from math import ceil
 from replit import db
 
@@ -35,12 +35,12 @@ class Cog_achievements(Extension):
 
 
   @extension_command(name="achievements", description="TBD", scope=Constants.GUILD_IDS)
-  async def achievements_cmd(self, ctx):
-    print("in cmd")
+  async def achievements_cmd(self, ctx, page=0):
     pass
 
   
   @achievements_cmd.subcommand(name="list", description="Check your achievements")
+  @option(name="page", description="Which page?", required=False, type=OptionType.INTEGER)
   @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def achiev_list_cmd(self, ctx, page=0):
@@ -51,6 +51,34 @@ class Cog_achievements(Extension):
       ctx: interactions.CommandContext
       page: int
     """
+    await self.achiev_list_tmp(ctx, page)
+    
+
+  def callback_from_page(self, page):
+    """
+    Returns the callback function for the page buttons in the achievement list
+    --
+    input:
+      page: int
+    --
+    output:
+      callback function
+    """
+    @autodefer(ephemeral=True)
+    async def callback(ctx):
+      await self.achiev_list_tmp(ctx, page)
+    return callback
+
+
+  async def achiev_list_tmp(self, ctx, page):
+    """
+    Common function that is called both from the /achievements list and the page buttons
+    --
+    input:
+      ctx: interactions.CommandContext
+      page: int
+    """
+    await utils.custom_assert(0 <= page < self.nb_pages, f"The `page` argument should be between 0 and {self.nb_pages}", ctx)
     user_id = str(ctx.author.id)
 
     if user_id not in db["achievements"].keys(): db["achievements"][user_id] = []
@@ -74,22 +102,6 @@ class Cog_achievements(Extension):
     
     await ctx.send(s, components=buttons, ephemeral=True)
     
-
-  def callback_from_page(self, page):
-    """
-    Returns the callback function for the page buttons in the achievement list
-    --
-    input:
-      page: int
-    --
-    output:
-      callback function
-    """
-    @autodefer(ephemeral=True)
-    async def callback(ctx):
-      # invoking the /achievements list command
-      await self.achievements_cmd.coroutines["list"](ctx, page)
-    return callback
 
 
 def setup(bot):

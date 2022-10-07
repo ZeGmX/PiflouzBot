@@ -1,12 +1,13 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/EdVraz/I-am-spending-way-too-many-time-on-this-lol@fix_autodefer_in_extensions",])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.2",])
 
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
 import logging
 from replit import db
+import os
 
 import achievement_handler
 from constant import Constants
@@ -24,15 +25,18 @@ intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE
 
 presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
 
-# bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]), disable_sync=True)
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
+bot = None
 
+try:
+  bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
+except:
+  os.system("kill 1")
+  
 
 @bot.event
 async def on_command_error(*args, **kwargs):
-  print("in error handler")
   print(args, kwargs)
-  print(args[1].message)
+  print(f"Got the following error: {str(args[-1])}")
 
 
 @bot.event
@@ -188,6 +192,5 @@ if __name__ == "__main__":
   while 1:
     try:
       bot.start()
-    except Exception as e:
-      print(e)
-      print("got error")
+    except:
+      os.system("kill 1")
