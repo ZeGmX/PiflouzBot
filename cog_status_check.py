@@ -63,12 +63,14 @@ class Cog_status_check(Extension):
     user_id = str(user.id)
     if user_id not in db["piflouz_bank"].keys(): db["piflouz_bank"][user_id] = 0
     if user_id not in db["turbo_piflouz_bank"].keys(): db["turbo_piflouz_bank"][user_id] = 0
+    if user_id not in db["discovered_piflex"].keys(): db["discovered_piflex"][user_id] = []
     
-    balance = db["piflouz_bank"][str(user.id)]
+    balance = db["piflouz_bank"][user_id]
     content = f"Balance of {user.mention}:\n{balance} {Constants.PIFLOUZ_EMOJI}"
 
-    if str(user.id) in db["turbo_piflouz_bank"].keys():
-      content += f"\n{db['turbo_piflouz_bank'][str(user.id)]} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}"
+    content += f"\n{db['turbo_piflouz_bank'][user_id]} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}"
+
+    content += f"\n{len(db['discovered_piflex'][user_id])} / {len(Constants.PIFLEX_IMAGES_URL)} piflex images discovered"
 
     await ctx.send(content, ephemeral=True)
 

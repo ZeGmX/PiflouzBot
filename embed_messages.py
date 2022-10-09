@@ -193,7 +193,7 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
     # Rankings
   if "piflouz_bank" in db.keys():
     d_piflouz = dict(db["piflouz_bank"])
-    d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
+    d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items() if len(discovered) > 0]
     d_donations = [(user_id, val) for user_id, val in db["donation_balance"].items() if val > 0]
 
     ranking_balance = get_ranking_str(list(d_piflouz.items()))

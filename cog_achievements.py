@@ -90,7 +90,7 @@ class Cog_achievements(Extension):
     for a in self.achievements[page * self.achievements_per_page:(page + 1) * self.achievements_per_page]:
       emoji = "✅" if a.to_str() in user_achievements else "❌"
       res.append(f"{emoji} • **{a.name}** • {a.reward} {Constants.PIFLOUZ_EMOJI}\n{a.description}")
-    s = "\n----\n".join(res)
+    s = f"**Progress: {len(user_achievements)} / {len(self.achievements)} achievements unlocked!**\n\n" + "\n----\n".join(res)
 
     # Getting the buttons
     buttons = []
