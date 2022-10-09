@@ -337,8 +337,9 @@ class Combo_event(Event_from_powerups):
 
 
 class Wordle_event(Event):
-  def __init__(self, reward=200):
-    self.reward = reward
+  def __init__(self, min_reward=200, max_reward=250):
+    self.min_reward = min_reward
+    self.max_reward = max_reward
 
 
   def get_embed(self):
@@ -348,7 +349,7 @@ class Wordle_event(Event):
     output:
       embed: interactions.Embed
     """
-    desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn {self.reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
+    desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn up to {self.max_reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
     
     embed = Embed(
       title="New Wordle!",
@@ -380,7 +381,7 @@ class Wordle_event(Event):
 
 
   def to_str(self):
-    return f"{__name__}.{Wordle_event.__name__}({self.reward})"
+    return f"{__name__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
 
 
 class Birthday_event(Event):

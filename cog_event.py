@@ -119,8 +119,15 @@ class Cog_event(Extension):
     header_str = "\n".join(wordle.guess(w) for w in guesses)
 
     if guesses[-1] == wordle.solution:
-      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.nb_trials} trials!\nYou earned {current_event.reward}{Constants.PIFLOUZ_EMOJI}"
-      piflouz_handlers.update_piflouz(user_id, current_event.reward, check_cooldown=False)
+      progress = 1 + (1 - len(guesses)) / (wordle.nb_trials - 1)
+      reward = round(current_event.min_reward + progress * (current_event.max_reward - current_event.min_reward))
+      
+      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.nb_trials} trials!\nYou earned {reward}{Constants.PIFLOUZ_EMOJI}"
+      piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
+
+      results = "\n".join([wordle.guess(word) for word in guesses])
+      announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.nb_trials})!\n{results}"
+      await ctx.channel.send(announcement_msg)
     elif len(guesses) == wordle.nb_trials:
       header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
 
