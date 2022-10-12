@@ -110,7 +110,8 @@ def create_duel(id_challenger, id_challenged, amount, duel_type):
     "amount": amount,
     "move1": None, # Not played yet
     "move2": None, # Not played yet
-    "accepted": False # Not accepted yet
+    "accepted": False, # Not accepted yet
+    "message_id": None # Not announced yet
   }
   return duel
 

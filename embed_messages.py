@@ -108,7 +108,7 @@ def get_embed_help_message():
         inline=True
       ),
       EmbedField(
-        name="`duel [accept|deny|challenge|cancel|play|status]`",
+        name="`/duel [challenge|play|status]`",
         value="Earn piflouz by winning challenges against others",
         inline=True
       ),

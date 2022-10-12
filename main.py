@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.2",])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.3",])
 
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence

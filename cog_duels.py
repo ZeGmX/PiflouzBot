@@ -1,4 +1,4 @@
-from interactions import extension_command, Extension, OptionType, Choice, option, autodefer
+from interactions import extension_command, Extension, OptionType, Choice, option, autodefer, Button, ButtonStyle, Emoji, extension_component
 from replit import db
 from math import ceil
 
@@ -16,12 +16,17 @@ class Cog_duels(Extension):
   --
   Slash commands:  
     /duel challenge
-    /duel accept
-    /duel deny
     /duel cancel
     /duel play Shifumi
     /duel status
+  Components:
+    duel_accept_button_name
+    duel_deny_button_name
+    duel_cancel_button_name
   """
+  duel_accept_button_name = "duel_accept"
+  duel_deny_button_name = "duel_deny"
+  duel_cancel_button_name = "duel_cancel"
 
   def __init__(self, bot):
     self.bot = bot
@@ -63,38 +68,47 @@ class Cog_duels(Extension):
     id_challenged = -1 if user is None else int(user.id)  
 
     new_duel = utils.create_duel(int(ctx.author.id), id_challenged, amount, duel_type)
-    db["duels"].append(new_duel)
-
+    
     mention = "anyone" if user is None else user.mention
 
+    buttons = [
+      Button(style=ButtonStyle.SUCCESS, label="", custom_id=Cog_duels.duel_accept_button_name, emoji=Emoji(name="✅")),
+      Button(style=ButtonStyle.DANGER, label="", custom_id=Cog_duels.duel_deny_button_name, emoji=Emoji(name="❎")),
+      Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_duels.duel_cancel_button_name, emoji=Emoji(name="🚫"))
+    ]
+
     channel = await ctx.get_channel()
-    await channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Use `/duel accept {new_duel['duel_id']}` to accept or `/duel deny {new_duel['duel_id']}` to deny.")
+    msg = await channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Click the green button below to accept or click the red one to deny. Click the gray one to cancel the challenge.", components=buttons)
+
+    new_duel["message_id"] = int(msg.id)
+    db["duels"].append(new_duel)
+
     await ctx.send("Done!", ephemeral=True)
+    
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("duel_created", ctx.author.id, id_challenged, amount, duel_type)
 
 
-  @duel_cmd.subcommand(name="accept", description="Accept someone's challenge")
-  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @extension_component(duel_accept_button_name)
   @autodefer(ephemeral=True)
-  @utils.check_message_to_be_processed
-  async def duel_accept_cmd(self, ctx, duel_id):
+  async def duel_accept_button_callback(self, ctx):
     """
-    Callback for the duel accept subcommand
+    Callback for the button that accepts a duel
     --
     input:
-      ctx: interactions.CommandContext
-      duel_id: int
+      ctx: interactions.ComponentContext
     """
+    msg_id = int(ctx.message.id)
+
+    # Finding the right duel
     duel_index = None
     for i, duel in enumerate(db["duels"]):
-      if duel["duel_id"] == duel_id:
+      if duel["message_id"] == msg_id:
         duel_index = i
         break
-    
-    # Check the duel exists
-    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
 
+    await utils.custom_assert(duel_index is not None, "Could not find the duel", ctx)
+    
     # Check that the duel is still available
     await utils.custom_assert(not duel["accepted"], "This challenge has already been accepted", ctx)
 
@@ -111,28 +125,31 @@ class Cog_duels(Extension):
     db["duels"][duel_index]["user_id2"] = int(ctx.author.id)
     duel_type = duel["duel_type"]
 
+    duel_id = duel["duel_id"]
+    
     channel = await ctx.get_channel()
     await channel.send(f"{ctx.author.mention} accepted <@{duel['user_id1']}>'s challenge! Use `/duel play {duel_type} {duel['duel_id']} [your move]`")
+    await ctx.disable_all_components()
     await ctx.send("Done!", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("duel_accepted", int(ctx.author.id), duel_id)
-
-
-  @duel_cmd.subcommand(name="deny", description="Deny someone's challenge")
-  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+    
+  
+  @extension_component(duel_deny_button_name)
   @autodefer(ephemeral=True)
-  @utils.check_message_to_be_processed
-  async def duel_deny_cmd(self, ctx, duel_id):
+  async def duel_deny_button_callback(self, ctx):
     """
-    Callback for the duel deny subcommand
+    Callback for the button that denies a duel
     --
     input:
-      ctx: interactions.CommandContext
-      duel_id: int
+      ctx: interactions.ComponentContext
     """
+    msg_id = int(ctx.message.id)
+
+    # Finding the right duel
     duel_index = None
     for i, duel in enumerate(db["duels"]):
-      if duel["duel_id"] == duel_id:
+      if duel["message_id"] == msg_id:
         duel_index = i
         break
     
@@ -147,25 +164,26 @@ class Cog_duels(Extension):
     del db["duels"][duel_index]
     await ctx.get_channel()
     await ctx.channel.send(f"{ctx.author.mention} denied <@{duel['user_id1']}>'s challenge!")
+    await ctx.disable_all_components()
     await ctx.send("Done", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
 
 
-  @duel_cmd.subcommand(name="cancel", description="Cancel your challenge to someone")
-  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
+  @extension_component(duel_cancel_button_name)
   @autodefer(ephemeral=True)
-  @utils.check_message_to_be_processed
-  async def duel_cancel_cmd(self, ctx, duel_id):
+  async def duel_cancel_button_callback(self, ctx):
     """
-    Callback for the duel cancel subcommand
+    Callback for the button that denies a duel
     --
     input:
-      ctx: interactions.CommandContext
-      duel_id: int
+      ctx: interactions.ComponentContext
     """
+    msg_id = int(ctx.message.id)
+
+    # Finding the right duel
     duel_index = None
     for i, duel in enumerate(db["duels"]):
-      if duel["duel_id"] == duel_id:
+      if duel["message_id"] == msg_id:
         duel_index = i
         break
     
@@ -182,6 +200,7 @@ class Cog_duels(Extension):
 
     await ctx.get_channel()
     await ctx.channel.send(f"{ctx.author.mention} cancelled their challenge to {mention}, what a loser")
+    await ctx.disable_all_components()
     await ctx.send("Done!", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
 

@@ -293,6 +293,9 @@ class Cog_event(Extension):
   async def birthday_raffle_register(self, ctx):
     """
     Callback for the button to register to the birthday raffle
+    --
+    input:
+      ctx: interactions.CommandContext
     """
     await ctx.defer(ephemeral=True)
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
