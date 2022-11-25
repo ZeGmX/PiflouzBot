@@ -16,7 +16,6 @@ class Cog_duels(Extension):
   --
   Slash commands:  
     /duel challenge
-    /duel cancel
     /duel play Shifumi
     /duel status
   Components:
@@ -80,7 +79,14 @@ class Cog_duels(Extension):
     channel = await ctx.get_channel()
     msg = await channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Click the green button below to accept or click the red one to deny. Click the gray one to cancel the challenge.", components=buttons)
 
+    opponent_name = "anyone" if user is None else user.name
+
+    thread = await msg.create_thread(f"{new_duel['duel_type']} duel - {ctx.author.name} vs {opponent_name}")
+    await thread.add_member(ctx.author.id)
+    if user is not None: await thread.add_member(user.id)
+
     new_duel["message_id"] = int(msg.id)
+    new_duel["thread_id"] = int(thread.id)
     db["duels"].append(new_duel)
 
     await ctx.send("Done!", ephemeral=True)
@@ -126,11 +132,16 @@ class Cog_duels(Extension):
     duel_type = duel["duel_type"]
 
     duel_id = duel["duel_id"]
-    
-    channel = await ctx.get_channel()
-    await channel.send(f"{ctx.author.mention} accepted <@{duel['user_id1']}>'s challenge! Use `/duel play {duel_type} {duel['duel_id']} [your move]`")
+
+    thread_id = duel["thread_id"]
+    thread = await self.bot.get_channel(thread_id)
+    await thread.add_member(ctx.author.id)
+
+    await thread.send(f"{ctx.author.mention} accepted <@{duel['user_id1']}>'s challenge! Use `/duel play {duel_type} [your move]`")
+    await thread.modify(name=f"[Accepted] {thread.name}")
     await ctx.disable_all_components()
     await ctx.send("Done!", ephemeral=True)
+    
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("duel_accepted", int(ctx.author.id), duel_id)
     
@@ -162,9 +173,14 @@ class Cog_duels(Extension):
     piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
 
     del db["duels"][duel_index]
-    await ctx.get_channel()
-    await ctx.channel.send(f"{ctx.author.mention} denied <@{duel['user_id1']}>'s challenge!")
+
+    thread_id = duel["thread_id"]
+    thread = await self.bot.get_channel(thread_id)
+    await thread.send(f"{ctx.author.mention} denied <@{duel['user_id1']}>'s challenge!")
+    await thread.modify(name=f"[Denied] {thread.name}")
+    await thread.archive()
     await ctx.disable_all_components()
+    
     await ctx.send("Done", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
 
@@ -198,9 +214,13 @@ class Cog_duels(Extension):
 
     mention = "anyone" if duel["user_id2"] == -1 else f"<@{duel['user_id2']}>"
 
-    await ctx.get_channel()
-    await ctx.channel.send(f"{ctx.author.mention} cancelled their challenge to {mention}, what a loser")
+    thread_id = duel["thread_id"]
+    thread = await self.bot.get_channel(thread_id)
+    await thread.send(f"{ctx.author.mention} cancelled their challenge to {mention}, what a loser")
+    await thread.modify(name=f"[Cancelled] {thread.name}")
+    await thread.archive()
     await ctx.disable_all_components()
+    
     await ctx.send("Done!", ephemeral=True)
     await utils.update_piflouz_message(self.bot)
 
@@ -252,30 +272,28 @@ class Cog_duels(Extension):
 
 
   @duel_cmd_group_cmd.subcommand(name="shifumi", description="Play shifumi!")
-  @option(name="duel_id", description="The id of the duel (see the duel announcement message)", required=True, type=OptionType.INTEGER)
   @option(name="value", description="What do you want to play?", required=True, type=OptionType.STRING, choices=[
     Choice(name="Rock", value="Rock"),
     Choice(name="Paper", value="Paper"),
     Choice(name="Scissors", value="Scissors")
   ])
   @autodefer(ephemeral=True)
-  @utils.check_message_to_be_processed
-  async def duel_play_shifumi_cmd(self, ctx, duel_id, value):
+  async def duel_play_shifumi_cmd(self, ctx, value):
     """
     Callback for the duel play shifumi subcommand
     --
     input:
       ctx: interactions.CommandContext
-      duel_id: int
       value: string -> the move played by the player
     """
+    thread = await ctx.get_channel()
     duel_index = None
     for i, duel in enumerate(db["duels"]):
-      if duel["duel_id"] == duel_id:
+      if duel["thread_id"] == int(thread.id):
         duel_index = i
         break
     
-    await utils.custom_assert(duel_index is not None, "This duel does not exist", ctx)
+    await utils.custom_assert(duel_index is not None, "You are not inside an ongoing duel thread", ctx)
     await utils.custom_assert(duel["accepted"], "This duel is not accepted yet", ctx)
     await utils.custom_assert(int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]], "You are not part of this challenge", ctx)
 
@@ -292,6 +310,9 @@ class Cog_duels(Extension):
     
     await ctx.send("Done! Just wait for the other player to make a move", ephemeral=True)
 
+    user1 = await ctx.guild.get_member(id1)
+    user2 = await ctx.guild.get_member(id2)
+
     move1 = db["duels"][duel_index]["move1"]
     move2 = db["duels"][duel_index]["move2"]
 
@@ -300,14 +321,14 @@ class Cog_duels(Extension):
     money_if_win = total_money - money_tax
 
     win_shifumi = {"Rock": "Scissors", "Paper": "Rock", "Scissors": "Paper"}
-    channel = await ctx.get_channel()
     if move1 is not None and move2 is not None:
       # Tie, everyone gets all of their money back
       if move1 == move2:
         piflouz_handlers.update_piflouz(id1, qty=duel["amount"], check_cooldown=False)
         piflouz_handlers.update_piflouz(id2, qty=duel["amount"], check_cooldown=False)
           
-        await channel.send(f"<@{id1}> and <@{id2}> tied at {duel['duel_type']}! They both played {move1}! They both got their money back")
+        await thread.send(f"{user1.mention} and {user2.mention} tied at {duel['duel_type']}! They both played {move1}! They both got their money back")
+        await thread.modify(f"[Tie] {thread.name[11:]}") # We remove the [Accepted]
         self.bot.dispatch("duel_tie", id1, id2, duel["amount"], duel["duel_type"])
 
       # Player 1 won
@@ -315,7 +336,8 @@ class Cog_duels(Extension):
         piflouz_handlers.update_piflouz(id1, qty=money_if_win, check_cooldown=False)
         piflouz_handlers.update_piflouz(self.bot.me.id, qty=money_tax, check_cooldown=False)
 
-        await channel.send(f"<@{id1}> won at {duel['duel_type']} against <@{id2}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move1} vs {move2}")
+        await thread.send(f"{user1.mention} won at {duel['duel_type']} against {user2.mention}, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move1} vs {move2}")
+        await thread.modify(f"[{user1.name} won] {thread.name[11:]}") # We remove the [Accepted]
         self.bot.dispatch("duel_won", id1, id2, duel["amount"], duel["duel_type"])
 
       
@@ -324,8 +346,11 @@ class Cog_duels(Extension):
         piflouz_handlers.update_piflouz(id2, qty=money_if_win, check_cooldown=False)
         piflouz_handlers.update_piflouz(self.bot.me.id, qty=money_tax, check_cooldown=False)
 
-        await channel.send(f"<@{id2}> won at {duel['duel_type']} against <@{id1}>, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move2} vs {move1}")
+        await thread.send(f"{user2.mention} won at {duel['duel_type']} against {user1.mention}, earning {money_if_win} {Constants.PIFLOUZ_EMOJI}! They played {move2} vs {move1}")
+        await thread.modify(f"[{user2.name} won] {thread.name[11:]}") # We remove the [Accepted]
         self.bot.dispatch("duel_won", id2, id1, duel["amount"], duel["duel_type"])
+
+      await thread.archive()
 
       del db["duels"][duel_index]
       await utils.update_piflouz_message(self.bot)
