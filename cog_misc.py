@@ -314,7 +314,7 @@ class Cog_misc(Extension):
 
 
   @extension_command(name="otter", description="Get a cute otter image", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @autodefer()
   @utils.check_message_to_be_processed
   async def otter_cmd(self, ctx):
     """
@@ -325,6 +325,15 @@ class Cog_misc(Extension):
     """
     embed = await embed_messages.get_embed_otter(title="Look at this cute otter!")
     await ctx.send(embeds=embed)
+
+
+  @extension_command(name="reboot", description="DEAD", scope=Constants.GUILD_IDS)
+  async def reboot_cmd(self, ctx):
+    """
+    TODO
+    """
+    import os
+    os.system("kill 1")
     
 
 def setup(bot):

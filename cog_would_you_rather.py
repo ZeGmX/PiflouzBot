@@ -36,8 +36,11 @@ class Cog_would_you_rather(Extension):
       ctx: interactions.CommandContext
     """
     modal = self.get_wyr_modal()
-    await ctx.popup(modal)
 
+    if str(ctx.author.id) in db["wyr_edit"].keys():
+      del db["wyr_edit"][str(ctx.author.id)]  
+    
+    await ctx.popup(modal)
 
   # @extension_modal("wyr")
   # @autodefer(ephemeral=True)
