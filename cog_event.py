@@ -301,7 +301,7 @@ class Cog_event(Extension):
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
     
     current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Birthday_raffle_event), "The current event is not a wordle", ctx)
+    await utils.custom_assert(isinstance(current_event, events.Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
 
     user_id = str(ctx.author.id)
     await utils.custom_assert(user_id not in db["birthday_raffle_participation"], "You are already registered!", ctx)
