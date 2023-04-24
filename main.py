@@ -116,6 +116,7 @@ async def on_start():
   socials.task_check_live_status.start(bot)
   utils.backup_db.start()
   rank_handlers.update_ranks.start(bot)
+  socials.shuffle_names.start(bot)
 
 
 @bot.event

@@ -18,6 +18,7 @@ class Constants:
   PIFLEXER_ROLE_ID = int(os.getenv("PIFLEXER_ROLE_ID"))
   MEGA_PIFLEXER_ROLE_ID = int(os.getenv("MEGA_PIFLEXER_ROLE_ID"))
   PIBOX_MASTER_ID = int(os.getenv("PIBOX_MASTER_ID"))  # Not actually a discord role
+  CHAOS_ROLE_ID = int(os.getenv("CHAOS_ROLE_ID"))
   PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
   PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
   BIRTHDAY_NOTIF_ROLE_ID = int(os.getenv("BIRTHDAY_NOTIF_ROLE_ID"))
@@ -50,6 +51,7 @@ class Constants:
   MEGA_PIFLEXER_ROLE_DURATION = int(os.getenv("MEGA_PIFLEXER_ROLE_DURATION"))
   EVENT_TIME = eval(os.getenv("EVENT_TIME"))
   OTTER_IMAGE_TIME = eval(os.getenv("OTTER_IMAGE_TIME"))
+  SHUFFLE_NAME_TIME = eval(os.getenv("SHUFFLE_NAME_TIME"))
   
 
   ### Costs

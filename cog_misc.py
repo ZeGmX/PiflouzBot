@@ -234,7 +234,8 @@ class Cog_misc(Extension):
   @option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
     Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
     Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
-    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
+    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications"),
+    Choice(value=str(Constants.CHAOS_ROLE_ID), name="CHAOS")
   ])
   @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed
@@ -255,7 +256,8 @@ class Cog_misc(Extension):
   @option(name="role", description="Which role?", type=OptionType.STRING, required=True, choices=[
     Choice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
     Choice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
-    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications")
+    Choice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications"),
+    Choice(value=str(Constants.CHAOS_ROLE_ID), name="CHAOS")
   ])
   @autodefer(ephemeral=True)
   @utils.check_message_to_be_processed

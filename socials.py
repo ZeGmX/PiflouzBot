@@ -4,7 +4,8 @@ from replit import db
 import time
 import asyncpraw
 import twitch
-from interactions import Role
+from interactions import Role, Guild
+from random import shuffle
 
 from constant import Constants
 import embed_messages
@@ -113,3 +114,25 @@ async def generate_otter_of_the_day(bot):
   out_channel = await bot.get_channel(db["out_channel"])
   embed = await embed_messages.get_embed_otter()
   await out_channel.send(embeds=embed)
+
+
+@tasks.loop(hours=24)
+async def shuffle_names(bot):
+  """
+  Generates a new otter image every day to brighten everyone's day
+  --
+  input:
+    bot: discord.ext.commands.Bot
+  """
+  await utils.wait_until(Constants.SHUFFLE_NAME_TIME)
+  
+  guild = bot.guilds[0]
+  members = await guild.get_list_of_members(limit=50)
+  chaos_members = list(filter(lambda member: Constants.CHAOS_ROLE_ID in member.roles and int(member.id) != guild.owner_id, members))
+
+  names = [member.name for member in chaos_members]
+  shuffle(names)
+  
+  for nick, member in zip(names, chaos_members):
+    await member.modify(nick=nick)
+    

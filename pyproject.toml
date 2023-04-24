@@ -9,9 +9,10 @@ description = ""
 name = "piflouzbot"
 version = "0.1.0"
 [tool.poetry.dependencies]
-python = "^3.8"
-twitch-python = "^0.0.19"
 asyncpraw = "^7.5.0"
 discord = "^1.7.3"
 pyimgur = "^0.6.0"
+python = "^3.8"
+replit = "^3.2.5"
+twitch-python = "^0.0.19"
 [tool.poetry.dev-dependencies]
