@@ -1,5 +1,8 @@
 __pycache__/
 discord.log
 .breakpoints
-backups_db/
+backup_db/
 wordle_tmp.png
+__replit*
+backups_db/
+.cache/*
