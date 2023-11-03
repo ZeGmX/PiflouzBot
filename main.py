@@ -1,8 +1,9 @@
 import subprocess
 import sys
 
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.3",])
-
+subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.3", "replit", "discord", "python-dateutil", "asyncpraw", "twitch-python", "pyimgur", "matplotlib"])
+# rm .config/pip/pip.conf
+# 🧑‍💻 🔫
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
 import logging
@@ -187,8 +188,6 @@ if __name__ == "__main__":
   bot.load("cog_piflouz_mining")
   bot.load("cog_status_check")
   bot.load("cog_would_you_rather")
-
-  # logging.basicConfig(filename="discord.log", filemode="a", level=logging.DEBUG)
   
   while 1:
     try:

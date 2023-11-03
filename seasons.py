@@ -144,7 +144,7 @@ def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
 
 def reward_turbo_piflouz_based_on_scores(scores, reward, reward_type):
   """
-  Give user rewards based on a given ranking
+  Give user rewards based on a given score
   --
   input:
     scores: (str, int) list -> the score (int) for a given user given their id (str)
