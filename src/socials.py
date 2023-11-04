@@ -1,6 +1,6 @@
 from discord.ext import tasks
 from discord.utils import escape_markdown
-from replit import db
+from my_database import db
 import time
 import asyncpraw
 import twitch

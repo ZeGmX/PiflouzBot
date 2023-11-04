@@ -1,5 +1,5 @@
 from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer
-from replit import db
+from my_database import db
 import copy
 
 from constant import Constants

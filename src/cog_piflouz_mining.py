@@ -1,5 +1,5 @@
 from interactions import extension_command, extension_component, Extension, autodefer
-from replit import db
+from my_database import db
 
 from constant import Constants
 import piflouz_handlers
@@ -37,20 +37,7 @@ class Cog_piflouz_mining(Extension):
     input:
       ctx: interactions.CommandContext
     """
-    current_time = int(ctx.id.epoch)
-    piflouz_handlers.update_combo(ctx.author.id, current_time)
-    successful_update, qty = piflouz_handlers.update_piflouz(ctx.author.id, current_time=current_time)
-    
-    if not successful_update:
-      timer = utils.get_timer(ctx.author.id, current_time)
-      
-      output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
-    else:
-      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(ctx.author.id)]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
-
-    await ctx.send(output_text, ephemeral=True)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("combo_updated", ctx.author.id)
+    await self.get_callback_tmp(ctx)
 
 
   @extension_component(component=button_name)
@@ -63,8 +50,31 @@ class Cog_piflouz_mining(Extension):
     input:
       ctx: interactions.ComponentContext
     """
-    await self.get_cmd(ctx)
-    
+    await self.get_callback_tmp(ctx)
+
+  
+  async def get_callback_tmp(self, ctx):
+    """
+    Callback for the /get command or button
+    --
+    input:
+      ctx: interactions.CommandContext or interactions.ComponentContext
+    """
+    current_time = int(ctx.id.epoch)
+    piflouz_handlers.update_combo(ctx.author.id, current_time)
+    successful_update, qty = piflouz_handlers.update_piflouz(ctx.author.id, current_time=current_time)
+
+    if not successful_update:
+      timer = utils.get_timer(ctx.author.id, current_time)
+      
+      output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
+    else:
+      output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(ctx.author.id)]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
+
+    await ctx.send(output_text, ephemeral=True)
+    await utils.update_piflouz_message(self.bot)
+    self.bot.dispatch("combo_updated", ctx.author.id)
+
 
   @extension_command(name="cooldown", description="When your addiction is stronger than your sense of time", scope=Constants.GUILD_IDS)
   @autodefer(ephemeral=True)

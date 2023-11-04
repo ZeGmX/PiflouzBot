@@ -1,5 +1,5 @@
 from interactions import extension_command, Extension, OptionType, Choice, option, autodefer, Button, ButtonStyle, Emoji, extension_component
-from replit import db
+from my_database import db
 from math import ceil
 
 from constant import Constants

@@ -1,5 +1,5 @@
 from interactions import Extension, extension_command, TextInput, TextStyleType, Modal, extension_modal, extension_message_command, autodefer
-from replit import db
+from my_database import db
 
 from constant import Constants
 import utils

@@ -1,4 +1,4 @@
-from replit import db
+from my_database import db
 
 from achievement_handler import listen_to
 from constant import Constants

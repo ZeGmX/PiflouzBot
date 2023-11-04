@@ -2,7 +2,7 @@ import time
 import datetime
 import asyncio
 from discord.ext import tasks
-from replit import db
+from my_database import db
 
 from constant import Constants
 import piflouz_handlers

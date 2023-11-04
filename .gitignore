@@ -6,3 +6,10 @@ wordle_tmp.png
 __replit*
 backups_db/
 .cache/*
+.dockerignore
+.env*
+compose.yaml
+my_db/
+my_db_prod/
+reset.cmd
+.venv/

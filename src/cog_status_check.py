@@ -1,6 +1,6 @@
 from discord.utils import escape_markdown
 from interactions import extension_command, Extension, OptionType, option, autodefer
-from replit import db
+from my_database import db
 
 from constant import Constants
 import powerups # Used for eval

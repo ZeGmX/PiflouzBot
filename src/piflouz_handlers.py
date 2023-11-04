@@ -1,6 +1,6 @@
 from discord.ext import tasks
 from random import random, randrange
-from replit import db
+from my_database import db
 import functools
 from interactions import Role
 

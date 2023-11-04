@@ -3,10 +3,10 @@ import datetime
 import asyncio
 import pickle
 from functools import wraps
-from replit import db
-from replit.database.database import ObservedList, ObservedDict, Database
+from my_database import db
 from discord.ext import tasks
 from pyimgur import Imgur
+from interactions import Button, ButtonStyle, Emoji
 
 from constant import Constants
 import embed_messages
@@ -66,7 +66,7 @@ def get_total_cooldown(user_id):
     cooldown: the time in seconds
   """
   if str(user_id) not in db["powerups"].keys():
-    db["powerups"][int(user_id)] = []
+    db["powerups"][str(user_id)] = []
 
   current_event = eval(db["current_event"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
@@ -83,10 +83,13 @@ async def update_piflouz_message(bot):
   input:
     bot: interactions.Client
   """
+  from cog_piflouz_mining import Cog_piflouz_mining
+  
   channel = await bot.get_channel(db["out_channel"])
   embed = embed_messages.get_embed_piflouz(bot)
   piflouz_message = await channel.get_message(db["piflouz_message_id"])
-  await piflouz_message.edit(embeds=embed)
+  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Emoji(id=Constants.PIFLOUZ_EMOJI_ID))
+  await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 
 def create_duel(id_challenger, id_challenged, amount, duel_type):
@@ -152,48 +155,47 @@ def check_message_to_be_processed(fun):
   return wrapper
 
 
-def observed_to_py(obj):
-  """
-  Turns an "Observed" object (from the database) into a classic Python object
-  --
-  input:
-    obj: int/str/bool/None/ObservedDict/ObservedList/Database
-  output:
-    res: int/str/bool/None/dict/list
-  """
-  t = type(obj)
-  if t == int or t == str or t == bool or obj is None:
-    return obj
+# def observed_to_py(obj):
+#   """
+#   Turns an "Observed" object (from the database) into a classic Python object
+#   --
+#   input:
+#     obj: int/str/bool/None/ObservedDict/ObservedList/Database
+#   output:
+#     res: int/str/bool/None/dict/list
+#   """
+#   t = type(obj)
+#   if t == int or t == str or t == bool or obj is None:
+#     return obj
 
-  elif t == ObservedList:
-    return [observed_to_py(sub_obj) for sub_obj in obj]
+#   elif t == ObservedList:
+#     return [observed_to_py(sub_obj) for sub_obj in obj]
   
-  elif t == ObservedDict or t == Database:
-    return {key: observed_to_py(val) for key, val in obj.items()}
+#   elif t == ObservedDict or t == Database:
+#     return {key: observed_to_py(val) for key, val in obj.items()}
   
-  else:
-    print("Cannot convert from type: ", t)
+#   else:
+#     print("Cannot convert from type: ", t)
 
 
 @tasks.loop(hours=24)
-async def backup_db(filename=None):
+async def backup_db(folder=None):
   """
   Creates a daily backup of the database
   --
   input:
     filename: str -> the path to the file where the database will be saved. If None, the name is based on the date
   """
-  then = datetime.time(22, 0, 0)
+  then = datetime.time(23, 0, 0)
   await wait_until(then)
 
-  if filename is None:
+  parent_folder ="backups_db"
+  if folder is None:
     now = datetime.datetime.now()
-    filename = now.strftime("backups_db/%Y_%m_%d_%H:%M:%S.dump")
+    folder = now.strftime("%Y_%m_%d_%H:%M:%S")
+  db.make_backup(parent_folder, folder)
 
-  content = observed_to_py(db)
-
-  pickle.dump(content, open(filename, "wb"))
-  print("Made a backup of the database in file: ", filename)
+  print("Made a backup of the database in file: ", folder)
 
 
 async def recover_db(filename):

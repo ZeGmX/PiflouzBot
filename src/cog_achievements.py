@@ -1,6 +1,6 @@
 from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer, option, OptionType
 from math import ceil
-from replit import db
+from my_database import db
 
 from achievement_handler import get_achievements_list
 from constant import Constants

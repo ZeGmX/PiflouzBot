@@ -1,18 +1,14 @@
-import subprocess
-import sys
-
-subprocess.check_call([sys.executable, "-m", "pip", "install", "discord-py-interactions==4.3.3", "replit", "discord", "python-dateutil", "asyncpraw", "twitch-python", "pyimgur", "matplotlib"])
-# rm .config/pip/pip.conf
-# 🧑‍💻 🔫
+from dotenv import load_dotenv
+load_dotenv()
 
 from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
 import logging
-from replit import db
 import os
 
 import achievement_handler
 from constant import Constants
 from custom_client import Client
+from my_database import db
 import events
 import piflouz_handlers
 import powerups
@@ -26,12 +22,7 @@ intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE
 
 presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
 
-bot = None
-
-try:
-  bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
-except:
-  os.system("kill 1")
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
   
 
 @bot.event
@@ -189,8 +180,4 @@ if __name__ == "__main__":
   bot.load("cog_status_check")
   bot.load("cog_would_you_rather")
   
-  while 1:
-    try:
-      bot.start()
-    except:
-      os.system("kill 1")
+  bot.start()

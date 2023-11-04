@@ -1,7 +1,7 @@
 from interactions import extension_command, Extension, Emoji, OptionType, Button, ButtonStyle, Choice, autodefer, option, extension_message_command
 from math import ceil
 import random
-from replit import db
+from my_database import db
 import re
 
 from cog_piflouz_mining import Cog_piflouz_mining
@@ -334,8 +334,7 @@ class Cog_misc(Extension):
     """
     TODO
     """
-    import os
-    os.system("kill 1")
+    exit(1)
     
 
 def setup(bot):

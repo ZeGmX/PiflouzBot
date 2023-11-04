@@ -1,7 +1,7 @@
 from discord.ext import tasks
 from discord import Color
 import random
-from replit import db
+from my_database import db
 import asyncio
 from math import floor
 from interactions import Embed, EmbedField, EmbedImageStruct, Button, ButtonStyle, Emoji, Role

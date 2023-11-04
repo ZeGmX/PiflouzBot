@@ -1,7 +1,7 @@
 from interactions import extension_command, extension_component, Extension, OptionType, Embed, EmbedImageStruct, option, autodefer
 from discord import Color
 #from discord import Color
-from replit import db
+from my_database import db
 import os
 
 from constant import Constants

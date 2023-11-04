@@ -1,7 +1,7 @@
 from discord.ext import tasks
 from discord.utils import sleep_until
 from math import sqrt
-from replit import db
+from my_database import db
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import Emoji, Button, ButtonStyle

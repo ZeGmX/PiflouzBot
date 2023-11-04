@@ -1,0 +1,8 @@
+discord-py-interactions==4.3.3
+python-dotenv==1.0.0
+discord
+python-dateutil
+asyncpraw
+twitch-python
+pyimgur
+matplotlib

@@ -1,5 +1,5 @@
 import time
-from replit import db
+from my_database import db
 import asyncio
 from discord.ext import tasks
 from interactions import Role, Guild

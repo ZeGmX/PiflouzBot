@@ -1,5 +1,5 @@
 import random
-from replit import db
+from my_database import db
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import Embed, EmbedImageStruct, EmbedField
