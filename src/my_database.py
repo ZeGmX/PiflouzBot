@@ -218,6 +218,13 @@ class My_database(dict):
     ### I/O ###
 
     def make_backup(self, parent_folder: str = "backups", folder: str = "database") -> None:
+        """
+        Creates a backup of the database in the specified folder
+        --
+        input:
+            parent_folder: str -> the parent folder where the backup will be stored
+            folder: str -> the name of the folder where the backup will be stored
+        """
         if not os.path.exists(parent_folder):
             os.mkdir(parent_folder)
         if not os.path.exists(f"{parent_folder}/{folder}"):
@@ -227,6 +234,13 @@ class My_database(dict):
 
 
     def _save(self, folder: str = None) -> None:
+        """
+        Saves the database in the specified folder
+        --
+        input:
+            folder: str -> the folder where the database will be stored
+        """
+
         if folder is None:
             folder = self.folder
 
@@ -235,6 +249,12 @@ class My_database(dict):
 
         
     def _load(self, folder: str = None) -> None:
+        """
+        Loads the database from the specified folder
+        --
+        input:
+            folder: str -> the folder where the database will be loaded from
+        """
         if folder is None:
             folder = self.folder
 
@@ -244,10 +264,24 @@ class My_database(dict):
     
 
     def _save_key(self, key: str, folder: str) -> None:
+        """
+        Saves a key in the specified folder
+        --
+        input:
+            key: str -> the key to be saved
+            folder: str -> the folder where the key will be saved
+        """
         pickle.dump(Element.convert_from_element(self[key]), open(f"{folder}/{key}.dumped", "wb"))
     
 
     def _load_key(self, key: str, folder: str) -> None:
+        """
+        Loads a key from the specified folder
+        --
+        input:
+            key: str -> the key to be loaded
+            folder: str -> the folder where the key will be loaded from
+        """
         self[key] = pickle.load(open(f"{folder}/{key}.dumped", "rb"))
 
 
