@@ -47,6 +47,17 @@ async def update_rank_pilord(bot):
       member = await guild.get_member(int(user_id))
       await member.remove_role(role, guild_id=guild.id)
 
+  # Avoid creating pilords if there is no piflouz
+  if len(L) == 0 or L[0][1] <= 0:
+    if len(db["current_pilords"]) == 0:
+      return
+    else:
+      for user_id in db["current_pilords"]:
+        member = await guild.get_member(int(user_id))
+        await member.remove_role(role, guild_id=guild.id)
+      db["current_pilords"] = []
+      return
+
   # Setup new pilords
   for user_id, amount in L:
     if user_id not in db["current_pilords"]:
@@ -66,11 +77,12 @@ async def update_rank_mega_piflexer(bot):
   """
   if "mega_piflexers" not in db.keys():
     return
-  
+
   t = time.time()
   guild = Guild(id=Constants.GUILD_IDS[0], _client=bot._http)
   role = Role(id=Constants.MEGA_PIFLEXER_ROLE_ID)
-  for id, old_time in db["mega_piflexers"].items():
+
+  for id, old_time in list(db["mega_piflexers"].items()):
     if t - old_time >= Constants.MEGA_PIFLEXER_ROLE_DURATION:
       member = await guild.get_member(int(id))
       await member.remove_role(role, guild_id=guild.id)
@@ -91,7 +103,8 @@ async def update_rank_piflexer(bot):
 
   guild = Guild(id=Constants.GUILD_IDS[0], _client=bot._http)
   role = Role(id=Constants.PIFLEXER_ROLE_ID)
-  for id, old_time in db["piflexers"].items():
+  
+  for id, old_time in list(db["piflexers"].items()):
     if t - old_time >= Constants.PIFLEX_ROLE_DURATION:
       member = await guild.get_member(int(id))
       await member.remove_role(role, guild_id=guild.id)
@@ -119,6 +132,17 @@ async def update_rank_piflex_master(bot):
     if user_id not in user_ids:
       member = await guild.get_member(int(user_id))
       await member.remove_role(role, guild_id=guild.id)
+
+  # Avoid creating piflex masters if there is no piflex
+  if len(L) == 0 or len(L[0][1]) == 0:
+    if len(db["current_piflex_masters"]) == 0:
+      return
+    else:
+      for user_id in db["current_piflex_masters"]:
+        member = await guild.get_member(int(user_id))
+        await member.remove_role(role, guild_id=guild.id)
+      db["current_piflex_masters"] = []
+      return
 
   # Setup new piflex masters
   for user_id, amount in L:
