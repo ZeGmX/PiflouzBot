@@ -6,6 +6,10 @@ import os
 # Mutable elements in the database
 # In the database, they are stored as the actual element (list, dict), but when accessed, they are converted to Element_list or Element_dict
 class Element:
+    """
+    Class for mutable elements in the database
+    """
+
     element = None
     db_key = ""
 
@@ -16,6 +20,14 @@ class Element:
 
     @staticmethod
     def convert_to_element(item, db_key):
+        """
+        Converts a general database item to an Element_list or Element_dict
+        No effect if the item is not a list or a dict
+        --
+        input:
+            item: any
+            db_key: str
+        """
         if type(item) == list:
             return Element_list(db_key, item)
         elif type(item) == dict:
@@ -25,6 +37,13 @@ class Element:
         
     @staticmethod
     def convert_from_element(item):
+        """
+        Converts an Element_list or Element_dict to a general database item
+        No effect if the item is not an Element_list or Element_dict
+        --
+        input:
+            item: any
+        """
         if type(item) == Element_list:
             return list(Element.convert_from_element(item) for item in item.element)
         elif type(item) == Element_dict:
@@ -34,10 +53,17 @@ class Element:
     
 
     def get_element(self):
+        """
+        Returns the initial database item
+        --
+        output:
+            item: list or dict
+        """
         return self.element
     
 
     def __setitem__(self, key, value):
+        assert db._check_if_acceptable(value), "Value could not be appended because it contains an unacceptable type"
         self.element[key] = value
         db._save_key(self.db_key, db.folder)
 
@@ -72,41 +98,76 @@ class Element:
 
 
 class Element_list(Element):
+    """
+    Class for mutable lists in the database
+    """
+
     def __init__(self, db_key, element):
         assert type(element) == list
         super().__init__(db_key, element)
 
     
     def append(self, item):
+        """
+        Implements the general list append method
+        --
+        input:
+            item: any
+        """
+        assert db._check_if_acceptable(item), "Value could not be appended because it contains an unacceptable type"
         self.element.append(Element.convert_from_element(item))
         db._save_key(self.db_key, db.folder)
 
 
 class Element_dict(Element):
+    """
+    Class for mutable dictionaries in the database
+    """
+
     def __init__(self, db_key, element):
         assert type(element) == dict
         super().__init__(db_key, element)
     
 
     def keys(self):
+        """
+        Implements the general dict keys method
+        --
+        output:
+            res: dict_keys
+        """
         return self.element.keys()
 
 
     def values(self):
+        """
+        Implements the general dict values method
+        --
+        output:
+            res: dict_values
+        """
         return self.element.values()
     
 
     def items(self):
+        """
+        Implements the general dict items method
+        --
+        output:
+            res: dict_items
+        """
         return self.element.items()
 
 
-# Dictionarry based database
 class My_database(dict):
+    """
+    Dictionary-based database with automatic saving and loading
+    """
 
     ACCEPTABLE_TYPES_DEFAULT = [int, float, str, bool, type(None)]
     ACCEPTABLE_TYPES_COLLECTION = [list, dict, Element_list, Element_dict]
 
-    folder = None
+    folder = None  # folder where the database is stored
 
 
     def __init__(self, folder: str = None) -> None:
@@ -119,13 +180,22 @@ class My_database(dict):
     ### Item handling ###
 
     def _check_if_acceptable(self, value):
+        """
+        Verifies if a value has a type acceptable for the database
+        --
+        input:
+            value: any
+        --
+        output:
+            res: bool
+        """
         if type(value) in self.ACCEPTABLE_TYPES_DEFAULT:
             return True
         
         if type(value) in self.ACCEPTABLE_TYPES_COLLECTION:
             return all(self._check_if_acceptable(item) for item in value)
         
-        raise TypeError(f'Value of type {type(value)} is not acceptable')
+        return False
     
 
     def __getitem__(self, key):
@@ -134,10 +204,11 @@ class My_database(dict):
 
     # set an item
     def __setitem__(self, key, value):
-        if self._check_if_acceptable(value):
-            super().__setitem__(key, Element.convert_from_element(value))
-            self._save_key(key, self.folder)
-    
+        assert self._check_if_acceptable(value), "Value could not be appended because it contains an unacceptable type"
+        super().__setitem__(key, Element.convert_from_element(value))
+        self._save_key(key, self.folder)
+
+
     # delete an item
     def __delitem__(self, key):
         super().__delitem__(key)
@@ -187,8 +258,8 @@ class My_database(dict):
 
 
 # db = My_database()
-# db.folder = "D:/Downloads/test_docker/pibot/my_db"
-# db.load("my_db")
+# db.folder = "D:/pibot/my_db"
+# db._load("my_db")
 
 db = My_database(folder="my_db")
 
