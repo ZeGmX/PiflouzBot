@@ -205,7 +205,7 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
     description=desc,
     thumbnail = EmbedImageStruct(url=Constants.PIFLOUZ_URL),
     color=Color.gold().value
-  )
+    )
     
     if ranking_balance != "":
       embed.add_field(name="Balance", value=ranking_balance, inline=True)
@@ -230,6 +230,10 @@ def get_ranking_str(L):
   res = ""
   previous_val, previous_index = 0, 0
   vals = sorted(L, key=lambda key_val: -key_val[1])
+  
+  if len(vals) == 0 or vals[0][1] <= 0:
+    return res
+  
   for i, (user_id, val) in enumerate(vals):
     if i == 10: break # The embed has a limited size so we limit the amount of user in each ranking
 
