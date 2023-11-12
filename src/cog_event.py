@@ -1,6 +1,4 @@
-from interactions import extension_command, extension_component, Extension, OptionType, Embed, EmbedImageStruct, option, autodefer
-from discord import Color
-#from discord import Color
+from interactions import Extension, OptionType, Embed, EmbedAttachment, MaterialColors, RoleColors, slash_option, auto_defer, slash_command, component_callback
 from my_database import db
 import os
 
@@ -32,23 +30,20 @@ class Cog_event(Extension):
     self.bot = bot
 
     # Register the button callbacks
-    for emoji in events.Birthday_event.ingredients:
-      self.bot.component(emoji)(self.callback_from_emoji(emoji))
-
-  
+    for emoji in events.Birthday_event.INGREDIENTS:
+      self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
     
-  @extension_command(name="raffle", description=f"Buy raffle 🎟️ to test your luck /!\ Costs piflouz", scope=Constants.GUILD_IDS)
-  @option(name="nb_tickets", description="How many tickets?", type=OptionType.INTEGER, required=True, min_value=1)
-  # @option(description="How many tickets?", min_value=1)
-  @autodefer(ephemeral=True)
+  @slash_command(name="raffle", description=f"Buy raffle 🎟️ to test your luck /!\ Costs piflouz", scopes=Constants.GUILD_IDS)
+  @slash_option(name="nb_tickets", description="How many tickets?", opt_type=OptionType.INTEGER, required=True, min_value=1)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def raffle_cmd(self, ctx, nb_tickets):
     """
     Callback for the /raffle command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       nb_tickets: int
     """
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
@@ -73,27 +68,16 @@ class Cog_event(Extension):
     self.bot.dispatch("raffle_participation_successful", ctx.author.id, nb_tickets)
 
 
-  @extension_command(name="wordle", description="TBD", scope=Constants.GUILD_IDS)
-  async def wordle_cmd(self, ctx):
-    """
-    Callback for the /wordle command
-    --
-    input:
-      ctx: interactions.CommandContext
-    """
-    pass
-
-
-  @wordle_cmd.subcommand(name="guess", description="Take a guess on the word the day")
-  @option(name="word", description="5-letter english word", type=OptionType.STRING, required=True)
-  @autodefer(ephemeral=True)
+  @slash_command(name="wordle", description="TBD", sub_cmd_name="guess", sub_cmd_description="Take a guess on the word the day")
+  @slash_option(name="word", description="5-letter english word", opt_type=OptionType.STRING, required=True, min_length=5, max_length=5)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def wordle_guess_cmd(self, ctx, word):
     """
     Callback for the /wordle guess command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       word: str
     """
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
@@ -134,15 +118,15 @@ class Cog_event(Extension):
     await self.send_wordle_embed(ctx, wordle, guesses, header_str)  
 
 
-  @wordle_cmd.subcommand(name="status", description="Check how your wordle is going")
-  @autodefer(ephemeral=True)
+  @slash_command(name="wordle", description="TBD", sub_cmd_name="status", sub_cmd_description="Check how your wordle is going")
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def wordle_status_cmd(self, ctx):
     """
     Callback for the /wordle status command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
     
@@ -174,7 +158,7 @@ class Cog_event(Extension):
     Generates the wordle image, host it on imgur and send the it as an interaction response
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       wordle: wordle.Wordle
       guesses: List[str]
       header_str: str
@@ -184,19 +168,19 @@ class Cog_event(Extension):
     link = utils.upload_image_to_imgur(img_path)
     os.remove(img_path)
 
-    color = Color.gold()
+    color = MaterialColors.AMBER
     if len(guesses) > 0 and guesses[-1] == wordle.solution:
-      color = Color.dark_green()
+      color = RoleColors.DARK_GREEN
     elif len(guesses) == wordle.nb_trials and guesses[-1] != wordle.solution:
-      color = Color.dark_red()
+      color = RoleColors.DARK_RED
 
     embed = Embed(
       title="Wordle",
       description=header_str,
       color = color.value,
-      image=EmbedImageStruct(url=link)
+      images=[EmbedAttachment(url=link)]
     )
-    await ctx.send(embeds=embed, ephemeral=True)
+    await ctx.send(embed=embed, ephemeral=True)
 
 
   async def birthday_ingredient_button_callback(self, ctx, emoji):
@@ -204,14 +188,13 @@ class Cog_event(Extension):
     callback for the birthday event buttons with the given emoji
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       emoji: str
     """
-    await ctx.defer(ephemeral=True)
     user_id = str(ctx.author.id)
 
     if user_id not in db["birthday_event_ingredients"].keys():
-      db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.ingredients}
+      db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.INGREDIENTS}
       db["birthday_event_ingredients"][user_id]["last_react_time"] = -1
     if user_id not in db["baked_cakes"].keys():
       db["baked_cakes"][user_id] = 0
@@ -239,22 +222,24 @@ class Cog_event(Extension):
       emoji: str
     --
     output:
-      callback function
+      interactions.ComponentCommand
     """
+    @component_callback(emoji)
+    @auto_defer(ephemeral=True)
     async def callback(ctx):
       await self.birthday_ingredient_button_callback(ctx, emoji)
     return callback
 
 
-  @extension_command(name="birthday", description=f"Check how your baking skills are going", scope=Constants.GUILD_IDS, options=[])
-  @autodefer(ephemeral=True)
+  @slash_command(name="birthday", description=f"Check how your baking skills are going", scopes=Constants.GUILD_IDS, options=[])
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def birthday_cmd(self, ctx):
     """
     Callback for the /birthday command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
   
@@ -263,7 +248,7 @@ class Cog_event(Extension):
 
     user_id = str(ctx.author.id)
     if user_id not in db["birthday_event_ingredients"].keys():
-      db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.ingredients}
+      db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.INGREDIENTS}
       db["birthday_event_ingredients"][user_id]["last_react_time"] = -1
     if user_id not in db["baked_cakes"].keys():
       db["baked_cakes"][user_id] = 0
@@ -283,21 +268,21 @@ class Cog_event(Extension):
       res: str
     """
     res = "Your ingredients: \n"
-    for e in events.Birthday_event.ingredients:
+    for e in events.Birthday_event.INGREDIENTS:
       res += f"• {e}: {db['birthday_event_ingredients'][user_id][e]}\n"
     res += f"\nYou baked {db['baked_cakes'][user_id]} cakes!"
     return res
 
 
-  @extension_component(events.Birthday_raffle_event.button_id)
+  @component_callback(events.Birthday_raffle_event.button_id)
+  @auto_defer(ephemeral=True)
   async def birthday_raffle_register(self, ctx):
     """
     Callback for the button to register to the birthday raffle
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.ComponentContext
     """
-    await ctx.defer(ephemeral=True)
     await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
     
     current_event = eval(db["current_event"])
@@ -305,7 +290,7 @@ class Cog_event(Extension):
 
     user_id = str(ctx.author.id)
     await utils.custom_assert(user_id not in db["birthday_raffle_participation"], "You are already registered!", ctx)
-    db["birthday_raffle_participation"] += [user_id]
+    db["birthday_raffle_participation"].append(user_id)
 
     await current_event.update_raffle_message(self.bot)
     

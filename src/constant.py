@@ -1,5 +1,6 @@
 import os
 import datetime # Useful for an eval
+from interactions import TimeTrigger, OrTrigger
 
 
 class Constants:
@@ -52,6 +53,7 @@ class Constants:
   EVENT_TIME = eval(os.getenv("EVENT_TIME"))
   OTTER_IMAGE_TIME = eval(os.getenv("OTTER_IMAGE_TIME"))
   SHUFFLE_NAME_TIME = eval(os.getenv("SHUFFLE_NAME_TIME"))
+  EVERY_HOUR_TRIGGER = OrTrigger(*[TimeTrigger(hour=i) for i in range(24)])
   
 
   ### Costs

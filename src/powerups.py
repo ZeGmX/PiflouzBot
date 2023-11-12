@@ -1,15 +1,13 @@
 import time
-import datetime
-import asyncio
-from discord.ext import tasks
-from my_database import db
 
 from constant import Constants
+from custom_task_triggers import TaskCustom as Task
+from my_database import db
 import piflouz_handlers
 import utils
 
 
-@tasks.loop(hours=1)
+@Task.create(Constants.EVERY_HOUR_TRIGGER)
 async def handle_actions_every_hour(bot):
   """
   Callback for handling powerups that have an action every hour (such as miners)
@@ -17,13 +15,6 @@ async def handle_actions_every_hour(bot):
   input:
     bot: interactions.Client
   """
-  # Waiting for the next hour
-  now = datetime.datetime.now()
-  then = now + datetime.timedelta(hours=1)
-  then = datetime.datetime(then.year, then.month, then.day, then.hour, 0, 0)
-  dt = then - now
-  await asyncio.sleep(dt.total_seconds() % 3600)
-
   print("handling hourly powerups")
 
   for user_id, powerups in db["powerups"].items():

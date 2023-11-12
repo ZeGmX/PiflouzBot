@@ -1,6 +1,5 @@
-discord-py-interactions==4.3.3
+discord-py-interactions==5.10.0
 python-dotenv==1.0.0
-discord
 python-dateutil
 asyncpraw
 twitch-python

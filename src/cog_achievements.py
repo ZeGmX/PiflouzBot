@@ -1,9 +1,10 @@
-from interactions import extension_command, Extension, Emoji, Button, ButtonStyle, autodefer, option, OptionType
+from interactions import Extension, Button, ButtonStyle, OptionType, slash_command, auto_defer, slash_option
+from interactions.ext.paginators import Paginator
 from math import ceil
-from my_database import db
 
 from achievement_handler import get_achievements_list
 from constant import Constants
+from my_database import db
 import utils
 
 
@@ -22,85 +23,41 @@ class Cog_achievements(Extension):
   Components:
     page_achievements_list-{i}, i = 0...self.pages - 1
   """
-  achievements_per_page = 10
+  ACHIEVEMENTS_PER_PAGE = 10
 
   def __init__(self, bot):
     self.bot = bot
     self.achievements = get_achievements_list()
-    self.nb_pages = ceil(len(self.achievements) / self.achievements_per_page)
-
-    # Register the callbacks for the page arrow components
-    for i in range(self.nb_pages):
-      self.bot.component(f"page_achievements_list-{i}")(self.callback_from_page(i))
-
-
-  @extension_command(name="achievements", description="TBD", scope=Constants.GUILD_IDS)
-  async def achievements_cmd(self, ctx, page=0):
-    pass
+    self.nb_pages = ceil(len(self.achievements) / self.ACHIEVEMENTS_PER_PAGE)
 
   
-  @achievements_cmd.subcommand(name="list", description="Check your achievements")
-  @option(name="page", description="Which page?", required=False, type=OptionType.INTEGER)
-  @autodefer(ephemeral=True)
+  # @achievements_cmd.subcommand(name="list", description="Check your achievements")
+  @slash_command(name="achievements", description="TBD", sub_cmd_name="list", sub_cmd_description="Check your achievements", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
-  async def achiev_list_cmd(self, ctx, page=0):
+  async def achiev_list_cmd(self, ctx):
     """
     Callback for the achievements list command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       page: int
     """
-    await self.achiev_list_tmp(ctx, page)
-    
-
-  def callback_from_page(self, page):
-    """
-    Returns the callback function for the page buttons in the achievement list
-    --
-    input:
-      page: int
-    --
-    output:
-      callback function
-    """
-    @autodefer(ephemeral=True)
-    async def callback(ctx):
-      await self.achiev_list_tmp(ctx, page)
-    return callback
-
-
-  async def achiev_list_tmp(self, ctx, page):
-    """
-    Common function that is called both from the /achievements list and the page buttons
-    --
-    input:
-      ctx: interactions.CommandContext
-      page: int
-    """
-    await utils.custom_assert(0 <= page < self.nb_pages, f"The `page` argument should be between 0 and {self.nb_pages}", ctx)
     user_id = str(ctx.author.id)
 
     if user_id not in db["achievements"].keys(): db["achievements"][user_id] = []
 
     user_achievements = list(db["achievements"][user_id])
 
-    # Getting the string emoji
-    res = [f"Page {page + 1} / {self.nb_pages}"]
-    for a in self.achievements[page * self.achievements_per_page:(page + 1) * self.achievements_per_page]:
+    # Getting the string for each achievement
+    res = []
+    for a in self.achievements:
       emoji = "✅" if a.to_str() in user_achievements else "❌"
       res.append(f"{emoji} • **{a.name}** • {a.reward} {Constants.PIFLOUZ_EMOJI}\n{a.description}")
-    s = f"**Progress: {len(user_achievements)} / {len(self.achievements)} achievements unlocked!**\n\n" + "\n----\n".join(res)
 
-    # Getting the buttons
-    buttons = []
-    if page != 0 : # not the first page
-      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="⬅️"), custom_id=f"page_achievements_list-{page - 1}"))
-      
-    if page < self.nb_pages - 1: # not the last page
-      buttons.append(Button(style=ButtonStyle.SECONDARY, emoji=Emoji(name="➡️"), custom_id=f"page_achievements_list-{page + 1}"))
-    
-    await ctx.send(s, components=buttons, ephemeral=True)
+    prefix = f"**Progress: {len(user_achievements)} / {len(self.achievements)} achievements unlocked!**\n\n"
+    p = Paginator.create_from_list(client=self.bot, content=res, prefix=prefix, page_size=920)  # Using 920, we have exactly 10 achievements per page
+    await p.send(ctx, ephemeral=True)
     
 
 

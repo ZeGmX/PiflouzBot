@@ -1,11 +1,12 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from interactions import Intents, PresenceActivity, PresenceActivityType, ClientPresence
+from interactions import Intents, Activity, ActivityType, Status
+from interactions import listen
 import logging
 import os
 
-import achievement_handler
+from achievement_handler import Achievement_handler_ext
 from constant import Constants
 from custom_client import Client
 from my_database import db
@@ -18,25 +19,25 @@ import socials
 import utils
 
 
-intents = Intents.GUILD_MEMBERS | Intents.GUILD_MESSAGES | Intents.GUILD_MESSAGE_REACTIONS | Intents.DIRECT_MESSAGES | Intents.GUILDS
-
-presence = PresenceActivity(name="Piflouz generator", type=PresenceActivityType.GAME)
-
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, presence=ClientPresence(activities=[presence]))
+intents = Intents.new(guild_members=True, message_content=True, guild_messages=True, guild_message_reactions=True, direct_messages=True, guilds=True)
+activity = Activity(name="Piflouz generator", type=ActivityType.CUSTOM, state="Generating piflouz")
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity)
   
 
-@bot.event
-async def on_command_error(*args, **kwargs):
-  print(args, kwargs)
-  print(f"Got the following error: {str(args[-1])}")
+@listen(disable_default_listeners=True)
+async def on_error(error):
+  print(f"Got the following error in {error.source}: {error.error}")
+  print("Had the following arguments:", error.args)
+  print("Had the following kwargs:", error.kwargs)
+  print("Had the following context:", error.ctx)
 
 
-@bot.event
-async def on_start():
+@listen()
+async def on_startup():
   """
   Function executed when the bot correctly connected to Discord
   """
-  print(f"I have logged in as {bot.me.name} - id: {bot.me.id}")
+  print(f"I have logged in as {bot.user.display_name} - id: {bot.user.id}")
 
    # Setting the base parameters in the database
   for key in [
@@ -96,10 +97,8 @@ async def on_start():
   ]
 
   for event_name in custom_event:
-    achievement_handler.add_custom_listener_for_achievements(bot, event_name)
-
-  bot.register_listener(achievement_handler.on_interaction_create_listener, name="on_interaction_create")  # Note: we could use two different listeners with events 'on_command' and 'on_component'
-
+    Achievement_handler_ext.add_custom_listener_for_achievements(bot, event_name)
+  
   events.event_handlers.start(bot)
   piflouz_handlers.random_gift.start(bot)
   powerups.handle_actions_every_hour.start(bot)
@@ -111,48 +110,47 @@ async def on_start():
   socials.shuffle_names.start(bot)
 
 
-@bot.event
-async def on_message_create(message):
+
+
+@listen()
+async def on_message_create(message_event):
   """
   Listner function executed when a message is sent
   --
   input:
-    message: interactions.Message -> the message sent
+    message_event: interactions.MessageCreate -> the message create event
   """
-  if message.author.id == int(bot.me.id): return
-  
-  message._client = bot._http
-  message = await (await message.get_channel()).get_message(message.id)
+  message = message_event.message
+  if message.author.id == int(bot.user.id): return
   
   if message.content is not None and "$tarpin" in message.content:
     await message.reply("Du quoi ?")
     return
 
 
-@bot.event
-async def on_message_reaction_add(reac):
+@listen()
+async def on_message_reaction_add(reac_event):
   """
   Listener function executed when a reaction is added to a message
   --
   input:
-    reac: interactions.MessageReaction
+    reac_event: interactions.MessageReactionAdd 
   """
 
-  message_id = reac.message_id
+  message_id = reac_event.message.id
   if str(message_id) not in db["random_gifts"]:
     return
 
-  channel = await bot.get_channel(reac.channel_id)
-  message = await channel.get_message(reac.message_id)
-  user = reac.member
-  emoji = reac.emoji
+  message = reac_event.message
+  user = reac_event.author
+  emoji = reac_event.reaction.emoji
 
   # Random chest message
   if str(message_id) in db["random_gifts"]:
     id_required, qty, custom_message = db["random_gifts"][str(message_id)]
     
     if emoji.id is not None and int(emoji.id) == id_required:
-      piflouz_handlers.update_piflouz(user.id, qty, False)
+      # piflouz_handlers.update_piflouz(user.id, qty, False)
 
       del db["random_gifts"][str(message_id)]
       new_text_message = f"{user.mention} won {qty} {Constants.PIFLOUZ_EMOJI} from a pibox!"
@@ -166,18 +164,23 @@ async def on_message_reaction_add(reac):
       bot.dispatch("pibox_failed", user.id, qty)
   
 
+
+
 if __name__ == "__main__":
   Constants.load()  # Due to import circular import issues
  
   import achievements # to register the listeners
 
-  bot.load("cog_achievements")
-  bot.load("cog_buy")
-  bot.load("cog_duels")
-  bot.load("cog_event")
-  bot.load("cog_misc")
-  bot.load("cog_piflouz_mining")
-  bot.load("cog_status_check")
-  bot.load("cog_would_you_rather")
-  
+  bot.load_extension("achievement_handler")
+  bot.load_extension("cog_achievements")
+  bot.load_extension("cog_buy")
+  bot.load_extension("cog_duels")
+  bot.load_extension("cog_event")
+  bot.load_extension("cog_misc")
+  bot.load_extension("cog_piflouz_mining")
+  bot.load_extension("cog_status_check")
+  bot.load_extension("cog_would_you_rather")
+
+  db["birthday_raffle_participation"] = []
+
   bot.start()

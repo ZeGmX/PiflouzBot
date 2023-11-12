@@ -1,7 +1,7 @@
-from interactions import Extension, extension_command, TextInput, TextStyleType, Modal, extension_modal, extension_message_command, autodefer
-from my_database import db
+from interactions import Extension, Modal, ShortText, slash_command, message_context_menu, auto_defer, modal_callback
 
 from constant import Constants
+from my_database import db
 import utils
 
 
@@ -20,53 +20,35 @@ class Cog_would_you_rather(Extension):
     wyr
   """
 
-  modal_name = "wyr"
+  MODAL_NAME = "wyr"
 
   def __init__(self, bot):
     self.bot = bot
 
 
-  @extension_command(name="wouldyourather", description="Create a custom wouldyourather", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="wouldyourather", description="Create a custom wouldyourather", scopes=Constants.GUILD_IDS)
   async def wouldyourather_cmd(self, ctx):
     """
     Custom wouldyourather commend for easier formating
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     modal = self.get_wyr_modal()
 
     if str(ctx.author.id) in db["wyr_edit"].keys():
       del db["wyr_edit"][str(ctx.author.id)]  
     
-    await ctx.popup(modal)
-
-  # @extension_modal("wyr")
-  # @autodefer(ephemeral=True)
-  # async def wouldyourather_response(self, ctx, *options):
-  #   """
-  #   Response to the "Would you rather?" modal
-  #   --
-  #   input:
-  #     ctx: interactions.ComponentContext
-  #     options: string list
-  #   """
-  #   msg = await ctx.send(self.get_wyr_txt(options))
-
-  #   emojis = "🇦🇧🇨🇩🇪"
-  #   for i in range(len(options)):
-  #     await msg.create_reaction(emojis[i])
+    await ctx.send_modal(modal=modal)
 
 
-  @extension_message_command(name="WYR - edit", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @message_context_menu(name="WYR - edit", scopes=Constants.GUILD_IDS)
   async def edit_would_you_rather_app(self, ctx):
     """
     Message context application for editing a "Would you rather?" message by Pibot
     --
     input:
-      ctx: ctx: interactions.CommandContext
+      ctx: ctx: interactions.SlashContext
     """
     start = "> **Would you rather...**\n"
     await utils.custom_assert(self.check_if_wyr_message(ctx.target), "This is not a Pibot-generated 'Would you rather?'", ctx)
@@ -76,25 +58,25 @@ class Cog_would_you_rather(Extension):
     values = [line[4:] for line in content]
 
     modal = self.get_wyr_modal(values=values)
-    await ctx.popup(modal)
+    await ctx.send_modal(modal)
 
     db["wyr_edit"][str(ctx.author.id)] = int(ctx.target.id)
 
  
-  @extension_modal(modal_name)
-  @autodefer(ephemeral=True)
-  async def wouldyourather_edit_response(self, ctx, *options):
+  @modal_callback(MODAL_NAME)
+  @auto_defer(ephemeral=True)
+  async def wouldyourather_edit_response(self, ctx, **options):
     """
     Response to the "Would you rather?" modal
     --
     input:
-      ctx: interactions.ComponentContext
-      options: string list
+      ctx: interactions.ModalContext 
+      options: InputText list
     """
     # We remove the blank options
-    options = list(filter(lambda elmt: len(elmt) > 0, options))
+    options = [option for option in options.values() if len(option) > 0]
 
-    channel = await self.bot.get_channel(ctx.channel_id)
+    channel = await self.bot.fetch_channel(ctx.channel.id)
     txt = self.get_wyr_txt(options)
     msg = None
     
@@ -102,8 +84,8 @@ class Cog_would_you_rather(Extension):
     if str(ctx.author.id) in db["wyr_edit"].keys():
       # We recover the id of the original message we are editing
       id = db["wyr_edit"][str(ctx.author.id)]
-      msg = await channel.get_message(id)
-      await msg.edit(txt)
+      msg = await channel.fetch_message(id)
+      await msg.edit(content=txt)
       del db["wyr_edit"][str(ctx.author.id)]
     # We are creating a WYR
     else:
@@ -119,10 +101,10 @@ class Cog_would_you_rather(Extension):
       bot_reac = [reac.emoji.name for reac in msg.reactions if reac.me and reac.emoji.name in emojis]
     for i in range(len(options)):
       if emojis[i] not in bot_reac:
-        await msg.create_reaction(emojis[i])
+        await msg.add_reaction(emojis[i])
     for i in range(len(options), len(emojis)):
       if emojis[i] in bot_reac:
-        await msg.remove_all_reactions_of(emojis[i])
+        await msg.clear_reactions(emojis[i])
 
   
   def get_wyr_modal(self, values=None):
@@ -131,6 +113,9 @@ class Cog_would_you_rather(Extension):
     --
     input:
       values: string list -> the default value for each wyr option
+    --
+    output:
+      modal: interactions.Modal
     """
     nb_options = 5
     
@@ -140,8 +125,8 @@ class Cog_would_you_rather(Extension):
     option_indexes = "ABCDE"
 
     # The first two are mandatory, the other ones are not
-    components = [TextInput(style=TextStyleType.SHORT, label=f"Option {option_indexes[i]}", custom_id=f"wyr_option_{i}", value=values[i], placeholder="Type your option here", required=i < 2) for i in range(nb_options)]
-    return Modal(title="Would you rather...", custom_id=self.modal_name, components=components)
+    components = [ShortText(label=f"Option {option_indexes[i]}", custom_id=f"wyr_option_{i}", value=values[i], placeholder="Type your option here", required=i < 2) for i in range(nb_options)]
+    return Modal(*components, title="Would you rather...", custom_id=self.MODAL_NAME)
 
 
   def get_wyr_txt(self, options):
@@ -174,7 +159,7 @@ class Cog_would_you_rather(Extension):
       res: bool
     """
     start = "> **Would you rather...**\n"
-    return msg.content.startswith(start) and msg.author.id == int(self.bot.me.id)
+    return msg.content.startswith(start) and msg.author.id == int(self.bot.user.id)
 
 
 def setup(bot):

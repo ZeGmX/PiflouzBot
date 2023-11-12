@@ -1,7 +1,8 @@
-import interactions
+from interactions import Client
+from interactions.api.events import BaseEvent
 
 
-class Client(interactions.Client):
+class Client(Client):
   """
   A custom bot client to simplify some function calls
   """
@@ -10,28 +11,21 @@ class Client(interactions.Client):
     super().__init__(*args, **kwargs)
 
 
-  async def get_channel(self, channel_id):
-    """
-    Get a discord channel given its id
-    --
-    input:
-      channel_id: int
-    """
-    data = await self._http.get_channel(channel_id)
-    return interactions.Channel(_client=self._http, **data)
-
-
-  def dispatch(self, *args, **kwargs):
+  def dispatch(self, event, *args, **kwargs):
     """
     Dispatches an event with the arguments
     The first argument should be a string corresponding to the event name
     """
-    self._websocket._dispatch.dispatch(*args, **kwargs)
+    if isinstance(event, BaseEvent):
+      super().dispatch(event, *args, **kwargs)
+    else:
+      super().dispatch(My_Event(event, self), *args, **kwargs)
+  
 
-
-  def register_listener(self, *args, **kwargs):
-    """
-    Registers a new listener
-    The first argument should be the corresponding coroutine, and the "name" argument should be the name of the event
-    """
-    self._websocket._dispatch.register(*args, **kwargs)
+class My_Event(BaseEvent):
+  """
+  A custom event
+  """
+  def __init__(self, name, bot):
+    self.override_name = name
+    self.bot = bot

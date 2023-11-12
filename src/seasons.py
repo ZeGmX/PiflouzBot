@@ -1,14 +1,14 @@
-from discord.ext import tasks
-from discord.utils import sleep_until
 from math import sqrt
-from my_database import db
 import datetime
 from dateutil.relativedelta import relativedelta
-from interactions import Emoji, Button, ButtonStyle
+from interactions import Button, ButtonStyle, IntervalTrigger
+import asyncio
 
 from cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
+from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages
+from my_database import db
 import piflouz_handlers
 import utils
 
@@ -24,13 +24,11 @@ async def start_new_season(bot):
     msg: interactions.Message -> the message sent
   """
   if "out_channel" in db.keys():
-    channel = await bot.get_channel(db["out_channel"])
+    channel = await bot.fetch_channel(db["out_channel"])
 
-    emoji = Emoji(id=Constants.PIFLOUZ_EMOJI_ID)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Constants.PIFLOUZ_EMOJI)
 
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=emoji)
-
-    msg = await channel.send(embeds=embed_messages.get_embed_piflouz(bot), components=piflouz_button)
+    msg = await channel.send(embed=embed_messages.get_embed_piflouz(), components=piflouz_button)
     return msg
 
 
@@ -89,11 +87,11 @@ async def end_current_season(bot):
   # Sending the announcement message
   if "out_channel" in db.keys():
     embed = await embed_messages.get_embed_end_season(bot)
-    channel = await bot.get_channel(db["out_channel"])
-    await channel.send(embeds=embed)
+    channel = await bot.fetch_channel(db["out_channel"])
+    await channel.send(embed=embed)
   
 
-@tasks.loop(hours=24)
+@Task.create(IntervalTrigger(hours=24))
 async def season_task(bot):
   """
   Starts and ends seasons
@@ -103,12 +101,12 @@ async def season_task(bot):
   """
   last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
   next_begin = last_begin_time + relativedelta(months=3)
-  await sleep_until(next_begin)
+  await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
 
   if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
     await end_current_season(bot)
-    channel = await bot.get_channel(db["out_channel"])
-    old_message = await channel.get_message(db["current_season_message_id"])
+    channel = await bot.fetch_channel(db["out_channel"])
+    old_message = await channel.fetch_message(db["current_season_message_id"])
     await old_message.unpin()
   
   db["last_begin_time"] = int(next_begin.timestamp())
@@ -117,7 +115,6 @@ async def season_task(bot):
   db["current_season_message_id"] = int(msg.id)
   db["piflouz_message_id"] = int(msg.id)
   
-
 
 def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
   """

@@ -1,3 +1,5 @@
+# TODO: fix mutating the databse using .items() or through iteration
+
 import pickle
 import os
 
@@ -106,6 +108,16 @@ class Element_list(Element):
         assert type(element) == list
         super().__init__(db_key, element)
 
+
+    def __add__(self, other):
+        """
+        Implements the general list add method
+        --
+        input:
+            other: list
+        """
+        return self.element + other
+    
     
     def append(self, item):
         """

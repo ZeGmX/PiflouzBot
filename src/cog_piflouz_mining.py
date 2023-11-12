@@ -1,4 +1,4 @@
-from interactions import extension_command, extension_component, Extension, autodefer
+from interactions import slash_command, component_callback, Extension, auto_defer
 from my_database import db
 
 from constant import Constants
@@ -27,21 +27,21 @@ class Cog_piflouz_mining(Extension):
     self.bot = bot
   
 
-  @extension_command(name="get", description="For the lazy ones", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="get", description="For the lazy ones", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def get_cmd(self, ctx):
     """
     Callback for the get command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.InteractionContext
     """
     await self.get_callback_tmp(ctx)
 
 
-  @extension_component(component=button_name)
-  @autodefer(ephemeral=True)
+  @component_callback(button_name)
+  @auto_defer(ephemeral=True)
   async def mining_button_callback(self, ctx):
     """
     Callback for the button under the mining message
@@ -58,9 +58,9 @@ class Cog_piflouz_mining(Extension):
     Callback for the /get command or button
     --
     input:
-      ctx: interactions.CommandContext or interactions.ComponentContext
+      ctx: interactions.SlashContext or interactions.ComponentContext
     """
-    current_time = int(ctx.id.epoch)
+    current_time = int(ctx.id.created_at.timestamp())
     piflouz_handlers.update_combo(ctx.author.id, current_time)
     successful_update, qty = piflouz_handlers.update_piflouz(ctx.author.id, current_time=current_time)
 
@@ -76,8 +76,8 @@ class Cog_piflouz_mining(Extension):
     self.bot.dispatch("combo_updated", ctx.author.id)
 
 
-  @extension_command(name="cooldown", description="When your addiction is stronger than your sense of time", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="cooldown", description="When your addiction is stronger than your sense of time", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def cooldown_cmd(self, ctx):
     """
@@ -87,7 +87,7 @@ class Cog_piflouz_mining(Extension):
       ctx: interactions.CommandContext
     """
     user = ctx.author
-    current_time = int(ctx.id.epoch)
+    current_time = int(ctx.id.created_at.timestamp())
     timer = utils.get_timer(user.id, current_time)
     if timer > 0 :
       output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"

@@ -3,17 +3,15 @@ import datetime
 import asyncio
 import pickle
 from functools import wraps
-from my_database import db
-from discord.ext import tasks
 from pyimgur import Imgur
-from interactions import Button, ButtonStyle, Emoji
+from interactions import Button, ButtonStyle, TimeTrigger
 
 from constant import Constants
+from custom_task_triggers import TaskCustom as Task
 import embed_messages
-import piflouz_handlers
+from my_database import db
 import powerups  # Used in eval()
 import events  # Used in eval()
-
 
 def get_new_joke():
   """
@@ -85,10 +83,11 @@ async def update_piflouz_message(bot):
   """
   from cog_piflouz_mining import Cog_piflouz_mining
   
-  channel = await bot.get_channel(db["out_channel"])
-  embed = embed_messages.get_embed_piflouz(bot)
-  piflouz_message = await channel.get_message(db["piflouz_message_id"])
-  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Emoji(id=Constants.PIFLOUZ_EMOJI_ID))
+  channel = await bot.fetch_channel(db["out_channel"])
+  embed = embed_messages.get_embed_piflouz()
+  piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
+  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id="piflouz_mining_button", emoji=Constants.PIFLOUZ_EMOJI)
+  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Constants.PIFLOUZ_EMOJI)
   await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 
@@ -155,30 +154,7 @@ def check_message_to_be_processed(fun):
   return wrapper
 
 
-# def observed_to_py(obj):
-#   """
-#   Turns an "Observed" object (from the database) into a classic Python object
-#   --
-#   input:
-#     obj: int/str/bool/None/ObservedDict/ObservedList/Database
-#   output:
-#     res: int/str/bool/None/dict/list
-#   """
-#   t = type(obj)
-#   if t == int or t == str or t == bool or obj is None:
-#     return obj
-
-#   elif t == ObservedList:
-#     return [observed_to_py(sub_obj) for sub_obj in obj]
-  
-#   elif t == ObservedDict or t == Database:
-#     return {key: observed_to_py(val) for key, val in obj.items()}
-  
-#   else:
-#     print("Cannot convert from type: ", t)
-
-
-@tasks.loop(hours=24)
+@Task.create(TimeTrigger(hour=23))
 async def backup_db(folder=None):
   """
   Creates a daily backup of the database
@@ -186,9 +162,6 @@ async def backup_db(folder=None):
   input:
     filename: str -> the path to the file where the database will be saved. If None, the name is based on the date
   """
-  then = datetime.time(23, 0, 0)
-  await wait_until(then)
-
   parent_folder ="backups_db"
   if folder is None:
     now = datetime.datetime.now()

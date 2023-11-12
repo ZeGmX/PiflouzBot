@@ -1,8 +1,8 @@
-from discord.utils import escape_markdown
-from interactions import extension_command, Extension, OptionType, option, autodefer
+from interactions import Extension, OptionType, slash_command, slash_option, auto_defer
 from my_database import db
 
 from constant import Constants
+from markdown import escape_markdown
 import powerups # Used for eval
 import socials
 import utils
@@ -22,18 +22,18 @@ class Cog_status_check(Extension):
   """
  
   def __init__(self, bot):
-    pass
+    self.bot = bot
 
-  @extension_command(name="is-live", description="Check if a certain streamer is live", scope=Constants.GUILD_IDS)
-  @option(name="streamer_name", description="The name of the streamer you want to check", type=OptionType.STRING, required=True)
-  @autodefer(ephemeral=True)
+  @slash_command(name="is-live", description="Check if a certain streamer is live", scopes=Constants.GUILD_IDS)
+  @slash_option(name="streamer_name", description="The name of the streamer you want to check", opt_type=OptionType.STRING, required=True)
+  @auto_defer()
   @utils.check_message_to_be_processed
   async def is_live_cmd(self, ctx, streamer_name):
     """
     Callback for the isLive command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
       streamer_name: str
     """
     stream = socials.get_live_status(streamer_name)
@@ -47,16 +47,16 @@ class Cog_status_check(Extension):
       await ctx.send(msg)
   
 
-  @extension_command(name="balance", description="Check how many piflouz you have", scope=Constants.GUILD_IDS)
-  @option(name="user", description="The person you want to check. Leave empty to check your own balance", type=OptionType.USER, required=False)
-  @autodefer(ephemeral=True)
+  @slash_command(name="balance", description="Check how many piflouz you have", scopes=Constants.GUILD_IDS)
+  @slash_option(name="user", description="The person you want to check. Leave empty to check your own balance", opt_type=OptionType.USER, required=False)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def balance_cmd(self, ctx, user=None):
     """
     Callback for the balance command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     if user is None: user = ctx.author
 
@@ -75,15 +75,15 @@ class Cog_status_check(Extension):
     await ctx.send(content, ephemeral=True)
 
 
-  @extension_command(name="pilord", description="See how much you need to farm to flex with your rank", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="pilord", description="See how much you need to farm to flex with your rank", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def pilord_cmd(self, ctx):
     """
     Callback for the pilord command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     user_id = str(ctx.author.id)
     if user_id not in db["piflouz_bank"].keys():
@@ -97,15 +97,15 @@ class Cog_status_check(Extension):
       await ctx.send(f"You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!", ephemeral=True)  
   
 
-  @extension_command(name="powerups", description="See how powerful you are", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="powerups", description="See how powerful you are", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def powerups_cmd(self, ctx):
     """
     Callback for the powerups command
     --
     input:
-      ctx: interactions.CommandContext
+      ctx: interactions.SlashContext
     """
     user_id = str(ctx.author.id)
     content = "Here is the list of powerups you have at the moment:\n"
@@ -124,15 +124,15 @@ class Cog_status_check(Extension):
     await ctx.send(content, ephemeral=True)
 
   
-  @extension_command(name="ranking", description="See how worthy you are", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="ranking", description="See how worthy you are", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def ranking_cmd(self, ctx):
     """
     Callback for the ranking command
     --
     input:
-    ctx: interactions.CommandContext
+    ctx: interactions.SlashContext
     """
     d_piflouz = dict(db["piflouz_bank"])
     d_piflex = dict(db["discovered_piflex"])
@@ -162,15 +162,15 @@ class Cog_status_check(Extension):
       await ctx.send(res, ephemeral=True)
     
 
-  @extension_command(name="season-result", description="See how much you earned in the last season", scope=Constants.GUILD_IDS)
-  @autodefer(ephemeral=True)
+  @slash_command(name="season-result", description="See how much you earned in the last season", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
   async def seasonresult_cmd(self, ctx):
     """
     Callback for the seasonresult command
     --
     input:
-    ctx: interactions.CommandContext
+    ctx: interactions.SlashContext
     """
     user_id = str(ctx.author.id)
     await utils.custom_assert(user_id in db["season_results"].keys(), "You did not participate to the previous season", ctx)

@@ -1,7 +1,60 @@
-from interactions import InteractionType
+from interactions import Extension, listen
 
 
-listeners = dict()
+listeners = dict()  # Associates an event name to a list of classes that listen to it
+
+
+class Achievement_handler_ext(Extension):
+  """
+  Intermediate for event dispatching and achievement checking
+  """
+
+  def __init__(self, bot) :
+    self.bot = bot
+  
+
+  @listen()
+  async def on_component_completion(self, event):
+    """
+    Listener that is called when a component callback has finished
+    --
+    input:
+      event: interactions.ComponentCompletion
+    """
+    ctx = event.ctx
+    await dispatch_to_achievements(ctx.custom_id, int(ctx.author.id), ctx)
+
+
+  @listen()
+  async def on_command_completion(self, event):
+    """
+    Listener that is called when a command callback has finished
+    --
+    input:
+      event: interactions.CommandCompletion
+    """
+    ctx = event.ctx
+    await dispatch_to_achievements(ctx.command.name.default, int(ctx.author.id), ctx)
+
+
+  def add_custom_listener_for_achievements(bot, event_name):
+    """
+    Adds a new listener to the bot
+    When the event is dispached, it will be sent to the achievements listening to it to check if they are validated
+    --
+    input:
+      bot: interactions.Client
+      event_name: str
+    """
+    @listen(event_name)
+    async def custom_event_listener(event, user_id, *args, **kwargs):
+      await dispatch_to_achievements(event_name, user_id, *args, **kwargs)
+
+    bot.add_listener(custom_event_listener)
+
+
+def setup(bot):
+  Achievement_handler_ext(bot)
 
 
 def listen_to(*events):
@@ -20,48 +73,22 @@ def listen_to(*events):
   return wrapper
 
 
-async def dispatch_to_achievements(event, user_id, *args, **kwargs):
+async def dispatch_to_achievements(event_name, user_id, *args, **kwargs):
   """
   Sends informations to the appropriate achievements to validate it(or not)
   --
   input:
-    event: str -> the name of the event
+    event_name: str -> the name of the event
+    user_id: int -> id of the user who triggered the event
   """
-  if event in listeners.keys():
-    for cls in listeners[event]:
+  if event_name in listeners.keys():
+    for cls in listeners[event_name]:
       event_obj = cls()
       try:
         assert not event_obj.is_validated(user_id), "achievement already validated"
         await event_obj.check(user_id, *args, **kwargs)
       except:
         pass
-
-
-async def on_interaction_create_listener(ctx):
-  """
-  Listener that is called when an interaction is created
-  --
-  input:
-    ctx: interactions.MessageContext
-  """
-  if ctx.type == InteractionType.APPLICATION_COMMAND:
-    await dispatch_to_achievements(ctx.data.name, int(ctx.author.id), ctx)
-  elif ctx.type == InteractionType.MESSAGE_COMPONENT:
-    await dispatch_to_achievements(ctx.custom_id, int(ctx.author.id), ctx)
-
-
-def add_custom_listener_for_achievements(bot, event_name):
-  """
-  Adds a new listener to the bot which is used to check achievement progress
-  --
-  input:
-    bot: interactions.Client
-    event_name: str
-  """
-  async def custom_event_listener(user_id, *args, **kwargs):
-    await dispatch_to_achievements(event_name, user_id, *args, **kwargs)
-
-  bot.register_listener(custom_event_listener, name=event_name)
 
 
 def get_achievements_list():

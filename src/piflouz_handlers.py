@@ -1,11 +1,11 @@
-from discord.ext import tasks
 from random import random, randrange
-from my_database import db
 import functools
-from interactions import Role
+from interactions import IntervalTrigger
 
 from constant import Constants
+from custom_task_triggers import TaskCustom as Task
 import events  # Used in eval()
+from my_database import db
 import powerups  # Used in eval()
 import utils
 
@@ -65,14 +65,14 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
     amount: int, positive
     custom_message: either None, or a custom message (str) to add at the end.
   """
-  out_channel = await bot.get_channel(db["out_channel"])
+  out_channel = await bot.fetch_channel(db["out_channel"])
 
   index = randrange(len(Constants.EMOJI_IDS_FOR_PIBOX))
   emoji_id = Constants.EMOJI_IDS_FOR_PIBOX[index]
   emoji_name = Constants.EMOJI_NAMES_FOR_PIBOX[index]
   emoji = f"<:{emoji_name}:{emoji_id}>"
 
-  role = Role(id=Constants.PIBOX_NOTIF_ROLE_ID)
+  role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
 
   text_output = f"{role.mention} Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !" 
   if custom_message is not None:
@@ -82,7 +82,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
   db["random_gifts"][str(message.id)] = [emoji_id, piflouz_quantity, custom_message]
 
 
-@tasks.loop(seconds=30)
+@Task.create(IntervalTrigger(seconds=30))
 async def random_gift(bot):
   """
   Generates piflouz gifts randomly
@@ -106,8 +106,8 @@ async def random_gift(bot):
   if random() < drop_rate:
     # Piflouz with the bot's money
     piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
-    if update_piflouz(bot.me.id, qty=-piflouz_quantity, check_cooldown=False):
-      await spawn_pibox(bot, piflouz_quantity, custom_message=f"<@{bot.me.id}> spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
+    if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
+      await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
 
 
 def update_combo(user_id, current_time):

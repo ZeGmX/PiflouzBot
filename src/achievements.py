@@ -1,7 +1,6 @@
-from my_database import db
-
 from achievement_handler import listen_to
 from constant import Constants
+from my_database import db
 import piflouz_handlers
 import powerups
 
@@ -12,6 +11,7 @@ class Achievement:
   reward = 0
   # is_secret = True/False
   # requirements = [achievements]
+
 
   async def check(self, user_id, *args, **kwargs):
     """
@@ -153,7 +153,7 @@ class Achievement_rank_pilexer(Achievement):
 @listen_to("piflex_bought")
 class Achievement_piflex(Achievement):
   name = "Piflex Level 2"
-  description = "Make a piflex!"
+  description = "Do a piflex!"
   reward = 1000
 
 
@@ -337,8 +337,8 @@ class Achievement_donate_to_pibot(Achievement):
   description = "Donate piflouz to Pibot"
   reward = 10
 
-  async def check(self, user_id, amount, id_receiver, *args, **kwargs):
-    if id_receiver == Constants.BOT_ID:
+  async def check(self, user_id, amount, id_receiver, bot_id,  *args, **kwargs):
+    if id_receiver == bot_id:
       self.validate(user_id)
 
 

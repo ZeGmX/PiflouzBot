@@ -1,15 +1,14 @@
-from discord.ext import tasks
-from discord.utils import escape_markdown
-from my_database import db
+from markdown import escape_markdown as escape_markdown
 import time
 import asyncpraw
 import twitch
-from interactions import Role, Guild
+from interactions import IntervalTrigger
 from random import shuffle
 
 from constant import Constants
+from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
+from my_database import db
 import embed_messages
-import utils
 
 
 def get_live_status(user_name, helix=None):
@@ -32,7 +31,7 @@ def get_live_status(user_name, helix=None):
     return None
 
 
-@tasks.loop(seconds=30)
+@Task.create(IntervalTrigger(seconds=30))
 async def task_check_live_status(bot):
   """
   Checks if the best streamers are live on Twitch every few seconds
@@ -69,10 +68,12 @@ async def send_new_live_message(bot, stream, streamer_name):
     streamer_name: str -> the name of the streamer who went live
   """
   current_live_message_time = int(time.time())
-  if (current_live_message_time - db["previous_live_message_time"][streamer_name]) >= Constants.TWITCH_ANNOUNCEMENT_DELAY:  #Checks if we waited long enough
+  if (current_live_message_time - db["previous_live_message_time"][streamer_name]) >= Constants.TWITCH_ANNOUNCEMENT_DELAY:  # Checks if we waited long enough
     db["previous_live_message_time"][streamer_name] = current_live_message_time
-    out_channel = await bot.get_channel(db["twitch_channel"])
-    role = Role(id=Constants.TWITCH_NOTIF_ROLE_ID)
+    
+    out_channel = await bot.fetch_channel(db["twitch_channel"])
+    role = await bot.guilds[0].fetch_role(Constants.TWITCH_NOTIF_ROLE_ID)
+
     msg = escape_markdown(f"{role.mention} {streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
     await out_channel.send(msg)
   else:
@@ -98,41 +99,39 @@ async def get_otter_image():
   return submission.url
 
 
-@tasks.loop(hours=24)
+@Task.create(TimeTriggerDT(Constants.OTTER_IMAGE_TIME))
 async def generate_otter_of_the_day(bot):
   """
   Generates a new otter image every day to brighten everyone's day
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
-  await utils.wait_until(Constants.OTTER_IMAGE_TIME)
-
   if "out_channel" not in db.keys():
     return
     
-  out_channel = await bot.get_channel(db["out_channel"])
+  out_channel = await bot.fetch_channel(db["out_channel"])
   embed = await embed_messages.get_embed_otter()
   await out_channel.send(embeds=embed)
 
 
-@tasks.loop(hours=24)
+@Task.create(TimeTriggerDT(Constants.SHUFFLE_NAME_TIME))
 async def shuffle_names(bot):
   """
   Generates a new otter image every day to brighten everyone's day
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
-  await utils.wait_until(Constants.SHUFFLE_NAME_TIME)
-  
   guild = bot.guilds[0]
-  members = await guild.get_list_of_members(limit=50)
-  chaos_members = list(filter(lambda member: Constants.CHAOS_ROLE_ID in member.roles and int(member.id) != guild.owner_id, members))
+  await guild.gateway_chunk() # to load all members
+  members = guild.members
+  owner = await guild.fetch_owner()
+  chaos_members = list(filter(lambda member: Constants.CHAOS_ROLE_ID in member.roles and int(member.id) != owner.id, members))
 
-  names = [member.name for member in chaos_members]
+  names = [member.display_name for member in chaos_members]
   shuffle(names)
   
   for nick, member in zip(names, chaos_members):
-    await member.modify(nick=nick)
+    await member.edit_nickname(nick)
     
