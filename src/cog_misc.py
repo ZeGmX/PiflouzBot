@@ -254,7 +254,6 @@ class Cog_misc(Extension):
 
   @slash_command(name="pichapouche", description="Picha picha!", scopes=Constants.GUILD_IDS)
   @auto_defer()
-  @utils.check_message_to_be_processed
   async def pichapouche_cmd(self, ctx):
     """
     Picha picha!
