@@ -323,7 +323,7 @@ async def get_embed_end_season(bot):
   
   embed = Embed(
     title="The season is over!",
-    description=f"The last season has ended! Use the `/season-results` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
+    description=f"The last season has ended! Use the `/season-result` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
     color=MaterialColors.PURPLE,
     thumbnail=EmbedAttachment(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
   )
