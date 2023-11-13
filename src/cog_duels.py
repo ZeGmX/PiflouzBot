@@ -237,7 +237,7 @@ class Cog_duels(Extension):
     msgs = []
     for duel in my_duels:
       mention = "anyone" if duel["user_id2"] == -1 else f"<@{duel['user_id2']}>"
-      s = f"id: {duel['duel_id']} - <@{duel['user_id1']}> vs {mention} - {duel['duel_type']} - {duel['amount']} {Constants.PIFLOUZ_EMOJI}\n"
+      s = f"• Id: {duel['duel_id']} - <@{duel['user_id1']}> vs {mention} - {duel['duel_type']} - {duel['amount']} {Constants.PIFLOUZ_EMOJI}\n"
       
       if not duel["accepted"]:
         s += f"Waiting on {mention} to accept\n"
@@ -246,6 +246,8 @@ class Cog_duels(Extension):
           s += f"Waiting on <@{duel['user_id1']}> to play\n"
         if duel["move2"] is None:
           s += f"Waiting on <@{duel['user_id2']}> to play\n"
+
+      s+= f"https://discord.com/channels/{ctx.guild.id}/{duel['thread_id']}\n"
       
       msgs.append(s)
     

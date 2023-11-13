@@ -181,6 +181,4 @@ if __name__ == "__main__":
   bot.load_extension("cog_status_check")
   bot.load_extension("cog_would_you_rather")
 
-  db["birthday_raffle_participation"] = []
-
   bot.start()
