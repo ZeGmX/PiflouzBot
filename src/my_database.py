@@ -148,7 +148,7 @@ class Element_dict(Element):
         output:
             res: dict_keys
         """
-        return self.element.keys()
+        return Element_dict_keys(self.element.keys(), self.db_key)
 
 
     def values(self):
@@ -158,7 +158,7 @@ class Element_dict(Element):
         output:
             res: dict_values
         """
-        return self.element.values()
+        return Element_dict_values(self.element.values(), self.db_key)
     
 
     def items(self):
@@ -168,7 +168,53 @@ class Element_dict(Element):
         output:
             res: dict_items
         """
-        return self.element.items()
+        return Element_dict_items(self.element.items(), self.db_key)
+
+
+class Element_dict_iterator:
+    """
+    Class for the iterators generated from .keys(), .values() and .items() methods of Element_dict
+    """
+
+    def __init__(self, collection, db_key):
+        self.collection = collection
+        self.db_key = db_key
+        self.iterator = None
+    
+
+    def __iter__(self):
+        self.iterator = iter(self.collection)
+        return self
+
+
+    def __next__(self):
+        return Element.convert_to_element(next(self.iterator), self.db_key)
+    
+
+    def __contains__(self, item):
+        return item in self.collection
+
+
+    def __str__(self) -> str:
+        return str(self.collection)
+
+
+    def __repr__(self):
+        return str(self.collection)
+
+
+class Element_dict_keys(Element_dict_iterator):
+    pass
+
+
+class Element_dict_values(Element_dict_iterator):
+    pass
+
+
+class Element_dict_items(Element_dict_iterator):
+    def __next__(self):
+        key, value = next(self.iterator)
+        return (Element.convert_to_element(key, self.db_key), Element.convert_to_element(value, self.db_key))
 
 
 class My_database(dict):
@@ -311,7 +357,6 @@ db = My_database(folder="my_db")
 
 # for key in list(db.keys()):
 #     del db[key]
-
 
 # a = pickle.load(open("D:/Downloads/pibot/2023_11_02_22_00_00.dump", "rb"))
 # for key in list(a.keys()):
