@@ -341,6 +341,10 @@ class Wordle_event(Event):
     async def on_end(self, bot):
         db["wordle_guesses"] = dict()
 
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        await out_channel.send("The event is over, the word of the day was **" + db["word_of_the_day"] + "**")
+
 
     def to_str(self):
         return f"{__name__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
