@@ -46,12 +46,12 @@ class Cog_event(Extension):
       ctx: interactions.SlashContext
       nb_tickets: int
     """
-    await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
+    await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
   
-    current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Raffle_event), "The current event is not a raffle", ctx)
+    current_raffle = eval(db["current_event_passive"])
+    await utils.custom_assert(isinstance(current_raffle, events.Raffle_event), "The current event is not a raffle", ctx)
   
-    price = nb_tickets * current_event.ticket_price
+    price = nb_tickets * current_raffle.ticket_price
     
     user_id = str(ctx.author.id)
   
@@ -63,7 +63,7 @@ class Cog_event(Extension):
     db["raffle_participation"][user_id] += nb_tickets
   
     await ctx.send(f"Successfully bought {nb_tickets} tickets", ephemeral=True)
-    await current_event.update_raffle_message(self.bot)
+    await current_raffle.update_raffle_message(self.bot)
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("raffle_participation_successful", ctx.author.id, nb_tickets)
 
@@ -80,10 +80,10 @@ class Cog_event(Extension):
       ctx: interactions.SlashContext
       word: str
     """
-    await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
+    await utils.custom_assert("current_event_challenge" in db.keys(), "No current event registered", ctx)
   
-    current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Wordle_event), "The current event is not a wordle", ctx)
+    current_wordle = eval(db["current_event_challenge"])
+    await utils.custom_assert(isinstance(current_wordle, events.Wordle_event), "The current event is not a wordle", ctx)
 
     wordle = Wordle(db["word_of_the_day"])
 
@@ -104,7 +104,7 @@ class Cog_event(Extension):
 
     if guesses[-1] == wordle.solution:
       progress = 1 + (1 - len(guesses)) / (wordle.nb_trials - 1)
-      reward = round(current_event.min_reward + progress * (current_event.max_reward - current_event.min_reward))
+      reward = round(current_wordle.min_reward + progress * (current_wordle.max_reward - current_wordle.min_reward))
       
       header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.nb_trials} trials!\nYou earned {reward}{Constants.PIFLOUZ_EMOJI}"
       piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
@@ -128,10 +128,10 @@ class Cog_event(Extension):
     input:
       ctx: interactions.SlashContext
     """
-    await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
+    await utils.custom_assert("current_event_challenge" in db.keys(), "No current event registered", ctx)
     
-    current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Wordle_event), "The current event is not a wordle", ctx)
+    current_wordle = eval(db["current_event_challenge"])
+    await utils.custom_assert(isinstance(current_wordle, events.Wordle_event), "The current event is not a wordle", ctx)
     
     wordle = Wordle(db["word_of_the_day"])
 
@@ -206,7 +206,7 @@ class Cog_event(Extension):
     db["birthday_event_ingredients"][user_id]["last_react_time"] = date
     db["birthday_event_ingredients"][user_id][emoji] += qty
 
-    event = eval(db["current_event"])
+    event = eval(db["current_event_passive"])
     event.bake_cakes(user_id)
 
     res = self.get_birthday_str(user_id)    
@@ -241,10 +241,10 @@ class Cog_event(Extension):
     input:
       ctx: interactions.SlashContext
     """
-    await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
+    await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
   
-    current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Birthday_event), "The current event is not a Birthay event", ctx)
+    current_bday = eval(db["current_event_passive"])
+    await utils.custom_assert(isinstance(current_bday, events.Birthday_event), "The current event is not a Birthay event", ctx)
 
     user_id = str(ctx.author.id)
     if user_id not in db["birthday_event_ingredients"].keys():
@@ -283,16 +283,16 @@ class Cog_event(Extension):
     input:
       ctx: interactions.ComponentContext
     """
-    await utils.custom_assert("current_event" in db.keys(), "No current event registered", ctx)
+    await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
     
-    current_event = eval(db["current_event"])
-    await utils.custom_assert(isinstance(current_event, events.Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
+    current_bday_raffle = eval(db["current_event_passive"])
+    await utils.custom_assert(isinstance(current_bday_raffle, events.Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
 
     user_id = str(ctx.author.id)
     await utils.custom_assert(user_id not in db["birthday_raffle_participation"], "You are already registered!", ctx)
     db["birthday_raffle_participation"].append(user_id)
 
-    await current_event.update_raffle_message(self.bot)
+    await current_bday_raffle.update_raffle_message(self.bot)
     
     await ctx.send("You are now registered!", ephemeral=True)
   

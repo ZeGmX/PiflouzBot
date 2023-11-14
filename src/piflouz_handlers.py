@@ -93,8 +93,8 @@ async def random_gift(bot):
   drop_rate = Constants.PIBOX_DROP_RATE
 
   # Computing the drop rate based on the current event's powerups
-  if "current_event" in db.keys():
-    event = eval(db["current_event"])
+  if "current_event_passive" in db.keys():
+    event = eval(db["current_event_passive"])
     powerups_list = event.get_powerups()
     drop_rate = functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_rate_multiplier_value(), powerups_list, drop_rate)
   
@@ -168,7 +168,7 @@ def get_max_rewardable_combo(user_id):
   output:
     res: int
   """
-  current_event = eval(db["current_event"])
+  current_event = eval(db["current_event_passive"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
   powerups_event = current_event.get_powerups()
   all_powerups = powerups_user + powerups_event
@@ -189,7 +189,7 @@ def get_total_piflouz_earned(user_id, current_time):
   if str(user_id) not in db["mining_combo"].keys():
     db["mining_combo"][str(user_id)] = 0
 
-  current_event = eval(db["current_event"])
+  current_event = eval(db["current_event_passive"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
   powerups_event = current_event.get_powerups()
   all_powerups = powerups_user + powerups_event

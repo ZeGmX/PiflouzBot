@@ -23,9 +23,9 @@ async def event_handlers(bot):
                              then.minute, then.second)
     dt = (then - now).total_seconds() % (3600 * 24)
     
-    if "current_event" in db.keys():
-        current_event = eval(db["current_event"][len(__name__) + 1:])
-        await current_event.actions_every_5min(bot)
+    if "current_event_passive" in db.keys():
+        current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
+        await current_event_passive.actions_every_5min(bot)
 
     if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
         return
@@ -33,30 +33,61 @@ async def event_handlers(bot):
     await asyncio.sleep(dt)
 
     # End the current event
-    if "current_event" in db.keys():
-        current_event = eval(db["current_event"][len(__name__) + 1:])
-        await current_event.on_end(bot)
-
-        channel = await bot.fetch_channel(db["out_channel"])
-        old_message = await channel.fetch_message(db["current_event_message_id"])
-        await old_message.unpin()
+    await end_event(bot, "current_event_passive", "current_event_passive_message_id")
+    await end_event(bot, "current_event_challenge", "current_event_challenge_message_id")
 
     # Chose the new event of the day
     now = datetime.datetime.now()
 
     if now.month == 4 and now.day == 1:
-        new_event = Birthday_event()
+        new_event_passive = Birthday_event()
     elif now.month == 4 and now.day == 2:
-        new_event = Birthday_raffle_event(db["baked_cakes"]["total"] *
-                                          Birthday_event.REWARD_PER_CAKE)
+        new_event_passive = Birthday_raffle_event(db["baked_cakes"]["total"] * Birthday_event.REWARD_PER_CAKE)
     else:
-        new_event = random.choice(Constants.RANDOM_EVENTS)
+        new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
+    
+    new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
 
-    message = await new_event.on_begin(bot)
+    id1 = await start_event(bot, new_event_passive)
+    id2 = await start_event(bot, new_event_challenge)
+
+    db["current_event_passive_message_id"] = id1
+    db["current_event_passive"] = new_event_passive.to_str()
+    db["current_event_challenge_message_id"] = id2
+    db["current_event_challenge"] = new_event_challenge.to_str()
+
+
+async def end_event(bot, event_key, event_msg_id_key):
+    """
+    Ends an ongoing event
+    --
+    input:
+        bot: interactions.Client
+        event_key: str -> key in the database of the event to end
+        event_msg_id_key: str -> key in the database of the message announcing the event
+    """
+    if event_key in db.keys():
+        current_event = eval(db[event_key][len(__name__) + 1:])
+        await current_event.on_end(bot)
+
+        channel = await bot.fetch_channel(db["out_channel"])
+        old_message = await channel.fetch_message(db[event_msg_id_key])
+        await old_message.unpin()
+
+
+async def start_event(bot, event):
+    """
+    Starts a new event
+    --
+    input:
+        bot: interactions.Client
+        event: Event -> the event to start
+    output:
+        res: int -> id of the message announcing the event
+    """
+    message = await event.on_begin(bot)
     await message.pin()
-
-    db["current_event_message_id"] = int(message.id)
-    db["current_event"] = new_event.to_str()
+    return int(message.id)
 
 
 class Event:
@@ -114,8 +145,8 @@ class Event:
 
 class Raffle_event(Event):
     """
-  Raffle event, people can buy tickets and the person with the winning ticket wins all the money (minus taxes)
-  """
+    Raffle event, people can buy tickets and the person with the winning ticket wins all the money (minus taxes)
+    """
     def __init__(self, ticket_price, tax_ratio):
         self.ticket_price = ticket_price
         self.tax_ratio = tax_ratio
@@ -175,17 +206,17 @@ class Raffle_event(Event):
 
     async def update_raffle_message(self, bot):
         """
-    Updates the raffle message with amount of tickets bought by everyone
-    --
-    input:
-      bot: interactions.Client
-    """
-        if "current_event_message_id" not in db.keys():
+        Updates the raffle message with amount of tickets bought by everyone
+        --
+        input:
+        bot: interactions.Client
+        """
+        if "current_event_passive_message_id" not in db.keys():
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
         embed = await self.get_embed_raffle(bot)
-        raffle_message = await channel.fetch_message(db["current_event_message_id"])
+        raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
         await raffle_message.edit(embed=embed)
 
 
@@ -218,7 +249,7 @@ class Raffle_event(Event):
             fields.append(EmbedField(name="Current 🎟️ bought", value=val, inline=False))
             fields.append(EmbedField(name="Total prize", value=f"The winner will earn {total_prize} {Constants.PIFLOUZ_EMOJI}!", inline=False))
 
-        embed = Embed(title="New Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=fields)
+        embed = Embed(title="Passive event of the day: new Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=fields)
 
         return embed
 
@@ -271,7 +302,7 @@ class Event_from_powerups(Event):
         content = "\n".join(descriptions)
         field = EmbedField(name="The following powerups are active:", value=content)
 
-        embed = Embed(title="Event of the day", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[field])
+        embed = Embed(title="Passive event of the day", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[field])
         return embed
 
 
@@ -319,7 +350,7 @@ class Wordle_event(Event):
         """
         desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn up to {self.max_reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
 
-        embed = Embed(title="New Wordle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
+        embed = Embed(title="Challenge event of the day: new Wordle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
 
 
@@ -494,12 +525,12 @@ class Birthday_event(Event):
         input:
         bot: interactions.Client
         """
-        if "current_event_message_id" not in db.keys():
+        if "current_event_passive_message_id" not in db.keys():
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
         embed = self.get_start_embed()
-        message = await channel.fetch_message(db["current_event_message_id"])
+        message = await channel.fetch_message(db["current_event_passive_message_id"])
         await message.edit(embed=embed)
 
 
@@ -573,13 +604,13 @@ class Birthday_raffle_event(Event):
         input:
         bot: interactions.Client
         """
-        if "current_event_message_id" not in db.keys():
+        if "current_event_passive_message_id" not in db.keys():
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
         embed = await self.get_embed_raffle(bot)
         button = self.get_component()
-        raffle_message = await channel.fetch_message(db["current_event_message_id"])
+        raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
         await raffle_message.edit(embed=embed, components=button)
 
 

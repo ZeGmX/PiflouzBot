@@ -73,7 +73,7 @@ class Constants:
   ### Misc
   GUILD_IDS = eval(os.getenv("GUILD_IDS"))
   POWERUPS_STORE = None  # Set in load()
-  RANDOM_EVENTS = None  # Set in load()
+  RANDOM_EVENTS_PASSIVE = None  # Set in load()
   GREETINGS = [ "Greetings {}! Nice to meet you!",
                 "Hello there {}, how are you doing today ?",
                 "Hello, oh great {}. Hope you are doing great!",
@@ -89,7 +89,8 @@ class Constants:
     import events
 
     Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
-    Constants.RANDOM_EVENTS = eval(os.getenv("RANDOM_EVENTS"))
+    Constants.RANDOM_EVENTS_PASSIVE = eval(os.getenv("RANDOM_EVENTS_PASSIVE"))
+    Constants.RANDOM_EVENTS_CHALLENGE = eval(os.getenv("RANDOM_EVENTS_CHALLENGE"))
 
   
   

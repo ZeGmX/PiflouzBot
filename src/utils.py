@@ -66,7 +66,7 @@ def get_total_cooldown(user_id):
   if str(user_id) not in db["powerups"].keys():
     db["powerups"][str(user_id)] = []
 
-  current_event = eval(db["current_event"])
+  current_event = eval(db["current_event_passive"])
   powerups_user = [eval(p) for p in db["powerups"][str(user_id)]]
   powerups_event = current_event.get_powerups()
 

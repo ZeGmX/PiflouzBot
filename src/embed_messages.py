@@ -344,7 +344,7 @@ async def get_embed_end_raffle(bot, winner_id, prize):
     embed: interactions.Embed
   """
   channel = await bot.fetch_channel(db["out_channel"])
-  msg = await channel.fetch_message(db["current_event_message_id"])
+  msg = await channel.fetch_message(db["current_event_passive_message_id"])
   url = msg.jump_url
   
   embed = Embed(
