@@ -10,7 +10,7 @@ from achievement_handler import Achievement_handler_ext
 from constant import Constants
 from custom_client import Client
 from my_database import db
-import events
+from events import events
 import piflouz_handlers
 import powerups
 import rank_handlers
@@ -68,7 +68,8 @@ async def on_startup():
     "current_pilords",      # list of the current pilords
     "duels",                # list of active duels
     "current_piflex_masters",  # list of the current piflex masters
-    "birthday_raffle_participation"  # for the birthday raffle event
+    "birthday_raffle_participation",  # for the birthday raffle event
+    "match_challenge_completed" # for the match challenge event
   ]:
     if key not in db.keys():
       db[key] = []
@@ -172,13 +173,13 @@ if __name__ == "__main__":
   import achievements # to register the listeners
 
   bot.load_extension("achievement_handler")
-  bot.load_extension("cog_achievements")
-  bot.load_extension("cog_buy")
-  bot.load_extension("cog_duels")
-  bot.load_extension("cog_event")
-  bot.load_extension("cog_misc")
-  bot.load_extension("cog_piflouz_mining")
-  bot.load_extension("cog_status_check")
-  bot.load_extension("cog_would_you_rather")
+  bot.load_extension("cogs.cog_achievements")
+  bot.load_extension("cogs.cog_buy")
+  bot.load_extension("cogs.cog_duels")
+  bot.load_extension("cogs.cog_event")
+  bot.load_extension("cogs.cog_misc")
+  bot.load_extension("cogs.cog_piflouz_mining")
+  bot.load_extension("cogs.cog_status_check")
+  bot.load_extension("cogs.cog_would_you_rather")
 
   bot.start()

@@ -14,3 +14,5 @@ my_db_prod/
 reset.cmd
 .venv/
 todo.txt
+src/events/riddle.png
+src/events/solution.png

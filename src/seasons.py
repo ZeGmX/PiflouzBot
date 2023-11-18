@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from interactions import Button, ButtonStyle, IntervalTrigger
 import asyncio
 
-from cog_piflouz_mining import Cog_piflouz_mining
+from cogs.cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages
@@ -48,12 +48,10 @@ async def end_current_season(bot):
     if duel["accepted"]:
       piflouz_handlers.update_piflouz(duel["user_id2"], qty=duel["amount"], check_cooldown=False)
 
-
   # Adding turbo piflouz based on the amount of piflouz collected
   bank = list(db["piflouz_bank"].items())
   reward_balance = lambda balance: int(sqrt(balance))
   reward_turbo_piflouz_based_on_scores(bank, reward_balance, "Balance")
-
   
   # Adding turbo piflouz based on the amount of piflex images discovered
   piflex_count = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items()]
@@ -63,17 +61,17 @@ async def end_current_season(bot):
   reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
 
   bonus_ranking = [100, 50, 30]
-
+  
   # Adding piflouz based on the ranking in piflouz
   reward_turbo_piflouz_based_on_ranking(bank, bonus_ranking, "Balance ranking")
-
+  
   # Adding piflouz based on the ranking in piflex
   reward_turbo_piflouz_based_on_ranking(piflex_count, bonus_ranking, "Piflex ranking")
-
+  
   # Adding piflouz based on the ranking in donations
   donations = list(db["donation_balance"].items())
   reward_turbo_piflouz_based_on_ranking(donations, bonus_ranking, "Donation ranking")
-
+  
   await utils.update_piflouz_message(bot)
 
   # Reseting the database
@@ -102,7 +100,7 @@ async def season_task(bot):
   last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
   next_begin = last_begin_time + relativedelta(months=3)
   await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
-
+  
   if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
     await end_current_season(bot)
     channel = await bot.fetch_channel(db["out_channel"])
@@ -134,7 +132,7 @@ def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
 
     if index < len(rewards):
       db["turbo_piflouz_bank"][user_id] += rewards[index]
-      db["season_results"][user_id][reward_type] = (rewards[index], index)
+      db["season_results"][user_id][reward_type] = [rewards[index], index]
     else:  # The user has a ranking too low to earn rewards
       break
 

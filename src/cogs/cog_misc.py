@@ -3,7 +3,7 @@ from interactions.ext.paginators import Paginator
 from math import ceil
 import random
 
-from cog_piflouz_mining import Cog_piflouz_mining
+from cogs.cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 import embed_messages
 from my_database import db

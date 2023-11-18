@@ -1,5 +1,3 @@
-# TODO: fix mutating the databse using .items() or through iteration
-
 import pickle
 import os
 
@@ -65,7 +63,8 @@ class Element:
     
 
     def __setitem__(self, key, value):
-        assert db._check_if_acceptable(value), "Value could not be appended because it contains an unacceptable type"
+        assert db._check_if_acceptable(value), "Value could not be set because it contains an unacceptable type"
+        assert db._check_if_acceptable(key), "Key could not be set because it contains an unacceptable type"
         self.element[key] = value
         db._save_key(self.db_key, db.folder)
 
@@ -262,7 +261,8 @@ class My_database(dict):
 
     # set an item
     def __setitem__(self, key, value):
-        assert self._check_if_acceptable(value), "Value could not be appended because it contains an unacceptable type"
+        assert self._check_if_acceptable(value), "Value could not be set because it contains an unacceptable type"
+        assert self._check_if_acceptable(key), "Key could not be set because it contains an unacceptable type"
         super().__setitem__(key, Element.convert_from_element(value))
         self._save_key(key, self.folder)
 

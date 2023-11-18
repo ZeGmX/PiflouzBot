@@ -1,18 +1,20 @@
-import random
 import asyncio
-from math import floor
+import datetime
 from interactions import Embed, EmbedField, EmbedAttachment, Button, ButtonStyle, IntervalTrigger, Color, BrandColors
 from interactions.client.utils.misc_utils import disable_components
-import datetime
+from math import floor
+import os
+import random
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 import embed_messages
+from events.matches_challenge import Matches_Interface
 from my_database import db
 import piflouz_handlers
 import powerups
 import utils
-import wordle
+from events.wordle import Wordle
 
 
 @Task.create(IntervalTrigger(minutes=5))
@@ -22,7 +24,6 @@ async def event_handlers(bot):
     then = datetime.datetime(now.year, now.month, now.day, then.hour,
                              then.minute, then.second)
     dt = (then - now).total_seconds() % (3600 * 24)
-    
     if "current_event_passive" in db.keys():
         current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
         await current_event_passive.actions_every_5min(bot)
@@ -94,52 +95,53 @@ class Event:
     """
     Base class for the events, inherited by every event class
     """
+
     async def on_begin(self, bot):
         """
-    Actions to be done when the event starts
-    --
-    input:
-      bot: interactions.Client
-    --
-    output:
-      msg: int -> id of the message announcing the event
-    """
+        Actions to be done when the event starts
+        --
+        input:
+            bot: interactions.Client
+        --
+        output:
+            msg: int -> id of the message announcing the event
+        """
         return None
 
     async def on_end(self, bot):
         """
-    Actions to be done when the event ends
-    --
-    input:
-      bot: interactions.Client
-    """
+        Actions to be done when the event ends
+        --
+        input:
+            bot: interactions.Client
+        """
         pass
 
     def get_powerups(self):
         """
-    Returns the list of powerups active during the event
-    --
-    output:
-      res: Powerup list
-    """
+        Returns the list of powerups active during the event
+        --
+        output:
+            res: Powerup list
+        """
         return []
 
     def to_str(self):
         """
-    Returns a string used to store in the database, and get back the object with eval
-    --
-    output:
-      res: str
-    """
+        Returns a string used to store in the database, and get back the object with eval
+        --
+        output:
+            res: str
+        """
         return ""
 
     async def actions_every_5min(self, bot):
         """
-    Actions to be done every 5 minutes
-    --
-    input:
-      bot: interactions.Client
-    """
+        Actions to be done every 5 minutes
+        --
+        input:
+            bot: interactions.Client
+        """
         pass
 
 
@@ -209,7 +211,7 @@ class Raffle_event(Event):
         Updates the raffle message with amount of tickets bought by everyone
         --
         input:
-        bot: interactions.Client
+            bot: interactions.Client
         """
         if "current_event_passive_message_id" not in db.keys():
             return
@@ -225,7 +227,7 @@ class Raffle_event(Event):
         Returns an embed message corresponding to the raffle message
         --
         input:
-        bot: interactions.Client
+            bot: interactions.Client
         """
         desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
@@ -259,7 +261,7 @@ class Raffle_event(Event):
         Returns 0 if there is no current raffle
         --
         output:
-        prize: int
+            prize: int
         """
         nb_tickets = sum(db["raffle_participation"].values())
         prize = floor(nb_tickets * self.ticket_price * (100 - self.tax_ratio) / 100)
@@ -296,7 +298,7 @@ class Event_from_powerups(Event):
         Returns an embed to announce the event
         --
         output:
-        embed: interactions.Embed
+            embed: interactions.Embed
         """
         descriptions = [p.get_event_str() for p in self.powerups]
         content = "\n".join(descriptions)
@@ -346,7 +348,7 @@ class Wordle_event(Event):
         Returns an embed to announce the event
         --
         output:
-        embed: interactions.Embed
+            embed: interactions.Embed
         """
         desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn up to {self.max_reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
 
@@ -360,7 +362,7 @@ class Wordle_event(Event):
 
         out_channel = await bot.fetch_channel(db["out_channel"])
 
-        db["word_of_the_day"] = wordle.Wordle().solution
+        db["word_of_the_day"] = Wordle().solution
 
         # Starting new event
         embed = self.get_embed()
@@ -430,7 +432,7 @@ class Birthday_event(Event):
         Returns the embed shown at the start of the event
         --
         output:
-        embed: interactions.Embed
+            embed: interactions.Embed
         """
         nb_backed_cakes = db["baked_cakes"]["total"]
 
@@ -446,7 +448,7 @@ class Birthday_event(Event):
         Returns the embed shown at the end of the event
         --
         output:
-        embed: interactions.Embed
+            embed: interactions.Embed
         """
         nb_cakes = db["baked_cakes"]["total"]
         embed = Embed(title="The baking is over!", thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
@@ -461,12 +463,12 @@ class Birthday_event(Event):
         Returns a button for a given ingredient
         --
         input:
-        emoji: str
-        nb: int
-        disabled: bool
+            emoji: str
+            nb: int
+            disabled: bool
         --
         output:
-        interactions.Button
+            interactions.Button
         """
         return Button(style=ButtonStyle.SECONDARY, label=str(nb), emoji=emoji, custom_id=emoji, disabled=disabled)
 
@@ -504,7 +506,7 @@ class Birthday_event(Event):
         Uses a user's inventory to bake some cakes
         --
         input:
-        user_id: str (of an int)
+            user_id: str (of an int)
         """
         inv = dict(db["birthday_event_ingredients"][user_id])
 
@@ -523,7 +525,7 @@ class Birthday_event(Event):
         Updates the birthday message with the amount of baked cakes
         --
         input:
-        bot: interactions.Client
+            bot: interactions.Client
         """
         if "current_event_passive_message_id" not in db.keys():
             return
@@ -602,7 +604,7 @@ class Birthday_raffle_event(Event):
         Updates the birthday raffle message with the participants
         --
         input:
-        bot: interactions.Client
+            bot: interactions.Client
         """
         if "current_event_passive_message_id" not in db.keys():
             return
@@ -619,7 +621,7 @@ class Birthday_raffle_event(Event):
         Returns an embed message corresponding to the raffle message
         --
         input:
-        bot: interactions.Client
+            bot: interactions.Client
         """
         desc = f"Today's raffle is special! Click the button below to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake! The first winner will earn 50%, the second one will get 30% and the third winner will get 20%!"
 
@@ -640,7 +642,68 @@ class Birthday_raffle_event(Event):
         Returns the button to register to the Raffle
         --
         output:
-        res: interactions.Button
+            res: interactions.Button
         """
         res = Button(style=ButtonStyle.SECONDARY, custom_id=self.button_id, emoji=self.button_id)
         return res
+
+
+class Move_match_event(Event):
+    """
+    An event showing an equation with two matches to move to make it correct
+    """
+
+    def __init__(self, reward):
+        self.reward = reward
+    
+
+    def get_embed(self, img_url):
+        """
+        Returns an embed to announce the event
+        --
+        input:
+            image_url: str -> Imgur url of the image to show
+        --
+        output:
+            embed: interactions.Embed
+        """
+        desc = f"Use `/match guess [equation]` to try to find the correct solution of the day and earn {self.reward} {Constants.PIFLOUZ_EMOJI}!"
+        embed = Embed(title="Challenge event of the day: move exactly two matches to make the equation correct!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
+        return embed
+
+
+    async def on_begin(self, bot):
+        if "out_channel" not in db.keys():
+            return
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        event = Matches_Interface()
+        event.save_all("src/events/")
+        url_riddle = utils.upload_image_to_imgur("src/events/riddle.png")
+        url_sol = utils.upload_image_to_imgur("src/events/solution.png")
+
+        db["match_challenge"] = {"riddle": event.riddle.str, "main_sol": event.main_sol.str, "all_sols": event.all_sols, "url_riddle": url_riddle, "url_sol": url_sol}
+
+        # Starting new event
+        embed = self.get_embed(url_riddle)
+        message = await out_channel.send(embed=embed)
+        await message.pin()
+        return message
+
+
+    async def on_end(self, bot):
+        db["match_challenge_completed"] = []
+
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Here is one of them:", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
+        await out_channel.send(embed=embed)
+
+        os.remove("src/events/riddle.png")
+        os.remove("src/events/solution.png")
+
+
+    def to_str(self):
+        return f"{__name__}.{Move_match_event.__name__}({self.reward})"

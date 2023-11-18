@@ -135,12 +135,12 @@ def get_embeds_help_message():
         ),
         EmbedField(
           name="`/wordle guess`",
-          value="Try to solve today's wordle ⚠️ Only works during raffle events",
+          value="Try to solve today's wordle ⚠️ Only works during wordle events",
           inline=False
         ),
         EmbedField(
           name="`/wordle status`",
-          value="Check how your wordle is going ⚠️ Only works during raffle events",
+          value="Check how your wordle is going ⚠️ Only works during wordle events",
           inline=False
         ),
         EmbedField(
@@ -164,6 +164,11 @@ def get_embeds_help_message():
         EmbedField(
           name="`/otter`",
           value="Finally something good in this world",
+          inline=False
+        ),
+        EmbedField(
+          name="`/match guess [guess]`",
+          value="Try to solve today's match moving challenge ⚠️ Only works during match moving events",
           inline=False
         ),
         EmbedField(
