@@ -21,7 +21,7 @@ import utils
 
 intents = Intents.new(guild_members=True, message_content=True, guild_messages=True, guild_message_reactions=True, direct_messages=True, guilds=True)
 activity = Activity(name="Piflouz generator", type=ActivityType.CUSTOM, state="Generating piflouz")
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity)
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity, send_command_tracebacks=False)
   
 
 @listen(disable_default_listeners=True)
