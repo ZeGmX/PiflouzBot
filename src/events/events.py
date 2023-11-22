@@ -19,19 +19,19 @@ from events.wordle import Wordle
 
 @Task.create(IntervalTrigger(minutes=5))
 async def event_handlers(bot):
-    # now = datetime.datetime.now()
-    # then = Constants.EVENT_TIME
-    # then = datetime.datetime(now.year, now.month, now.day, then.hour,
-    #                          then.minute, then.second)
-    # dt = (then - now).total_seconds() % (3600 * 24)
-    # if "current_event_passive" in db.keys():
-    #     current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
-    #     await current_event_passive.actions_every_5min(bot)
+    now = datetime.datetime.now()
+    then = Constants.EVENT_TIME
+    then = datetime.datetime(now.year, now.month, now.day, then.hour,
+                             then.minute, then.second)
+    dt = (then - now).total_seconds() % (3600 * 24)
+    if "current_event_passive" in db.keys():
+        current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
+        await current_event_passive.actions_every_5min(bot)
 
-    # if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
-    #     return
+    if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
+        return
 
-    # await asyncio.sleep(dt)
+    await asyncio.sleep(dt)
 
     # End the current event
     await end_event(bot, "current_event_passive", "current_event_passive_message_id")

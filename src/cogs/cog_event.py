@@ -113,7 +113,8 @@ class Cog_event(Extension):
 
       results = "\n".join([wordle.guess(word) for word in guesses])
       announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.nb_trials})!\n{results}"
-      await ctx.channel.send(announcement_msg)
+      thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+      await thread.send(announcement_msg)
     elif len(guesses) == wordle.nb_trials:
       header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
 
@@ -327,7 +328,9 @@ class Cog_event(Extension):
     db["match_challenge_completed"].append(user_id)
     piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
     await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
-    await ctx.channel.send(f"{ctx.author.mention} solved today's match event!")
+    
+    thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+    await thread.send(f"{ctx.author.mention} solved today's match event!")
 
 
 def setup(bot):
