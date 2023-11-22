@@ -25,7 +25,7 @@ class Cog_event(Extension):
     /birthday
     /match guess
   Components
-    events.Birthday_raffle_event.button_id
+    events.Birthday_raffle_event.BUTTON_ID
   """
 
   def __init__(self, bot):
@@ -276,7 +276,7 @@ class Cog_event(Extension):
     return res
 
 
-  @component_callback(events.events.Birthday_raffle_event.button_id)
+  @component_callback(events.events.Birthday_raffle_event.BUTTON_ID)
   @auto_defer(ephemeral=True)
   async def birthday_raffle_register(self, ctx):
     """

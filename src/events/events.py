@@ -19,23 +19,23 @@ from events.wordle import Wordle
 
 @Task.create(IntervalTrigger(minutes=5))
 async def event_handlers(bot):
-    now = datetime.datetime.now()
-    then = Constants.EVENT_TIME
-    then = datetime.datetime(now.year, now.month, now.day, then.hour,
-                             then.minute, then.second)
-    dt = (then - now).total_seconds() % (3600 * 24)
-    if "current_event_passive" in db.keys():
-        current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
-        await current_event_passive.actions_every_5min(bot)
+    # now = datetime.datetime.now()
+    # then = Constants.EVENT_TIME
+    # then = datetime.datetime(now.year, now.month, now.day, then.hour,
+    #                          then.minute, then.second)
+    # dt = (then - now).total_seconds() % (3600 * 24)
+    # if "current_event_passive" in db.keys():
+    #     current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
+    #     await current_event_passive.actions_every_5min(bot)
 
-    if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
-        return
+    # if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
+    #     return
 
-    await asyncio.sleep(dt)
+    # await asyncio.sleep(dt)
 
     # End the current event
     await end_event(bot, "current_event_passive", "current_event_passive_message_id")
-    await end_event(bot, "current_event_challenge", "current_event_challenge_message_id")
+    await end_event(bot, "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id")
 
     # Chose the new event of the day
     now = datetime.datetime.now()
@@ -49,16 +49,17 @@ async def event_handlers(bot):
     
     new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
 
-    id1 = await start_event(bot, new_event_passive)
-    id2 = await start_event(bot, new_event_challenge)
+    id1 = await new_event_passive.on_begin(bot)
+    id2_msg, id2_thread = await new_event_challenge.on_begin(bot)
 
     db["current_event_passive_message_id"] = id1
     db["current_event_passive"] = new_event_passive.to_str()
-    db["current_event_challenge_message_id"] = id2
+    db["current_event_challenge_message_id"] = id2_msg
+    db["current_event_challenge_thread_id"] = id2_thread
     db["current_event_challenge"] = new_event_challenge.to_str()
 
 
-async def end_event(bot, event_key, event_msg_id_key):
+async def end_event(bot, event_key, event_msg_id_key, thread_id_key=None):
     """
     Ends an ongoing event
     --
@@ -66,29 +67,11 @@ async def end_event(bot, event_key, event_msg_id_key):
         bot: interactions.Client
         event_key: str -> key in the database of the event to end
         event_msg_id_key: str -> key in the database of the message announcing the event
+        thread_id_key: str -> key in the database of the thread created for the event
     """
     if event_key in db.keys():
         current_event = eval(db[event_key][len(__name__) + 1:])
-        await current_event.on_end(bot)
-
-        channel = await bot.fetch_channel(db["out_channel"])
-        old_message = await channel.fetch_message(db[event_msg_id_key])
-        await old_message.unpin()
-
-
-async def start_event(bot, event):
-    """
-    Starts a new event
-    --
-    input:
-        bot: interactions.Client
-        event: Event -> the event to start
-    output:
-        res: int -> id of the message announcing the event
-    """
-    message = await event.on_begin(bot)
-    await message.pin()
-    return int(message.id)
+        await current_event.on_end(bot, db[event_msg_id_key], db[thread_id_key] if thread_id_key is not None else None)
 
 
 class Event:
@@ -104,18 +87,22 @@ class Event:
             bot: interactions.Client
         --
         output:
-            msg: int -> id of the message announcing the event
+            int -> id of the message announcing the event
         """
         return None
 
-    async def on_end(self, bot):
+
+    async def on_end(self, bot, msg_id, thread_id=None):
         """
         Actions to be done when the event ends
         --
         input:
             bot: interactions.Client
+            msg_id: int -> id of the message announcing the event
+            thread_id: int -> id of the thread created for the event
         """
         pass
+
 
     def get_powerups(self):
         """
@@ -126,6 +113,7 @@ class Event:
         """
         return []
 
+
     def to_str(self):
         """
         Returns a string used to store in the database, and get back the object with eval
@@ -134,6 +122,7 @@ class Event:
             res: str
         """
         return ""
+
 
     async def actions_every_5min(self, bot):
         """
@@ -145,7 +134,40 @@ class Event:
         pass
 
 
-class Raffle_event(Event):
+class Passive_event(Event):
+    async def get_embed(self, bot):
+        """
+        Returns an embed for the announcement message
+        --
+        input:
+            bot: interactions.Client
+        --
+        output:
+            embed: interactions.Embed
+        """
+        return None
+
+
+    async def on_begin(self, bot):
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        # Starting new event
+        embed = await self.get_embed(bot)
+        message = await out_channel.send(embed=embed)
+        await message.pin()
+        return int(message.id)
+
+
+    async def on_end(self, bot, msg_id, thread_id=None):
+        if "out_channel" not in db.keys(): return
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        old_message = await out_channel.fetch_message(msg_id)
+        await old_message.unpin()
+
+
+class Raffle_event(Passive_event):
     """
     Raffle event, people can buy tickets and the person with the winning ticket wins all the money (minus taxes)
     """
@@ -154,21 +176,8 @@ class Raffle_event(Event):
         self.tax_ratio = tax_ratio
 
 
-    async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
-        # Starting new raffle
-        embed = await self.get_embed_raffle(bot)
-        message = await out_channel.send(embed=embed)
-        return message
-
-
-    async def on_end(self, bot):
-        if "out_channel" not in db.keys():
-            return
+    async def on_end(self, bot, msg_id, thread_id=None):
+        await super().on_end(bot, msg_id, thread_id)
 
         out_channel = await bot.fetch_channel(db["out_channel"])
         participation = db["raffle_participation"]
@@ -217,18 +226,12 @@ class Raffle_event(Event):
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
-        embed = await self.get_embed_raffle(bot)
+        embed = await self.get_embed(bot)
         raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
         await raffle_message.edit(embed=embed)
 
 
-    async def get_embed_raffle(self, bot):
-        """
-        Returns an embed message corresponding to the raffle message
-        --
-        input:
-            bot: interactions.Client
-        """
+    async def get_embed(self, bot):
         desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
     The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone!"
@@ -255,6 +258,7 @@ class Raffle_event(Event):
 
         return embed
 
+
     def get_raffle_total_prize(self):
         """
         Returns the total prize in the current raffle
@@ -268,7 +272,7 @@ class Raffle_event(Event):
         return prize
 
 
-class Event_from_powerups(Event):
+class Event_from_powerups(Raffle_event):
     """
     Creates an event with just a list of powerups
     """
@@ -276,30 +280,11 @@ class Event_from_powerups(Event):
         self.powerups = list(powerup_list)
 
 
-    async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
-        # Starting new event
-        embed = self.get_embed()
-        message = await out_channel.send(embed=embed)
-        await message.pin()
-        return message
-
-
     def get_powerups(self):
         return self.powerups
 
 
-    def get_embed(self):
-        """
-        Returns an embed to announce the event
-        --
-        output:
-            embed: interactions.Embed
-        """
+    async def get_embed(self, bot):
         descriptions = [p.get_event_str() for p in self.powerups]
         content = "\n".join(descriptions)
         field = EmbedField(name="The following powerups are active:", value=content)
@@ -338,12 +323,53 @@ class Combo_event(Event_from_powerups):
         super().__init__(p1, p2)
 
 
-class Wordle_event(Event):
+class Challenge_event(Event):
+    async def get_embed(self, bot):
+        """
+        Returns an embed for the announcement message
+        --
+        input:
+            bot: interactions.Client
+        --
+        output:
+            embed: interactions.Embed
+        """
+        return None
+    
+
+    async def on_begin(self, bot):
+        """
+        output:
+            int -> id of the message announcing the event
+            int -> id of the thread created for the event
+        """
+        if "out_channel" not in db.keys():
+            return
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        # Starting new event
+        embed = await self.get_embed(bot)
+        message = await out_channel.send(embed=embed)
+        await message.pin()
+        thread = await message.create_thread(name="Challenge event of the day")
+        return int(message.id), int(thread.id)
+
+
+    async def on_end(self, bot, msg_id, thread_id):
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        old_message = await out_channel.fetch_message(msg_id)
+        await old_message.unpin()
+
+
+class Wordle_event(Challenge_event):
     def __init__(self, min_reward=200, max_reward=250):
         self.min_reward = min_reward
         self.max_reward = max_reward
 
-    def get_embed(self):
+
+    async def get_embed(self, bot):
         """
         Returns an embed to announce the event
         --
@@ -357,33 +383,25 @@ class Wordle_event(Event):
 
 
     async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
         db["word_of_the_day"] = Wordle().solution
-
-        # Starting new event
-        embed = self.get_embed()
-        message = await out_channel.send(embed=embed)
-        await message.pin()
-        return message
+        
+        return await super().on_begin(bot)
 
 
-    async def on_end(self, bot):
+    async def on_end(self, bot, msg_id, thread_id=None):
         db["wordle_guesses"] = dict()
 
-        if "out_channel" not in db.keys(): return
-        out_channel = await bot.fetch_channel(db["out_channel"])
-        await out_channel.send("The event is over, the word of the day was **" + db["word_of_the_day"] + "**")
+        thread = await bot.fetch_channel(thread_id)
+        await thread.send("The event is over! The word of the day was **" + db["word_of_the_day"] + "**")
+
+        await super().on_end(bot, msg_id, thread_id)
 
 
     def to_str(self):
         return f"{__name__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
 
 
-class Birthday_event(Event):
+class Birthday_event(Passive_event):
     INGREDIENTS = ["🥛", "🥚", "🍫", "🧈"]
     INGREDIENTS_PER_CAKE = {"🥛": 1, "🥚": 2, "🍫": 3, "🧈": 1}
     REWARD_PER_CAKE = 100
@@ -394,29 +412,21 @@ class Birthday_event(Event):
 
 
     async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
         db["baked_cakes"] = {"total": 0}
         db["birthday_event_ingredients"] = dict()
-
-        # Starting new event
-        embed = self.get_start_embed()
-        message = await out_channel.send(embed=embed)
-        await message.pin()
-        return message
+        
+        return await super().on_begin(bot)
 
 
-    async def on_end(self, bot):
-        if "out_channel" not in db.keys():
-            return
-        out_channel = await bot.fetch_channel(db["out_channel"])
+    async def on_end(self, bot, msg_id, thread_id=None):
+        await super().on_end(bot, msg_id, thread_id)
 
         # Disable previous deliveries
         delivery = db["last_birthday_delivery"]
         db["last_birthday_delivery"] = dict()
+
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
 
         if len(delivery) > 0:
             msg = await out_channel.fetch_message(delivery["id"])
@@ -427,13 +437,7 @@ class Birthday_event(Event):
         await out_channel.send(embed=embed)
 
 
-    def get_start_embed(self):
-        """
-        Returns the embed shown at the start of the event
-        --
-        output:
-            embed: interactions.Embed
-        """
+    async def get_embed(self, bot):
         nb_backed_cakes = db["baked_cakes"]["total"]
 
         embed = Embed(title="Happy birthday Pibot!", thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
@@ -531,7 +535,7 @@ class Birthday_event(Event):
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
-        embed = self.get_start_embed()
+        embed = await self.get_embed()
         message = await channel.fetch_message(db["current_event_passive_message_id"])
         await message.edit(embed=embed)
 
@@ -540,11 +544,11 @@ class Birthday_event(Event):
         return f"{__name__}.{Birthday_event.__name__}()"
 
 
-class Birthday_raffle_event(Event):
+class Birthday_raffle_event(Passive_event):
     """
     A special raffle event where you don't have to spend money
     """
-    button_id = "🎟️"
+    BUTTON_ID = "🎟️"
 
 
     def __init__(self, reward):
@@ -552,23 +556,20 @@ class Birthday_raffle_event(Event):
 
 
     async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
+        if "out_channel" not in db.keys(): return
         out_channel = await bot.fetch_channel(db["out_channel"])
 
         # Starting new raffle
-        embed = await self.get_embed_raffle(bot)
+        embed = await self.get_embed(bot)
         button = self.get_component()
         message = await out_channel.send(embed=embed, components=button)
-        return message
+        await message.pin()
+        return int(message.id)
 
 
-    async def on_end(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
-        out_channel = await bot.fetch_channel(db["out_channel"])
+    async def on_end(self, bot, msg_id, thread_id=None):
+        await super().on_end(bot, msg_id, thread_id)
+        
         participation = list(db["birthday_raffle_participation"])
 
         # Computing the winner for the last raffle
@@ -590,8 +591,10 @@ class Birthday_raffle_event(Event):
             piflouz_handlers.update_piflouz(winner2, qty=prize2, check_cooldown=False)
             piflouz_handlers.update_piflouz(winner3, qty=prize3, check_cooldown=False)
 
-            message = f"The birthday raffle is over! <@{winner1}> won {prize1} {Constants.PIFLOUZ_EMOJI}, <@{winner2}> won {prize2} {Constants.PIFLOUZ_EMOJI} and <@{winner3}> won {prize3} {Constants.PIFLOUZ_EMOJI}!"
+            if "out_channel" not in db.keys(): return
 
+            message = f"The birthday raffle is over! <@{winner1}> won {prize1} {Constants.PIFLOUZ_EMOJI}, <@{winner2}> won {prize2} {Constants.PIFLOUZ_EMOJI} and <@{winner3}> won {prize3} {Constants.PIFLOUZ_EMOJI}!"
+            out_channel = await bot.fetch_channel(db["out_channel"])
             await out_channel.send(message)
 
 
@@ -610,19 +613,13 @@ class Birthday_raffle_event(Event):
             return
 
         channel = await bot.fetch_channel(db["out_channel"])
-        embed = await self.get_embed_raffle(bot)
+        embed = await self.get_embed(bot)
         button = self.get_component()
         raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
         await raffle_message.edit(embed=embed, components=button)
 
 
-    async def get_embed_raffle(self, bot):
-        """
-        Returns an embed message corresponding to the raffle message
-        --
-        input:
-            bot: interactions.Client
-        """
+    async def get_embed(self, bot):
         desc = f"Today's raffle is special! Click the button below to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake! The first winner will earn 50%, the second one will get 30% and the third winner will get 20%!"
 
         embed = Embed(title="Birthday Special Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL))
@@ -644,11 +641,11 @@ class Birthday_raffle_event(Event):
         output:
             res: interactions.Button
         """
-        res = Button(style=ButtonStyle.SECONDARY, custom_id=self.button_id, emoji=self.button_id)
+        res = Button(style=ButtonStyle.SECONDARY, custom_id=self.BUTTON_ID, emoji=self.BUTTON_ID)
         return res
 
 
-class Move_match_event(Event):
+class Move_match_event(Challenge_event):
     """
     An event showing an equation with two matches to move to make it correct
     """
@@ -657,7 +654,7 @@ class Move_match_event(Event):
         self.reward = reward
     
 
-    def get_embed(self, img_url):
+    async def get_embed(self, img_url):
         """
         Returns an embed to announce the event
         --
@@ -673,9 +670,7 @@ class Move_match_event(Event):
 
 
     async def on_begin(self, bot):
-        if "out_channel" not in db.keys():
-            return
-
+        if "out_channel" not in db.keys(): return
         out_channel = await bot.fetch_channel(db["out_channel"])
 
         event = Matches_Interface()
@@ -686,23 +681,27 @@ class Move_match_event(Event):
         db["match_challenge"] = {"riddle": event.riddle.str, "main_sol": event.main_sol.str, "all_sols": event.all_sols, "url_riddle": url_riddle, "url_sol": url_sol}
 
         # Starting new event
-        embed = self.get_embed(url_riddle)
+        embed = await self.get_embed(url_riddle)
         message = await out_channel.send(embed=embed)
         await message.pin()
-        return message
+        thread = await message.create_thread(name="Challenge event of the day")
+        return int(message.id), int(thread.id)
 
 
-    async def on_end(self, bot):
+    async def on_end(self, bot, msg_id, thread_id=None):
+        thread = await bot.fetch_channel(thread_id)
+        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Here is one of them:", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
+        await thread.send(embed=embed)
+
+        await super().on_end(bot, msg_id, thread_id)
+
         db["match_challenge_completed"] = []
 
-        if "out_channel" not in db.keys(): return
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
-        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Here is one of them:", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
-        await out_channel.send(embed=embed)
-
-        os.remove("src/events/riddle.png")
-        os.remove("src/events/solution.png")
+        try:
+            os.remove("src/events/riddle.png")
+            os.remove("src/events/solution.png")
+        except:
+            print("Could not remove match event files")
 
 
     def to_str(self):
