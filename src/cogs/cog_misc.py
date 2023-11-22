@@ -84,7 +84,7 @@ class Cog_misc(Extension):
     channel = ctx.channel
     await channel.send("This channel is now my default channel")
   
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Constants.PIFLOUZ_EMOJI)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
     
     embed = embed_messages.get_embed_piflouz()
   

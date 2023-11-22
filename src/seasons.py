@@ -26,7 +26,7 @@ async def start_new_season(bot):
   if "out_channel" in db.keys():
     channel = await bot.fetch_channel(db["out_channel"])
 
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Constants.PIFLOUZ_EMOJI)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
 
     msg = await channel.send(embed=embed_messages.get_embed_piflouz(), components=piflouz_button)
     return msg
@@ -47,6 +47,10 @@ async def end_current_season(bot):
     piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
     if duel["accepted"]:
       piflouz_handlers.update_piflouz(duel["user_id2"], qty=duel["amount"], check_cooldown=False)
+    
+    thread = await bot.fetch_channel(duel["thread_id"])
+    await thread.edit(name="[Season over] " + thread.name)
+    await thread.archive(reason="Season over")
 
   # Adding turbo piflouz based on the amount of piflouz collected
   bank = list(db["piflouz_bank"].items())

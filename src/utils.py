@@ -87,7 +87,7 @@ async def update_piflouz_message(bot):
   embed = embed_messages.get_embed_piflouz()
   piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
   piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id="piflouz_mining_button", emoji=Constants.PIFLOUZ_EMOJI)
-  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.button_name, emoji=Constants.PIFLOUZ_EMOJI)
+  piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
   await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 

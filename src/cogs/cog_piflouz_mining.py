@@ -18,10 +18,10 @@ class Cog_piflouz_mining(Extension):
     /get
     /cooldown
   Components:
-    self.button_name
+    self.BUTTON_NAME
   """
 
-  button_name = "piflouz_mining_button"
+  BUTTON_NAME = "piflouz_mining_button"
 
   def __init__(self, bot):
     self.bot = bot
@@ -40,7 +40,7 @@ class Cog_piflouz_mining(Extension):
     await self.get_callback_tmp(ctx)
 
 
-  @component_callback(button_name)
+  @component_callback(BUTTON_NAME)
   @auto_defer(ephemeral=True)
   async def mining_button_callback(self, ctx):
     """
