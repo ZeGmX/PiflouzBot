@@ -111,9 +111,10 @@ class Cog_misc(Extension):
   @slash_command(name="donate", description="Be generous to others", scopes=Constants.GUILD_IDS)
   @slash_option(name="user_receiver", description="Revceiver", opt_type=OptionType.USER, required=True)
   @slash_option(name="amount", description="How much you want to give", opt_type=OptionType.INTEGER, required=True, min_value=1)
+  @slash_option(name="custom_message", description="Message to send with the donation", opt_type=OptionType.STRING, required=False)
   @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
-  async def donate_cmd(self, ctx, user_receiver, amount):
+  async def donate_cmd(self, ctx, user_receiver, amount, custom_message=""):
     """
     Callback for the donate command
     --
@@ -121,6 +122,7 @@ class Cog_misc(Extension):
       ctx: interactions.SlashContext
       user_receiver: interactions.User
       amount: int
+      custom_message: str
     """
     user_sender = ctx.author 
   
@@ -136,7 +138,7 @@ class Cog_misc(Extension):
     await ctx.send("Done!", ephemeral=True)
   
     channel = ctx.channel
-    await channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}")
+    await channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}\nMessage from the sender: {custom_message}")
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("donation_successful", ctx.author.id, amount, user_receiver.id, self.bot.user.id)
   
