@@ -215,6 +215,11 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
 
     embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail = EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
     
+    p_get, p_event, p_pibox = db["piflouz_generated"]["get"], db["piflouz_generated"]["event"], db["piflouz_generated"]["pibox"]
+    p_tot = p_get + p_event + p_pibox
+    stats = f"This season, I generated a total of {p_tot} {Constants.PIFLOUZ_EMOJI}:\n- {p_get} from `/get` commands\n- {p_event} from events\n- {p_pibox} from piboxes"
+    embed.add_field(name="Season statistics", value=stats, inline=False)
+
     if ranking_balance != "":
       embed.add_field(name="Balance", value=ranking_balance, inline=True)
     if ranking_piflex != "":

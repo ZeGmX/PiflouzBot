@@ -10,6 +10,16 @@ import powerups  # Used in eval()
 import utils
 
  
+class Pibox_type:
+  """
+  Enum for the different types of piboxes
+  """
+  MAIN = 0
+  FROM_BOT_MONEY = 1
+  FROM_PIBOX_MASTER = 2
+  FROM_GIVEAWAY = 3
+
+
 def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
   """
   This function does the generic piflouz mining, and returns wether it suceeded or not
@@ -56,7 +66,7 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
   return False
 
 
-async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
+async def spawn_pibox(bot, piflouz_quantity, custom_message=None, pibox_type=Pibox_type.MAIN):
   """
   Generates a pibox of the amount passed in argument.
   --
@@ -64,6 +74,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
     bot: interactions.Client
     amount: int, positive
     custom_message: either None, or a custom message (str) to add at the end.
+    pibox_type: int, from the Pibox_type enum
   """
   out_channel = await bot.fetch_channel(db["out_channel"])
 
@@ -79,7 +90,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None):
     text_output += " " + custom_message
   message = await out_channel.send(text_output)
   
-  db["random_gifts"][str(message.id)] = [emoji_id, piflouz_quantity, custom_message]
+  db["random_gifts"][str(message.id)] = [emoji_id, piflouz_quantity, custom_message, pibox_type]
 
 
 @Task.create(IntervalTrigger(seconds=30))
@@ -88,7 +99,7 @@ async def random_gift(bot):
   Generates piflouz gifts randomly
   --
   input:
-    bot: discord.ext.commands.Bot
+    bot: interactions.Client
   """
   drop_rate = Constants.PIBOX_DROP_RATE
 
@@ -101,13 +112,13 @@ async def random_gift(bot):
   if random() < drop_rate:
     # Main piflouz
     piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
-    await spawn_pibox(bot, piflouz_quantity)
+    await spawn_pibox(bot, piflouz_quantity, pibox_type=Pibox_type.MAIN)
 
   if random() < drop_rate:
     # Piflouz with the bot's money
     piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
     if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
-      await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!")
+      await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!", pibox_type=Pibox_type.FROM_BOT_MONEY)
 
 
 def update_combo(user_id, current_time):

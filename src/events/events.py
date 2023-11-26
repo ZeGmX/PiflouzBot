@@ -199,9 +199,7 @@ class Raffle_event(Passive_event):
 
             # Giving the tax to the bot
             tax_value = total_tickets * self.ticket_price - prize
-            piflouz_handlers.update_piflouz(bot.user.id,
-                                            qty=tax_value,
-                                            check_cooldown=False)
+            piflouz_handlers.update_piflouz(bot.user.id, qty=tax_value, check_cooldown=False)
 
             piflouz_handlers.update_piflouz(id, prize, check_cooldown=False)
             embed = await embed_messages.get_embed_end_raffle(bot, id, prize)
@@ -596,6 +594,9 @@ class Birthday_raffle_event(Passive_event):
             message = f"The birthday raffle is over! <@{winner1}> won {prize1} {Constants.PIFLOUZ_EMOJI}, <@{winner2}> won {prize2} {Constants.PIFLOUZ_EMOJI} and <@{winner3}> won {prize3} {Constants.PIFLOUZ_EMOJI}!"
             out_channel = await bot.fetch_channel(db["out_channel"])
             await out_channel.send(message)
+
+            db["piflouz_generated"]["event"] += self.reward
+            await utils.update_piflouz_message(bot)
 
 
     def to_str(self):

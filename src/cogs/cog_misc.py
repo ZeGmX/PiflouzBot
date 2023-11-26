@@ -186,7 +186,7 @@ class Cog_misc(Extension):
     # Trading
     await utils.custom_assert(piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to giveaway", ctx)
     custom_message = f"This is a gift from the great {user_sender.mention}, be sure to thank them! "
-    await piflouz_handlers.spawn_pibox(self.bot, amount, custom_message=custom_message)
+    await piflouz_handlers.spawn_pibox(self.bot, amount, custom_message=custom_message, pibox_type=piflouz_handlers.Pibox_type.FROM_GIVEAWAY)
     await ctx.send("Done!", ephemeral=True)
   
     await utils.update_piflouz_message(self.bot)
@@ -206,7 +206,7 @@ class Cog_misc(Extension):
     await utils.custom_assert(int(ctx.author.id) == Constants.PIBOX_MASTER_ID, "Only the pibox master can use this command", ctx)
     piflouz_quantity = random.randrange(Constants.MAX_PIBOX_AMOUNT)
     custom_message = "It was spawned by the pibox master"
-    await piflouz_handlers.spawn_pibox(self.bot, piflouz_quantity, custom_message)
+    await piflouz_handlers.spawn_pibox(self.bot, piflouz_quantity, custom_message, piflouz_handlers.Pibox_type.FROM_PIBOX_MASTER)
     await ctx.send("Done!", ephemeral=True)
     
 

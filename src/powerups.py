@@ -91,6 +91,7 @@ class Powerups:
     """
     return ""
   
+  
   def get_store_str(self):
     """
     Returns the string to be shown in /store embed if the powerup is in the store

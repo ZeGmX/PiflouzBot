@@ -137,7 +137,7 @@ class Cog_buy(Extension):
     if user_id not in db["powerups"].keys():
       db["powerups"][user_id] = []
     
-    # we take a copy of the powerup in order not to modify the fields when buying
+    # We take a copy of the powerup in order not to modify the fields when buying
     powerup = copy.copy(Constants.POWERUPS_STORE[emoji])
     if powerup.on_buy(user_id, current_time):
       await utils.update_piflouz_message(self.bot)

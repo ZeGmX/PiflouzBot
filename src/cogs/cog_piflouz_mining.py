@@ -66,14 +66,16 @@ class Cog_piflouz_mining(Extension):
 
     if not successful_update:
       timer = utils.get_timer(ctx.author.id, current_time)
-      
       output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
+      
     else:
       output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {db['mining_combo'][str(ctx.author.id)]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
 
+      self.bot.dispatch("combo_updated", ctx.author.id)
+      db["piflouz_generated"]["get"] += qty
+      await utils.update_piflouz_message(self.bot)
+
     await ctx.send(output_text, ephemeral=True)
-    await utils.update_piflouz_message(self.bot)
-    self.bot.dispatch("combo_updated", ctx.author.id)
 
 
   @slash_command(name="cooldown", description="When your addiction is stronger than your sense of time", scopes=Constants.GUILD_IDS)
