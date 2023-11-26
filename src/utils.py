@@ -91,32 +91,7 @@ async def update_piflouz_message(bot):
   await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 
-def create_duel(id_challenger, id_challenged, amount, duel_type):
-  """
-  Generates a new duel
-  --
-  input:
-    id_challenged: int
-    id_challenged: int
-    amount: int
-    duel_type: str
-  --
-  output:
-    duel: dict
-  """
-  duel = {
-    "user_id1": id_challenger, # Challenger
-    "user_id2": id_challenged, # Challenged
-    "duel_id": get_new_duel_id(),
-    "duel_type": duel_type,
-    "amount": amount,
-    "move1": None, # Not played yet
-    "move2": None, # Not played yet
-    "accepted": False, # Not accepted yet
-    "message_id": None, # Not announced yet
-    "thread_id": None
-  }
-  return duel
+
 
 
 async def wait_until(then):
@@ -214,20 +189,6 @@ def seconds_to_formatted_string(s):
     if seconds > 0: return f"{min}min {seconds}s"
     return f"{min}min"
   return f"{seconds}s"
-
-
-def get_new_duel_id():
-  """
-  Creates a new unique id to represent a duel
-  --
-  output:
-    res: int
-  """
-  if "last_duel_id" not in db.keys():
-    db["last_duel_id"] = -1
-  
-  db["last_duel_id"] += 1
-  return db["last_duel_id"]
 
 
 async def custom_assert(condition, msg, ctx):

@@ -359,7 +359,7 @@ async def get_embed_end_raffle(bot, winner_id, prize):
   
   embed = Embed(
     title="The raffle is over!",
-    description=f"The raffle has ended! Congratulations to <@{winner_id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!\nClick [here]({url}) to see the final participation.",
+    description=f"The raffle has ended! Congratulations to <@{winner_id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!\nClick [here]({url}) to see the final participation",
     color=Color.random(),
     thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL)
   )

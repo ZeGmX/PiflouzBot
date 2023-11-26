@@ -77,11 +77,11 @@ class Constants:
   POWERUPS_STORE = None  # Set in load()
   RANDOM_EVENTS_PASSIVE = None  # Set in load()
   GREETINGS = [ "Greetings {}! Nice to meet you!",
-                "Hello there {}, how are you doing today ?",
+                "Hello there {}, how are you doing today?",
                 "Hello, oh great {}. Hope you are doing great!",
                 "Oh, I didn't see you there {}. Hello!",
                 "Hello {}! How are you today?",
-                "Greetings {}, I hope you have a great day today."]
+                "Greetings {}, I hope you have a great day today"]
   STREAMERS = eval(os.getenv("STREAMERS"))
 
 

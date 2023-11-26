@@ -14,7 +14,7 @@ from my_database import db
 import piflouz_handlers
 import powerups
 import utils
-from events.wordle import Wordle
+from wordle import Wordle
 
 
 @Task.create(IntervalTrigger(minutes=5))

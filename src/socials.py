@@ -77,7 +77,7 @@ async def send_new_live_message(bot, stream, streamer_name):
     msg = escape_markdown(f"{role.mention} {streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
     await out_channel.send(msg)
   else:
-    print(f"Found {streamer_name}, but cooldown was still up.")
+    print(f"Found {streamer_name}, but cooldown was still up")
 
 
 async def get_otter_image():

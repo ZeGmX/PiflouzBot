@@ -5,7 +5,7 @@ import os
 from constant import Constants
 import events.events  # used in eval()
 from events.matches_challenge import Matches_Interface, Matches_Expression
-from events.wordle import Wordle
+from wordle import Wordle
 import piflouz_handlers
 import powerups # used in eval()
 import utils
