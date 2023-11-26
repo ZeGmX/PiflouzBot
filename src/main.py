@@ -162,8 +162,15 @@ async def on_message_reaction_add(reac_event):
       new_text_message += " " + custom_message
     await message.edit(content=new_text_message)
 
+    # Add to stats
     if pibox_type in [piflouz_handlers.Pibox_type.MAIN, piflouz_handlers.Pibox_type.FROM_PIBOX_MASTER]:
       db["piflouz_generated"]["pibox"] += qty
+
+    # Check if it was a giveaway
+    elif pibox_type == piflouz_handlers.Pibox_type.FROM_GIVEAWAY:
+      id = str(user.id)
+      if id not in db["donation_balance"].keys(): db["donation_balance"][id] = 0
+      db["donation_balance"][id] -= qty
     
     await utils.update_piflouz_message(bot)
     bot.dispatch("pibox_obtained", user.id, qty)

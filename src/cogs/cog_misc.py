@@ -189,8 +189,13 @@ class Cog_misc(Extension):
     await piflouz_handlers.spawn_pibox(self.bot, amount, custom_message=custom_message, pibox_type=piflouz_handlers.Pibox_type.FROM_GIVEAWAY)
     await ctx.send("Done!", ephemeral=True)
   
+    id = str(user_sender.id)
+    if id not in db["donation_balance"].keys(): db["donation_balance"][id] = 0
+    db["donation_balance"][id] += amount
+    
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("giveaway_successful", ctx.author.id)
+
 
 
   @slash_command(name="spawn-pibox", description="The pibox master can spawn a pibox", scopes=Constants.GUILD_IDS)
