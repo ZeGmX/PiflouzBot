@@ -1,13 +1,14 @@
-import random
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import Embed, MaterialColors, RoleColors, Color, EmbedAttachment, EmbedField
-
+import os
+import random
 
 from constant import Constants
 from my_database import db
 import socials
 import utils
+from wordle import Wordle
 
 
 def get_embeds_help_message():
@@ -364,4 +365,29 @@ async def get_embed_end_raffle(bot, winner_id, prize):
     thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL)
   )
 
+  return embed
+
+
+def get_embed_wordle(solution, guesses, header_str):
+  """
+  Generates the wordle image, host it on imgur and put it in an embed
+  --
+  input:
+    solution: str -> the solution of the wordle
+    guesses: List[str] -> the guesses
+  """
+  wordle = Wordle(solution)
+
+  path = "wordle_tmp.png"
+  wordle.generate_image(guesses, path)
+  url = utils.upload_image_to_imgur(path)
+  os.remove(path)
+
+  color = MaterialColors.AMBER
+  if len(guesses) > 0 and guesses[-1] == solution:
+    color = RoleColors.DARK_GREEN
+  elif len(guesses) == Wordle.NB_TRIALS:
+    color = RoleColors.DARK_RED
+
+  embed = Embed(title="Wordle", description=header_str, color=color, images=[EmbedAttachment(url=url)])
   return embed

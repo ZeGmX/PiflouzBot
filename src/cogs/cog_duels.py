@@ -8,6 +8,7 @@ from duels import generate_duel, recover_duel
 from my_database import db
 import piflouz_handlers
 import utils
+from wordle import Wordle
 
 
 class Cog_duels(Extension):
@@ -227,7 +228,6 @@ class Cog_duels(Extension):
 
   @slash_command(name="duel", description="TBD", sub_cmd_name="status", sub_cmd_description="Check your ongoing duels", scopes=Constants.GUILD_IDS)
   @auto_defer(ephemeral=True)
-  @utils.check_message_to_be_processed
   async def duel_status_cmd(self, ctx):
     """
     Callback for the duel subcommand command
@@ -241,7 +241,7 @@ class Cog_duels(Extension):
     for duel_dict in my_duels:
       duel = recover_duel(duel_dict)
       mention = "anyone" if duel_dict["user_id2"] == -1 else f"<@{duel_dict['user_id2']}>"
-      s = f"• Id: {duel_dict['duel_id']} - <@{duel_dict['user_id1']}> vs {mention} - {duel_dict['duel_type']} - {duel_dict['amount']} {Constants.PIFLOUZ_EMOJI}\n{duel.status()}"
+      s = f"• Id: {duel_dict['duel_id']} - <@{duel_dict['user_id1']}> vs {mention} - {duel_dict['duel_type']} - {duel_dict['amount']} {Constants.PIFLOUZ_EMOJI}\n{duel.status(int(ctx.author.id))}"
 
       # Link to the duel thread      
       s+= f"https://discord.com/channels/{ctx.guild.id}/{duel_dict['thread_id']}\n"
@@ -256,12 +256,13 @@ class Cog_duels(Extension):
       await p.send(ctx, ephemeral=True)
 
 
-  async def checks_before_play(self, ctx):
+  async def checks_before_play(self, ctx, duel_type):
     """
     Checks if the duel can be played
     --
     input:
       ctx: interactions.SlashContext
+      duel_type: string -> the type of duel
     --
     output:
       duel: duels.Duel
@@ -277,6 +278,7 @@ class Cog_duels(Extension):
     await utils.custom_assert(duel_index is not None, "You are not inside an ongoing duel thread", ctx)
     await utils.custom_assert(duel_dict["accepted"], "This duel is not accepted yet", ctx)
     await utils.custom_assert(int(ctx.author.id) in [duel_dict["user_id1"], duel_dict["user_id2"]], "You are not part of this challenge", ctx)
+    await utils.custom_assert(duel_dict["duel_type"] == duel_type, f"This duel is not a {duel_type} duel", ctx)
 
     if duel_dict["user_id1"] == ctx.author.id:
       await utils.custom_assert(duel_dict["result1"] is None, "You already finished playing!", ctx)
@@ -295,28 +297,49 @@ class Cog_duels(Extension):
   @auto_defer(ephemeral=True)
   async def duel_play_shifumi_cmd(self, ctx, value):
     """
-    Callback for the duel play shifumi subcommand
+    Callback for the `duel play shifumi` subcommand
     --
     input:
       ctx: interactions.SlashContext
       value: string -> the move played by the player
     """
-    await self.global_duel_play(ctx, value)
+    await self.global_duel_play(ctx, value, "Shifumi")
 
 
-  async def global_duel_play(self, ctx, value):
+  @slash_command(name="duel", description="TBD", group_name="play", group_description="TBD", sub_cmd_name="wordle", sub_cmd_description="Play wordle!", scopes=Constants.GUILD_IDS)
+  @slash_option(name="guess", description="What is your guessed word?", required=True, opt_type=OptionType.STRING, min_length=Wordle.WORD_SIZE, max_length=Wordle.WORD_SIZE)
+  @auto_defer(ephemeral=True)
+  async def duel_play_wordle_cmd(self, ctx, guess):
+    """
+    Callback for the `duel play wordle` subcommand
+    --
+    input:
+      ctx: interactions.SlashContext
+      value: string -> the move played by the player
+    """
+    await self.global_duel_play(ctx, guess, "Wordle")
+
+
+  async def global_duel_play(self, ctx, value, duel_type):
     """
     Callback for `/duel play` for any type of duel
     --
     input:
       ctx: interactions.SlashContext
       value: string -> the action played by the player
+      duel_type: string -> the type of duel
     """
     # Processing the move
-    duel, duel_index = await self.checks_before_play(ctx)
-    duel.play(ctx.author.id, value)
+    duel, duel_index = await self.checks_before_play(ctx, duel_type)
+    check, error_msg = duel.check_entry(value)
+    await utils.custom_assert(check, error_msg, ctx)
 
-    await ctx.send("Done! Just wait for the other player to finish playing", ephemeral=True)
+    res = duel.play(ctx.author.id, value)
+
+    if res is None:
+      await ctx.send("Done! Just wait for the other player to finish playing", ephemeral=True)
+    else:
+      await ctx.send(**res, ephemeral=True)
 
     # Processing the potential outcome of the duel
     if not duel.is_over(): return
@@ -327,6 +350,8 @@ class Cog_duels(Extension):
     qty = duel.dict["amount"]
     duel_type = duel.dict["duel_type"]
 
+    del db["duels"][duel_index]
+    
     # Tie, everyone gets all of their money back
     if not winner_loser:
       id1, id2 = duel.dict["user_id1"], duel.dict["user_id2"]
@@ -357,7 +382,6 @@ class Cog_duels(Extension):
     self.bot.dispatch("duel_won", id_winner, id_loser, qty, duel_type)
     await thread.archive()
 
-    del db["duels"][duel_index]
     await utils.update_piflouz_message(self.bot)
 
 

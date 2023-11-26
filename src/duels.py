@@ -1,7 +1,7 @@
 from random import choice
 
+from embed_messages import get_embed_wordle
 from my_database import db
-import utils
 from wordle import Wordle
 
 
@@ -130,9 +130,12 @@ class Duel:
         pass
     
 
-    def status(self):
+    def status(self, caller_id):
         """
         Returns the status of the duel
+        --
+        input:
+            caller_id: int -> the id of the user who called the command
         --
         output:
             res: str
@@ -157,8 +160,11 @@ class Duel:
         input:
             user_id: int
             action: any
+        --
+        output:
+            res: dict/None -> used as kwargs for the reply
         """
-        pass
+        return None
     
 
     def is_over(self):
@@ -206,6 +212,19 @@ class Duel:
             res: str
         """
         return ""
+    
+
+    def check_entry(self, action):
+        """
+        Verifies that the given action is valid
+        --
+        input:
+            action: any
+        --
+        output:
+            res: bool, str (error message)
+        """
+        return True, ""
 
 
 class Shifumi_duel(Duel):
@@ -229,6 +248,7 @@ class Shifumi_duel(Duel):
     def play(self, user_id, action):
         user = 1 if user_id == self.dict["user_id1"] else 2
         self.dict[f"result{user}"] = action
+        return None
     
 
     def get_winner_loser(self):
@@ -256,3 +276,95 @@ class Shifumi_duel(Duel):
         else:
             return f"They played {self.dict['result2']} vs {self.dict['result1']}!"
         
+
+class Wordle_duel(Duel):
+    """
+    TODO
+    """
+
+    def __init__(self, dict):
+        self.dict = dict
+
+    
+    @staticmethod
+    def new(id_challenger, id_challenged, amount):
+        d = create_duel_dict(id_challenger, id_challenged, amount, "Wordle")
+        d["attempts1"] = []
+        d["attempts2"] = []
+        d["last_image_url1"] = None
+        d["last_image_url2"] = None
+        d["word"] = choice(Wordle.SOLUTIONS)
+
+        return Wordle_duel(d)
+
+
+    async def on_accept(self, thread):
+        await thread.send(f"<@{self.dict['user_id2']}> accepted <@{self.dict['user_id1']}>'s challenge! Use `/duel play wordle [your guess]`")
+    
+
+    def status(self, caller_id):
+        mention = "anyone" if self.dict["user_id2"] == -1 else f"<@{self.dict['user_id2']}>"
+        user = 1 if caller_id == self.dict["user_id1"] else 2
+
+        if not self.dict["accepted"]:
+            return f"Waiting on {mention} to accept\n"
+        else:
+            res = ""
+            if self.dict["result1"] is None:
+                res += f"Waiting on <@{self.dict['user_id1']}> to finish playing\n"
+            if self.dict["result2"] is None:
+                res += f"Waiting on <@{self.dict['user_id2']}> to finish playing\n"
+
+            if self.dict[f"result{user}"] is None and self.dict[f"attempts{user}"] != []:
+                res += f"Here is your progress: {self.dict[f'last_image_url{user}']}\n"
+            return res
+
+
+    def check_entry(self, guess):
+        wordle = Wordle(self.dict["word"])
+        if not wordle.is_valid(guess.lower()): return False, "This is not a valid word!"
+        return True, ""
+
+
+    def play(self, user_id, guess):
+        user = 1 if user_id == self.dict["user_id1"] else 2
+
+        guess = guess.lower()
+        self.dict[f"attempts{user}"].append(guess)
+
+        header_str = f"{len(self.dict[f'attempts{user}'])} / {Wordle.NB_TRIALS} attempts made"
+        if guess == self.dict["word"]:
+            self.dict[f"result{user}"] = len(self.dict[f"attempts{user}"])
+            header_str = f"You found after {len(self.dict[f'attempts{user}'])} attempts!"
+        elif len(self.dict[f"attempts{user}"]) == Wordle.NB_TRIALS:
+            self.dict[f"result{user}"] = Wordle.NB_TRIALS + 1
+            header_str = f"You failed to find the word!"
+
+        embed = get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str)
+        self.dict[f"last_image_url{user}"] = embed.images[0].url
+        return {"embed": embed}
+
+
+    def get_winner_loser(self):
+        n1 = self.dict["result1"]
+        n2 = self.dict["result2"]
+
+        # Tie
+        if n1 == n2: return None
+        if n1 < n2: return self.dict["user_id1"], self.dict["user_id2"]
+        return self.dict["user_id2"], self.dict["user_id1"]
+    
+
+    def tie_str(self):
+        if self.dict["result1"] == Wordle.NB_TRIALS + 1:
+            return f"They both failed to find the word!"
+        return f"They both found the word in {self.dict['result1']} attempts!"
+        
+
+    def win_str(self, winner_id, loser_id):
+        n1, n2 = self.dict["result1"], self.dict["result2"]
+        if n1 == Wordle.NB_TRIALS + 1:
+            return f"<@{winner_id}> found the word in {n2} attempts while <@{loser_id}> failed!"
+        if n2 == Wordle.NB_TRIALS + 1:
+            return f"<@{winner_id}> found the word in {n1} attempts while <@{loser_id}> failed!"
+        return f"<@{winner_id}> found the word in {min(n1, n2)} attempts while <@{loser_id}> found it in {max(n1, n2)} attempts!"
