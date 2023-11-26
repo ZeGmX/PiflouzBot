@@ -263,7 +263,7 @@ class Cog_misc(Extension):
     input:
       ctx: interactions.SlashContext
     """
-    await ctx.send("Picha picha! <:pikadab:687208856719196161>")
+    await ctx.send(f"Picha picha! {Constants.PIKADAB_EMOJI}")
 
 
   @message_context_menu(name="Du quoi ?", scopes=Constants.GUILD_IDS)

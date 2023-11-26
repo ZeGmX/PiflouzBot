@@ -35,6 +35,8 @@ class Constants:
   TURBO_PIFLOUZ_ANIMATED_EMOJI = f"<a:turbo_piflouz:{TURBO_PIFLOUZ_ANIMATED_EMOJI_ID}>"
   BIRTHDAY_EMOJI_ID = int(os.getenv("BIRTHDAY_EMOJI_ID"))
   BIRTHDAY_EMOJI = f"<:pibou4Birthday:{BIRTHDAY_EMOJI_ID}>"
+  PIKADAB_EMOJI_ID = int(os.getenv("PIKADAB_EMOJI_ID"))
+  PIKADAB_EMOJI = f"<:pikadab:{PIKADAB_EMOJI_ID}>"
 
   ### Image URLs
   PIFLOUZ_URL = os.getenv("PIFLOUZ_URL")
