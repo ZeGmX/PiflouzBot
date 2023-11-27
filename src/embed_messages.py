@@ -16,7 +16,7 @@ def get_embeds_help_message():
   Returns the embed message with help for every command
   --
   output:
-    embed: List[interactions.Embed] -> the embededs (there is more than 25 fields so we need to paginate)
+    embeds: List[interactions.Embed] -> the embeds (there is more than 25 fields so we need to paginate)
   """
   embeds =[
     Embed(

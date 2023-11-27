@@ -5,3 +5,4 @@ asyncpraw
 twitch-python
 pyimgur
 matplotlib
+Pillow

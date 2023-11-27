@@ -55,8 +55,8 @@ class Matches_Interface:
         (0.5, 1, 0)
     ]
 
-    IMG_BACKGROUND = Image.open('src/events/assets/framecool2.png').resize((1920, 1080), Image.ANTIALIAS)
-    IMG_MATCH = Image.open('src/events/assets/allu.png').resize((MATCH_INIT_SCALE, MATCH_INIT_SCALE), Image.ANTIALIAS)
+    IMG_BACKGROUND = Image.open('src/events/assets/framecool2.png').resize((1920, 1080), Image.LANCZOS)
+    IMG_MATCH = Image.open('src/events/assets/allu.png').resize((MATCH_INIT_SCALE, MATCH_INIT_SCALE), Image.LANCZOS)
 
 
     def __init__(self, riddle=None, main_sol=None, all_sols=None):
