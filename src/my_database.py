@@ -288,7 +288,7 @@ class My_database(dict):
         if not os.path.exists(f"{parent_folder}/{folder}"):
             os.mkdir(f"{parent_folder}/{folder}")
         
-        self._save(self, f"{parent_folder}/{folder}")
+        self._save(f"{parent_folder}/{folder}")
 
 
     def _save(self, folder: str = None) -> None:

@@ -13,6 +13,7 @@ from my_database import db
 import powerups  # Used in eval()
 import events.events  # Used in eval()
 
+
 def get_new_joke():
   """
   Checks a joke API to format a new random joke
@@ -91,9 +92,6 @@ async def update_piflouz_message(bot):
   await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 
-
-
-
 async def wait_until(then):
   """
   Waits until a certain time of the day (or the next day)
@@ -140,7 +138,7 @@ async def backup_db(folder=None):
   parent_folder ="backups_db"
   if folder is None:
     now = datetime.datetime.now()
-    folder = now.strftime("%Y_%m_%d_%H:%M:%S")
+    folder = now.strftime("%Y_%m_%d_%Hh%Mmin%Ss")
   db.make_backup(parent_folder, folder)
 
   print("Made a backup of the database in file: ", folder)
