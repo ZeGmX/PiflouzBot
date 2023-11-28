@@ -137,8 +137,11 @@ class Cog_misc(Extension):
   
     await ctx.send("Done!", ephemeral=True)
   
-    channel = ctx.channel
-    await channel.send(f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}\nMessage from the sender: {custom_message}")
+    content = f"{user_sender.mention} sent {amount} {Constants.PIFLOUZ_EMOJI} to {user_receiver.mention}"
+    if len(custom_message) > 0:
+      content += f"\nMessage from the sender: {custom_message}"
+
+    await ctx.channel.send(content)
     await utils.update_piflouz_message(self.bot)
     self.bot.dispatch("donation_successful", ctx.author.id, amount, user_receiver.id, self.bot.user.id)
   

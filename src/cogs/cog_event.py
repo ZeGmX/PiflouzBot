@@ -62,7 +62,7 @@ class Cog_event(Extension):
     user_id = str(ctx.author.id)
   
     # user doesn't have enough money
-    await utils.custom_assert(piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False), f"User {ctx.author} doesn't have enough money to buy {nb_tickets} tickets", ctx)
+    await utils.custom_assert(piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False), f"You don't have enough money to buy {nb_tickets} tickets", ctx)
     
     if not user_id in db["raffle_participation"].keys():
       db["raffle_participation"][user_id] = 0
@@ -332,7 +332,7 @@ class Cog_event(Extension):
   @slash_option(name="guess", description="Your guessed word", opt_type=OptionType.STRING, required=True)
   @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
-  async def match_guess_cmd(self, ctx, guess):
+  async def subseq_guess_cmd(self, ctx, guess):
     """
     Callback for the `/subseq guess` command
     --

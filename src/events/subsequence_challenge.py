@@ -27,8 +27,8 @@ class Subseq_challenge:
         df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
         df = df.astype({"Word": "str"})
         
-        if answer not in df["Word"].values: return False
-        
+        if not any(answer == self._clean_word(w) for w in df["Word"]): return False
+
         it = iter(answer)
         return all(c in it for c in self.subseq)
         

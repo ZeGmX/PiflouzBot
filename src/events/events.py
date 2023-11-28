@@ -271,7 +271,7 @@ class Raffle_event(Passive_event):
         return prize
 
 
-class Event_from_powerups(Raffle_event):
+class Event_from_powerups(Passive_event):
     """
     Creates an event with just a list of powerups
     """
