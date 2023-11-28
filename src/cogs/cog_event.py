@@ -157,7 +157,7 @@ class Cog_event(Extension):
     if guesses != [] and guesses[-1] == wordle.solution:
       header_str += "\nYou won!"
     elif len(guesses) == wordle.NB_TRIALS:
-      header_str += f"You lost :( The correct word was {wordle.solution}"
+      header_str += f"\nYou lost :( The correct word was {wordle.solution}"
 
     await self.send_wordle_embed(ctx, wordle, guesses, header_str)
 
