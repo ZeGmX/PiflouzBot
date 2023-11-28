@@ -173,6 +173,11 @@ def get_embeds_help_message():
           inline=False
         ),
         EmbedField(
+          name="`/subseq guess [word]`",
+          value="Try to solve today's subsequence challenge ⚠️ Only works during subsequence events",
+          inline=False
+        ),
+        EmbedField(
           name="Things I do in the background",
           value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\

@@ -6,3 +6,5 @@ twitch-python
 pyimgur
 matplotlib
 Pillow
+unidecode
+pandas

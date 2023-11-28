@@ -9,7 +9,8 @@ import random
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 import embed_messages
-from events.matches_challenge import Matches_Interface
+from .matches_challenge import Matches_Interface
+from .subsequence_challenge import Subseq_challenge
 from my_database import db
 import piflouz_handlers
 import powerups
@@ -707,3 +708,40 @@ class Move_match_event(Challenge_event):
 
     def to_str(self):
         return f"{__name__}.{Move_match_event.__name__}({self.reward})"
+
+
+
+class Subseq_challenge_event(Challenge_event):
+    """
+    An event where the user has to find a word with a given subsequence
+    """
+
+    def __init__(self, reward):
+        self.reward = reward
+    
+
+    async def get_embed(self, bot):
+        desc = f"Use `/subseq guess [word]` to try to find the answer. Find one and you'll earn {self.reward}{Constants.PIFLOUZ_EMOJI}!"
+
+        embed = Embed(title=f"Challenge event of the day: find a french word that has \"{db['subseq_challenge']['subseq']}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
+        return embed
+
+
+    async def on_begin(self, bot):
+        s = Subseq_challenge.new(random.randint(3, 6))
+        db["subseq_challenge"] = {"subseq": s.subseq, "sol": s.sol}
+        
+        return await super().on_begin(bot)
+
+
+    async def on_end(self, bot, msg_id, thread_id=None):
+        db["subseq_challenge_completed"] = []
+
+        thread = await bot.fetch_channel(thread_id)
+        await thread.send("The event is over! Here is a solution: **" + db["subseq_challenge"]["sol"] + "**")
+
+        await super().on_end(bot, msg_id, thread_id)
+    
+
+    def to_str(self):
+        return f"{__name__}.{Subseq_challenge_event.__name__}({self.reward})"

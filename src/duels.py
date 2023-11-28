@@ -80,7 +80,7 @@ def get_new_duel_id():
 
 class Duel:
     """
-    TODO
+    Abstract class representing a duel
     """
 
     @staticmethod
@@ -229,7 +229,7 @@ class Duel:
 
 class Shifumi_duel(Duel):
     """
-    TODO
+    Classic shifumi duel
     """
 
     def __init__(self, dict):
@@ -279,7 +279,7 @@ class Shifumi_duel(Duel):
 
 class Wordle_duel(Duel):
     """
-    TODO
+    Wordle duel: the player who finds the word in the least number of attempts wins
     """
 
     def __init__(self, dict):

@@ -5,7 +5,8 @@ import os
 from constant import Constants
 from embed_messages import get_embed_wordle
 import events.events  # used in eval()
-from events.matches_challenge import Matches_Interface, Matches_Expression
+from events.matches_challenge import Matches_Expression
+from events.subsequence_challenge import Subseq_challenge
 from wordle import Wordle
 import piflouz_handlers
 import powerups # used in eval()
@@ -26,6 +27,7 @@ class Cog_event(Extension):
     /wordle status
     /birthday
     /match guess
+    /subseq guess
   Components
     events.Birthday_raffle_event.BUTTON_ID
   """
@@ -321,6 +323,40 @@ class Cog_event(Extension):
     
     thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
     await thread.send(f"{ctx.author.mention} solved today's match event!")
+
+    db["piflouz_generated"]["event"] += current_match.reward
+    await utils.update_piflouz_message(self.bot)
+  
+
+  @slash_command(name="subseq", description="TBD", sub_cmd_name="guess", sub_cmd_description="Take a guess on the subsequence event of the day", scopes=Constants.GUILD_IDS)
+  @slash_option(name="guess", description="Your guessed word", opt_type=OptionType.STRING, required=True)
+  @auto_defer(ephemeral=True)
+  @utils.check_message_to_be_processed
+  async def match_guess_cmd(self, ctx, guess):
+    """
+    Callback for the `/subseq guess` command
+    --
+    input:
+      ctx: interactions.SlashContext
+      guess: str
+    """
+    await utils.custom_assert("current_event_challenge" in db.keys(), "No current challenge event registered", ctx)
+    
+    current_match = eval(db["current_event_challenge"])
+    await utils.custom_assert(isinstance(current_match, events.events.Subseq_challenge_event), "The current event is not a subsequence event", ctx)
+
+    user_id = str(ctx.author.id)
+    await utils.custom_assert(user_id not in db["subseq_challenge_completed"], "You already won the event!", ctx)
+
+    s = Subseq_challenge(subseq=db["subseq_challenge"]["subseq"], sol=db["subseq_challenge"]["sol"])
+    await utils.custom_assert(s.check(guess), "Incorrect!", ctx)
+
+    db["subseq_challenge_completed"].append(user_id)
+    piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
+    await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
+
+    thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+    await thread.send(f"{ctx.author.mention} solved today's subsequence event!")
 
     db["piflouz_generated"]["event"] += current_match.reward
     await utils.update_piflouz_message(self.bot)
