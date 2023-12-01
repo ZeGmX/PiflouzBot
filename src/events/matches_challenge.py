@@ -1,8 +1,9 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import asyncio
 from copy import copy
 from itertools import chain
 from math import inf
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 from PIL import Image
 from random import randint, choice
 import re
@@ -59,17 +60,22 @@ class Matches_Interface:
     IMG_MATCH = Image.open('src/events/assets/allu.png').resize((MATCH_INIT_SCALE, MATCH_INIT_SCALE), Image.LANCZOS)
 
 
-    def __init__(self, riddle=None, main_sol=None, all_sols=None):
-        if riddle is None and main_sol is None and all_sols is None:
-            riddle, main_sol, all_sols = get_riddle()
-        
-        assert riddle is not None, "riddle should not be None"
-        assert main_sol is not None, "main_sol should not be None"
-        assert all_sols is not None, "all_sols should not be None"
-
+    def __init__(self, riddle, main_sol, all_sols):
         self.riddle = riddle
         self.main_sol = main_sol
         self.all_sols = all_sols
+
+
+    @staticmethod
+    async def new():
+        """
+        Generates a new riddle
+        --
+        output:
+            res: Matches_Interface
+        """
+        riddle, main_sol, all_sols = await get_riddle()
+        return Matches_Interface(riddle, main_sol, all_sols)
 
 
     @staticmethod
@@ -546,7 +552,7 @@ def generate_game(eq, nb_try=300, max_time=inf):
     output:
         riddle: Matches_Expression -> the initial riddle
         sols: str list -> all found possible solutions
-    """          
+    """
     t1 = time.time()
     min_sol = inf
     sols = []
@@ -598,11 +604,11 @@ def get_all_solutions(riddle):
     return sols
 
 
-def get_riddle():
+async def get_riddle():
     """
     Finds a riddle
     --
     output:
         (Matches_Expression, Matches_Expression, Matches_Expression list) -> solution, initial eq, amount of ways to go from one to the other    
     """
-    return generate_game(gen_equality(2, 2), max_time=30)
+    return await asyncio.to_thread(generate_game, gen_equality(2, 2), max_time=30)

@@ -675,7 +675,7 @@ class Move_match_event(Challenge_event):
         if "out_channel" not in db.keys(): return
         out_channel = await bot.fetch_channel(db["out_channel"])
 
-        event = Matches_Interface()
+        event = await Matches_Interface.new()
         event.save_all("src/events/")
         url_riddle = utils.upload_image_to_imgur("src/events/riddle.png")
         url_sol = utils.upload_image_to_imgur("src/events/solution.png")
