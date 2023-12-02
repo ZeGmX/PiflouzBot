@@ -4,7 +4,7 @@ from interactions import IntervalTrigger
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
-import events.events  # Used in eval()
+import events  # Used in eval()
 from my_database import db
 import powerups  # Used in eval()
 import utils

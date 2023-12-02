@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 from interactions import Button, ButtonStyle, IntervalTrigger
 import asyncio
 
-from cogs.cog_piflouz_mining import Cog_piflouz_mining
+from cogs import Cog_piflouz_mining
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages

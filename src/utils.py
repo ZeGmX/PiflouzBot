@@ -11,7 +11,7 @@ from custom_task_triggers import TaskCustom as Task
 import embed_messages
 from my_database import db
 import powerups  # Used in eval()
-import events.events  # Used in eval()
+import events  # Used in eval()
 
 
 def get_new_joke():
@@ -82,7 +82,7 @@ async def update_piflouz_message(bot):
   input:
     bot: interactions.Client
   """
-  from cogs.cog_piflouz_mining import Cog_piflouz_mining
+  from cogs import Cog_piflouz_mining
   
   channel = await bot.fetch_channel(db["out_channel"])
   embed = embed_messages.get_embed_piflouz()

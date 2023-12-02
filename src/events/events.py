@@ -26,7 +26,7 @@ async def event_handlers(bot):
                              then.minute, then.second)
     dt = (then - now).total_seconds() % (3600 * 24)
     if "current_event_passive" in db.keys():
-        current_event_passive = eval(db["current_event_passive"][len(__name__) + 1:])
+        current_event_passive = eval(db["current_event_passive"][len(__package__) + 1:])
         await current_event_passive.actions_every_5min(bot)
 
     if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
@@ -71,7 +71,7 @@ async def end_event(bot, event_key, event_msg_id_key, thread_id_key=None):
         thread_id_key: str -> key in the database of the thread created for the event
     """
     if event_key in db.keys():
-        current_event = eval(db[event_key][len(__name__) + 1:])
+        current_event = eval(db[event_key][len(__package__) + 1:])
         await current_event.on_end(bot, db[event_msg_id_key], db[thread_id_key] if thread_id_key is not None else None)
 
 
@@ -211,7 +211,7 @@ class Raffle_event(Passive_event):
 
 
     def to_str(self):
-        return f"{__name__}.{type(self).__name__}({self.ticket_price}, {self.tax_ratio})"
+        return f"{__package__}.{type(self).__name__}({self.ticket_price}, {self.tax_ratio})"
 
 
     async def update_raffle_message(self, bot):
@@ -294,7 +294,7 @@ class Event_from_powerups(Passive_event):
 
     def to_str(self):
         powerups_str = ", ".join([p.to_str() for p in self.powerups])
-        return f"{__name__}.{Event_from_powerups.__name__}({powerups_str})"
+        return f"{__package__}.{Event_from_powerups.__name__}({powerups_str})"
 
 
 class Increased_pibox_drop_rate_event(Event_from_powerups):
@@ -398,7 +398,7 @@ class Wordle_event(Challenge_event):
 
 
     def to_str(self):
-        return f"{__name__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
+        return f"{__package__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
 
 
 class Birthday_event(Passive_event):
@@ -541,7 +541,7 @@ class Birthday_event(Passive_event):
 
 
     def to_str(self):
-        return f"{__name__}.{Birthday_event.__name__}()"
+        return f"{__package__}.{Birthday_event.__name__}()"
 
 
 class Birthday_raffle_event(Passive_event):
@@ -602,7 +602,7 @@ class Birthday_raffle_event(Passive_event):
 
 
     def to_str(self):
-        return f"{__name__}.{type(self).__name__}({self.reward})"
+        return f"{__package__}.{type(self).__name__}({self.reward})"
 
 
     async def update_raffle_message(self, bot):
@@ -708,7 +708,7 @@ class Move_match_event(Challenge_event):
 
 
     def to_str(self):
-        return f"{__name__}.{Move_match_event.__name__}({self.reward})"
+        return f"{__package__}.{Move_match_event.__name__}({self.reward})"
 
 
 
@@ -745,4 +745,4 @@ class Subseq_challenge_event(Challenge_event):
     
 
     def to_str(self):
-        return f"{__name__}.{Subseq_challenge_event.__name__}({self.reward})"
+        return f"{__package__}.{Subseq_challenge_event.__name__}({self.reward})"

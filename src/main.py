@@ -10,7 +10,7 @@ from achievement_handler import Achievement_handler_ext
 from constant import Constants
 from custom_client import Client
 from my_database import db
-from events import events
+import events
 import piflouz_handlers
 import powerups
 import rank_handlers

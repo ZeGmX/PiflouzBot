@@ -3,7 +3,6 @@ from interactions.ext.paginators import Paginator
 from math import ceil
 import random
 
-from cogs.cog_piflouz_mining import Cog_piflouz_mining
 from constant import Constants
 import embed_messages
 from my_database import db
@@ -76,6 +75,7 @@ class Cog_misc(Extension):
     input:
       ctx: interactions.SlashContext
     """
+    from cogs import Cog_piflouz_mining
     await ctx.send("Done!", ephemeral=True)
   
     # Saving the channel in the database in order not to need to do /setupChannel when rebooting

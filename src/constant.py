@@ -87,8 +87,7 @@ class Constants:
 
   @staticmethod
   def load():
-    import powerups
-    from events import events
+    import powerups, events
 
     Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
     Constants.RANDOM_EVENTS_PASSIVE = eval(os.getenv("RANDOM_EVENTS_PASSIVE"))
