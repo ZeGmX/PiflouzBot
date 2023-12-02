@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import Embed, MaterialColors, RoleColors, Color, EmbedAttachment, EmbedField
@@ -373,7 +374,7 @@ async def get_embed_end_raffle(bot, winner_id, prize):
   return embed
 
 
-def get_embed_wordle(solution, guesses, header_str):
+async def get_embed_wordle(solution, guesses, header_str):
   """
   Generates the wordle image, host it on imgur and put it in an embed
   --
@@ -384,7 +385,7 @@ def get_embed_wordle(solution, guesses, header_str):
   wordle = Wordle(solution)
 
   path = "wordle_tmp.png"
-  wordle.generate_image(guesses, path)
+  await asyncio.to_thread(wordle.generate_image, guesses, path)
   url = utils.upload_image_to_imgur(path)
   os.remove(path)
 

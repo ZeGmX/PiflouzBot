@@ -367,7 +367,7 @@ class Matches_Expression:
     def move_far(self):
         """
         Generator for expression obtained by moving one match from one digit to another, or to create a new '1' or '-'
-        /!\ this cannot generate partial expressions with digits that are not full
+        ⚠️ this cannot generate partial expressions with digits that are not full
         --
         output:
             new_expr: Matches_Expression
@@ -412,7 +412,7 @@ class Matches_Expression:
     def move_change(self):
         """
         Generator for expression obtained by moving one match from one digit to itself
-        /!\ this cannot generate partial expressions with digits that are not full
+        ⚠️ this cannot generate partial expressions with digits that are not full
         --
         output:
             final_expr: Matches_Expression

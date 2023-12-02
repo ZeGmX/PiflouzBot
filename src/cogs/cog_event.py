@@ -40,7 +40,7 @@ class Cog_event(Extension):
       self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
     
-  @slash_command(name="raffle", description=f"Buy raffle 🎟️ to test your luck /!\ Costs piflouz", scopes=Constants.GUILD_IDS)
+  @slash_command(name="raffle", description="Buy raffle 🎟️ to test your luck ⚠️ Costs piflouz", scopes=Constants.GUILD_IDS)
   @slash_option(name="nb_tickets", description="How many tickets?", opt_type=OptionType.INTEGER, required=True, min_value=1)
   @auto_defer(ephemeral=True)
   @utils.check_message_to_be_processed
@@ -174,7 +174,7 @@ class Cog_event(Extension):
       guesses: List[str]
       header_str: str
     """
-    embed = get_embed_wordle(wordle.solution, guesses, header_str)
+    embed = await get_embed_wordle(wordle.solution, guesses, header_str)
     await ctx.send(embed=embed, ephemeral=True)
 
 

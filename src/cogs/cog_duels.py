@@ -334,7 +334,7 @@ class Cog_duels(Extension):
     check, error_msg = duel.check_entry(value)
     await utils.custom_assert(check, error_msg, ctx)
 
-    res = duel.play(ctx.author.id, value)
+    res = await duel.play(ctx.author.id, value)
 
     if res is None:
       await ctx.send("Done! Just wait for the other player to finish playing", ephemeral=True)

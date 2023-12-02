@@ -153,7 +153,7 @@ class Duel:
             return res
 
 
-    def play(self, user_id, action):
+    async def play(self, user_id, action):
         """
         Edits the dict in response to a user playing
         --
@@ -245,7 +245,7 @@ class Shifumi_duel(Duel):
         await thread.send(f"<@{self.dict['user_id2']}> accepted <@{self.dict['user_id1']}>'s challenge! Use `/duel play shifumi [your move]`")
     
 
-    def play(self, user_id, action):
+    async def play(self, user_id, action):
         user = 1 if user_id == self.dict["user_id1"] else 2
         self.dict[f"result{user}"] = action
         return None
@@ -326,7 +326,7 @@ class Wordle_duel(Duel):
         return True, ""
 
 
-    def play(self, user_id, guess):
+    async def play(self, user_id, guess):
         user = 1 if user_id == self.dict["user_id1"] else 2
 
         guess = guess.lower()
@@ -335,12 +335,12 @@ class Wordle_duel(Duel):
         header_str = f"{len(self.dict[f'attempts{user}'])} / {Wordle.NB_TRIALS} attempts made"
         if guess == self.dict["word"]:
             self.dict[f"result{user}"] = len(self.dict[f"attempts{user}"])
-            header_str = f"You found after {len(self.dict[f'attempts{user}'])} attempts!"
+            header_str = f"You found the word after {len(self.dict[f'attempts{user}'])} attempts!"
         elif len(self.dict[f"attempts{user}"]) == Wordle.NB_TRIALS:
             self.dict[f"result{user}"] = Wordle.NB_TRIALS + 1
             header_str = f"You failed to find the word!"
 
-        embed = get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str)
+        embed = await get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str)
         self.dict[f"last_image_url{user}"] = embed.images[0].url
         return {"embed": embed}
 
