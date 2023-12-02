@@ -351,7 +351,8 @@ class Challenge_event(Event):
         embed = await self.get_embed(bot)
         message = await out_channel.send(embed=embed)
         await message.pin()
-        thread = await message.create_thread(name="Challenge event of the day")
+        now = datetime.date.today()
+        thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
         return int(message.id), int(thread.id)
 
 
