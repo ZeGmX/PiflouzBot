@@ -697,18 +697,23 @@ class Move_match_event(Challenge_event):
         embed = await self.get_embed(url_riddle)
         message = await out_channel.send(embed=embed)
         await message.pin()
-        thread = await message.create_thread(name="Challenge event of the day")
+        now = datetime.date.today()
+        thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
         return int(message.id), int(thread.id)
 
 
     async def on_end(self, bot, msg_id, thread_id=None):
+        found_solutions = set(db["match_challenge_solutions"])
+        found_solutions_str = f"||{", ".join(found_solutions)}||"
+
         thread = await bot.fetch_channel(thread_id)
-        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Here is one of them:", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
+        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Below is one of them.\n You found the following solutions; {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
         await thread.send(embed=embed)
 
         await super().on_end(bot, msg_id, thread_id)
 
         db["match_challenge_completed"] = []
+        db["match_challenge_solutions"] = []
 
         try:
             os.remove("src/events/riddle.png")

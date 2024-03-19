@@ -71,6 +71,7 @@ async def on_startup():
     "current_piflex_masters",  # list of the current piflex masters
     "birthday_raffle_participation",  # for the birthday raffle event
     "match_challenge_completed",  # for the match challenge event
+    "match_challenge_solutions",  # for the match challenge event
     "subseq_challenge_completed", # for the subsequence challenge event
     "subseq_challenge_solutions", # for the subsequence challenge event
   ]:

@@ -317,6 +317,7 @@ class Cog_event(Extension):
     await utils.custom_assert(expression.str in db["match_challenge"]["all_sols"], "This equation is not one of my solution, try again!", ctx)
 
     db["match_challenge_completed"].append(user_id)
+    db["match_challenge_solutions"].append(expression.str)
     piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
     await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
     
