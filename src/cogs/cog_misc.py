@@ -322,5 +322,29 @@ class Cog_misc(Extension):
     exit(1)
     
 
+  # Christmas-special command
+  # @slash_command(name="hohoho", description="Merry xmas!", scopes=Constants.GUILD_IDS)
+  # @auto_defer(ephemeral=True)
+  # @utils.check_message_to_be_processed
+  # async def hohoho_cmd(self, ctx):
+  #   """
+  #   Callback for the `hohoho` command
+  #   --
+  #   input:
+  #     ctx: interactions.SlashContext
+  #   """
+  #   if "xmas" not in db.keys(): db["xmas"] = []
+
+  #   id = str(ctx.author.id)
+  #   await utils.custom_assert(id not in db["xmas"], "You already took your present! That's very naughty!", ctx)
+
+  #   piflouz_handlers.update_piflouz(id, 1000, check_cooldown=False)
+  #   db["piflouz_generated"]["event"] += 1000
+  #   db["xmas"].append(id)
+
+  #   await ctx.send(f"You've been very nice this year, take these 1000 {Constants.PIFLOUZ_EMOJI} !", ephemeral=True)
+  #   await utils.update_piflouz_message(self.bot)
+
+
 def setup(bot):
   Cog_misc(bot)

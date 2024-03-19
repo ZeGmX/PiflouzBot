@@ -117,8 +117,6 @@ async def on_startup():
   socials.shuffle_names.start(bot)
 
 
-
-
 @listen()
 async def on_message_create(message_event):
   """
@@ -177,8 +175,6 @@ async def on_message_reaction_add(reac_event):
     bot.dispatch("pibox_obtained", user.id, qty)
   else:
     bot.dispatch("pibox_failed", user.id, qty)
-  
-
 
 
 if __name__ == "__main__":

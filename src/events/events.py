@@ -34,6 +34,16 @@ async def event_handlers(bot):
 
     await asyncio.sleep(dt)
 
+    await update_events(bot)
+
+
+async def update_events(bot):
+    """
+    Stops the current events and starts new ones
+    --
+    input:
+        bot: interactions.Client
+    """
     # End the current event
     await end_event(bot, "current_event_passive", "current_event_passive_message_id")
     await end_event(bot, "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id")

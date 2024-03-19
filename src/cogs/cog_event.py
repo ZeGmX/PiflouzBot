@@ -5,7 +5,7 @@ import os
 from constant import Constants
 from embed_messages import get_embed_wordle
 import events  # used in eval()
-from events import Matches_Expression, Subseq_challenge
+from events import Matches_Expression, Subseq_challenge, update_events
 from wordle import Wordle
 import piflouz_handlers
 import powerups # used in eval()
@@ -359,6 +359,21 @@ class Cog_event(Extension):
 
     db["piflouz_generated"]["event"] += current_match.reward
     await utils.update_piflouz_message(self.bot)
+
+
+  @slash_command(name="restart-events", description="Restart the events", scopes=Constants.GUILD_IDS)
+  @auto_defer(ephemeral=True)
+  @utils.check_message_to_be_processed
+  async def restart_event(self, ctx):
+    """
+    Callback for the `/restart-events` command
+    --
+    input:
+      ctf: interactions.SlashContext
+    """
+    await utils.custom_assert(ctx.author.id == self.bot.owner.id, "You are not allowed to use this command!", ctx)
+    await update_events(self.bot)
+    await ctx.send("Done!", ephemeral=True)
 
 
 def setup(bot):
