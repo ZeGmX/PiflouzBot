@@ -351,6 +351,7 @@ class Cog_event(Extension):
     await utils.custom_assert(s.check(guess), "Incorrect!", ctx)
 
     db["subseq_challenge_completed"].append(user_id)
+    db["subseq_challenge_solutions"].append(Subseq_challenge._clean_word(guess))
     piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
     await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
 

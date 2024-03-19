@@ -72,6 +72,7 @@ async def on_startup():
     "birthday_raffle_participation",  # for the birthday raffle event
     "match_challenge_completed",  # for the match challenge event
     "subseq_challenge_completed", # for the subsequence challenge event
+    "subseq_challenge_solutions", # for the subsequence challenge event
   ]:
     if key not in db.keys():
       db[key] = []

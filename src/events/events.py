@@ -746,10 +746,14 @@ class Subseq_challenge_event(Challenge_event):
 
 
     async def on_end(self, bot, msg_id, thread_id=None):
+        found_solutions = set(db["subseq_challenge_solutions"])
+        found_solutions_str = f"||{", ".join(found_solutions)}||"
+        
         db["subseq_challenge_completed"] = []
+        db["subseq_challenge_solutions"] = []
 
         thread = await bot.fetch_channel(thread_id)
-        await thread.send("The event is over! Here is a solution: **" + db["subseq_challenge"]["sol"] + "**")
+        await thread.send("The event is over! Here is my solution: **" + db["subseq_challenge"]["sol"] + "**\nHere are all the solutions you found: " + found_solutions_str)
 
         await super().on_end(bot, msg_id, thread_id)
     
