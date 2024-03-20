@@ -49,7 +49,7 @@ async def end_current_season(bot):
       piflouz_handlers.update_piflouz(duel["user_id2"], qty=duel["amount"], check_cooldown=False)
     
     thread = await bot.fetch_channel(duel["thread_id"])
-    await thread.edit(name="[Season over] " + thread.name)
+    await thread.edit(archived=False, name="[Season over] " + thread.name)
     await thread.archive(reason="Season over")
 
   # Adding turbo piflouz based on the amount of piflouz collected
@@ -85,6 +85,9 @@ async def end_current_season(bot):
   db["random_gifts"] = {}
   db["powerups"] = {}
   db["duels"] = []
+  
+  for key in db["piflouz_generated"].keys():
+    db["piflouz_generated"][key] = 0
 
   # Sending the announcement message
   if "out_channel" in db.keys():
