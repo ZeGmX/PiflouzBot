@@ -210,7 +210,7 @@ You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the 
 If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`.\n\n\
 This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
-    # Rankings
+  # Rankings
   if "piflouz_bank" in db.keys():
     d_piflouz = [(user_id, val) for user_id, val in db["piflouz_bank"].items() if val > 0]
     d_piflex = [(user_id, len(discovered)) for user_id, discovered in db["discovered_piflex"].items() if len(discovered) > 0]
@@ -222,9 +222,10 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
 
     embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail = EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
     
-    p_get, p_event, p_pibox = db["piflouz_generated"]["get"], db["piflouz_generated"]["event"], db["piflouz_generated"]["pibox"]
-    p_tot = p_get + p_event + p_pibox
-    stats = f"This season, I generated a total of {p_tot} {Constants.PIFLOUZ_EMOJI}:\n- {p_get} from `/get` commands\n- {p_event} from events\n- {p_pibox} from piboxes"
+    p_get, p_event, p_pibox, p_miner = db["piflouz_generated"]["get"], db["piflouz_generated"]["event"], db["piflouz_generated"]["pibox"], db["piflouz_generated"]["miner"]
+    p_tot = p_get + p_event + p_pibox + p_miner
+    stats = f"This season, I generated a total of {p_tot} {Constants.PIFLOUZ_EMOJI}:\n- {p_get} from `/get` commands\n- {p_event} from events\n- {p_pibox} from piboxes\n- {p_miner} from miner powerups"
+    
     embed.add_field(name="Season statistics", value=stats, inline=False)
 
     if ranking_balance != "":

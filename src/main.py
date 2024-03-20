@@ -84,7 +84,7 @@ async def on_startup():
   if "previous_live_message_time" not in db.keys():
     db["previous_live_message_time"] = {name: 0 for name in Constants.streamers_to_check}
   
-  for key in ["get", "event", "pibox"]:
+  for key in ["get", "event", "pibox", "miner"]:
     if key not in db["piflouz_generated"].keys():
       db["piflouz_generated"][key] = 0
 
