@@ -332,12 +332,12 @@ class Wordle_duel(Duel):
         guess = guess.lower()
         self.dict[f"attempts{user}"].append(guess)
 
-        header_str = f"{len(self.dict[f'attempts{user}'])} / {Wordle.NB_TRIALS} attempts made"
+        header_str = f"{len(self.dict[f'attempts{user}'])} / {Wordle.NB_ATTEMPTS} attempts made"
         if guess == self.dict["word"]:
             self.dict[f"result{user}"] = len(self.dict[f"attempts{user}"])
             header_str = f"You found the word after {len(self.dict[f'attempts{user}'])} attempts!"
-        elif len(self.dict[f"attempts{user}"]) == Wordle.NB_TRIALS:
-            self.dict[f"result{user}"] = Wordle.NB_TRIALS + 1
+        elif len(self.dict[f"attempts{user}"]) == Wordle.NB_ATTEMPTS:
+            self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = f"You failed to find the word!"
 
         embed = await get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str)
@@ -356,15 +356,15 @@ class Wordle_duel(Duel):
     
 
     def tie_str(self):
-        if self.dict["result1"] == Wordle.NB_TRIALS + 1:
+        if self.dict["result1"] == Wordle.NB_ATTEMPTS + 1:
             return f"They both failed to find the word!"
         return f"They both found the word in {self.dict['result1']} attempts!"
         
 
     def win_str(self, winner_id, loser_id):
         n1, n2 = self.dict["result1"], self.dict["result2"]
-        if n1 == Wordle.NB_TRIALS + 1:
+        if n1 == Wordle.NB_ATTEMPTS + 1:
             return f"<@{winner_id}> found the word in {n2} attempts while <@{loser_id}> failed!"
-        if n2 == Wordle.NB_TRIALS + 1:
+        if n2 == Wordle.NB_ATTEMPTS + 1:
             return f"<@{winner_id}> found the word in {n1} attempts while <@{loser_id}> failed!"
         return f"<@{winner_id}> found the word in {min(n1, n2)} attempts while <@{loser_id}> found it in {max(n1, n2)} attempts!"

@@ -392,7 +392,7 @@ async def get_embed_wordle(solution, guesses, header_str):
   color = MaterialColors.AMBER
   if len(guesses) > 0 and guesses[-1] == solution:
     color = RoleColors.DARK_GREEN
-  elif len(guesses) == Wordle.NB_TRIALS:
+  elif len(guesses) == Wordle.NB_ATTEMPTS:
     color = RoleColors.DARK_RED
 
   embed = Embed(title="Wordle", description=header_str, color=color, images=[EmbedAttachment(url=url)])

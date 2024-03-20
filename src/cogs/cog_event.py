@@ -98,7 +98,7 @@ class Cog_event(Extension):
 
     guesses = list(db["wordle_guesses"][user_id])
     word = word.lower()
-    await utils.custom_assert(len(guesses) < wordle.NB_TRIALS, "The maximum amount of trials has been reached!", ctx)
+    await utils.custom_assert(len(guesses) < wordle.NB_ATTEMPTS, "The maximum amount of attempts has been reached!", ctx)
     await utils.custom_assert(wordle.is_valid(word), "This is not a valid word!", ctx)
     await utils.custom_assert(guesses == [] or wordle.solution != guesses[-1], "You already won!", ctx)
 
@@ -108,21 +108,21 @@ class Cog_event(Extension):
     header_str = "\n".join(wordle.guess(w) for w in guesses)
 
     if guesses[-1] == wordle.solution:
-      progress = 1 + (1 - len(guesses)) / (wordle.NB_TRIALS - 1)
+      progress = 1 + (1 - len(guesses)) / (wordle.NB_ATTEMPTS - 1)
       reward = round(current_wordle.min_reward + progress * (current_wordle.max_reward - current_wordle.min_reward))
       
-      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_TRIALS} trials!\nYou earned {reward}{Constants.PIFLOUZ_EMOJI}"
+      header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\nYou earned {reward}{Constants.PIFLOUZ_EMOJI}"
       piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
 
       results = "\n".join([wordle.guess(word) for word in guesses])
-      announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_TRIALS})!\n{results}"
+      announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
       thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
       await thread.send(announcement_msg)
 
       db["piflouz_generated"]["event"] += reward
       await utils.update_piflouz_message(self.bot)
 
-    elif len(guesses) == wordle.NB_TRIALS:
+    elif len(guesses) == wordle.NB_ATTEMPTS:
       header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
 
     await self.send_wordle_embed(ctx, wordle, guesses, header_str)  
@@ -153,11 +153,11 @@ class Cog_event(Extension):
     await utils.custom_assert(len(guesses) > 0, "You haven't participated to today's wordle yet!", ctx)
     
     header_str = "\n".join(wordle.guess(w) for w in guesses)
-    header_str += f"\n{len(guesses)}/{wordle.NB_TRIALS}"
+    header_str += f"\n{len(guesses)}/{wordle.NB_ATTEMPTS}"
 
     if guesses != [] and guesses[-1] == wordle.solution:
       header_str += "\nYou won!"
-    elif len(guesses) == wordle.NB_TRIALS:
+    elif len(guesses) == wordle.NB_ATTEMPTS:
       header_str += f"\nYou lost :( The correct word was {wordle.solution}"
 
     await self.send_wordle_embed(ctx, wordle, guesses, header_str)
