@@ -451,7 +451,7 @@ class Birthday_event(Passive_event):
         nb_backed_cakes = db["baked_cakes"]["total"]
 
         embed = Embed(title="Happy birthday Pibot!", thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
-            description=f"Today is Pibot's 2 years anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {', '.join(f'{nb} {e}' for e, nb in self.INGREDIENTS_PER_CAKE.items())} to be baked. Pibot will earn {self.REWARD_PER_CAKE} {Constants.PIFLOUZ_EMOJI} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
+            description=f"Today is Pibot's 2 years anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {", ".join(f"{nb} {e}" for e, nb in self.INGREDIENTS_PER_CAKE.items())} to be baked. Pibot will earn {self.REWARD_PER_CAKE} {Constants.PIFLOUZ_EMOJI} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
             color=BrandColors.WHITE
         )
         return embed
@@ -707,7 +707,7 @@ class Move_match_event(Challenge_event):
         found_solutions_str = f"||{", ".join(found_solutions)}||"
 
         thread = await bot.fetch_channel(thread_id)
-        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db['match_challenge']['all_sols'])} solutions. Below is one of them.\n You found the following solutions; {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
+        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db["match_challenge"]["all_sols"])} solutions. Below is one of them.\n You found the following solutions: {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
         await thread.send(embed=embed)
 
         await super().on_end(bot, msg_id, thread_id)
@@ -739,7 +739,7 @@ class Subseq_challenge_event(Challenge_event):
     async def get_embed(self, bot):
         desc = f"Use `/subseq guess [word]` to try to find the answer. Find one and you'll earn {self.reward}{Constants.PIFLOUZ_EMOJI}!"
 
-        embed = Embed(title=f"Challenge event of the day: find a french word that has \"{db['subseq_challenge']['subseq']}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
+        embed = Embed(title=f"Challenge event of the day: find a french word that has \"{db["subseq_challenge"]["subseq"]}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
 
 

@@ -17,26 +17,26 @@ class Matches_Interface:
     # segments used to draw each number
     # Xs is a small version of X, Xb is a big version of X
     MATCHES = {
-        '0' : [0, 1, 2, 3, 4, 5],
-        '0s' : [6, 2, 3, 4],
-        '1'  : [1, 2],
-        '1s' : [11],
-        '2'  : [0, 1, 6, 4, 3],
-        '3'  : [0, 1, 6, 2, 3],
-        '4'  : [1, 2, 5, 6],
-        '4s' : [6, 7, 8],
-        '5'  : [0, 5, 6, 2, 3],
-        '6'  : [0, 5, 4, 3, 2, 6],
-        '6s' : [5, 4, 3, 2, 6],
-        '7'  : [0, 1, 2],
-        '7b' : [5, 0, 1, 2],
-        '8'  : [0, 1, 2, 3, 4, 5, 6],
-        '8s' : [0, 1, 5, 6, 10],
-        '9'  : [0, 1, 2, 3, 5, 6],
-        '9s' : [0, 1, 2, 5, 6],
-        '+'  : [6, 7],
-        '-'  : [6],
-        '='  : [6, 9]
+        "0" : [0, 1, 2, 3, 4, 5],
+        "0s" : [6, 2, 3, 4],
+        "1"  : [1, 2],
+        "1s" : [11],
+        "2"  : [0, 1, 6, 4, 3],
+        "3"  : [0, 1, 6, 2, 3],
+        "4"  : [1, 2, 5, 6],
+        "4s" : [6, 7, 8],
+        "5"  : [0, 5, 6, 2, 3],
+        "6"  : [0, 5, 4, 3, 2, 6],
+        "6s" : [5, 4, 3, 2, 6],
+        "7"  : [0, 1, 2],
+        "7b" : [5, 0, 1, 2],
+        "8"  : [0, 1, 2, 3, 4, 5, 6],
+        "8s" : [0, 1, 5, 6, 10],
+        "9"  : [0, 1, 2, 3, 5, 6],
+        "9s" : [0, 1, 2, 5, 6],
+        "+"  : [6, 7],
+        "-"  : [6],
+        "="  : [6, 9]
     }
 
     # Position and orientation of the match image corresponding to each segment
@@ -56,8 +56,8 @@ class Matches_Interface:
         (0.5, 1, 0)
     ]
 
-    IMG_BACKGROUND = Image.open('src/events/assets/framecool2.png').resize((1920, 1080), Image.LANCZOS)
-    IMG_MATCH = Image.open('src/events/assets/allu.png').resize((MATCH_INIT_SCALE, MATCH_INIT_SCALE), Image.LANCZOS)
+    IMG_BACKGROUND = Image.open("src/events/assets/framecool2.png").resize((1920, 1080), Image.LANCZOS)
+    IMG_MATCH = Image.open("src/events/assets/allu.png").resize((MATCH_INIT_SCALE, MATCH_INIT_SCALE), Image.LANCZOS)
 
 
     def __init__(self, riddle, main_sol, all_sols):
@@ -140,7 +140,7 @@ class Matches_Interface:
         y1 = 615 + scale * Matches_Interface.MATCH_INIT_SCALE
         y2 = 615 - scale * Matches_Interface.MATCH_INIT_SCALE
 
-        plt.savefig(folder + "riddle.png", bbox_inches='tight', pad_inches=0)
+        plt.savefig(folder + "riddle.png", bbox_inches="tight", pad_inches=0)
     
 
     def save_solution(self, folder):
@@ -168,7 +168,7 @@ class Matches_Interface:
         y1 = 615 + scale * Matches_Interface.MATCH_INIT_SCALE
         y2 = 615 - scale * Matches_Interface.MATCH_INIT_SCALE
 
-        plt.savefig(folder + "solution.png", bbox_inches='tight', pad_inches=0)
+        plt.savefig(folder + "solution.png", bbox_inches="tight", pad_inches=0)
 
 
     def save_all(self, folder):
@@ -189,85 +189,85 @@ class Matches_Expression:
     # Caracters: 0, 0s, 1, 1s, 2, 3, 4, 4s, 5, 6, 6s, 7, 7b, 8, 8s, 9, 9s, +, -, =, nothing
     # BIG PLUS ? Small 3 ?
     ADD_MATCH = {
-        '0': ['8'],
-        '0s': ['6s', '8s', '9s'],
-        '1': ['7'],
-        '1s': ['1', '+'],
-        '2': [],
-        '3': ['9'],
-        '4': ['9s'],
-        '4s': [],
-        '5': ['6', '9'],
-        '6': ['8'],
-        '6s': ['6'],
-        '7': ['7b'],
-        '7b': ['9s'],
-        '8': [],
-        '8s': [],
-        '9': ['8'],
-        '9s': ['9'],
-        '+': ['4s'],
-        '-': ['+', '='],
-        '=': []
+        "0": ["8"],
+        "0s": ["6s", "8s", "9s"],
+        "1": ["7"],
+        "1s": ["1", "+"],
+        "2": [],
+        "3": ["9"],
+        "4": ["9s"],
+        "4s": [],
+        "5": ["6", "9"],
+        "6": ["8"],
+        "6s": ["6"],
+        "7": ["7b"],
+        "7b": ["9s"],
+        "8": [],
+        "8s": [],
+        "9": ["8"],
+        "9s": ["9"],
+        "+": ["4s"],
+        "-": ["+", "="],
+        "=": []
     }
     REMOVE_MATCH = {
-        '0': [],
-        '0s': [],
-        '1': ['1s'],
-        '1s': ['nothing'],
-        '2': [],
-        '3': [],
-        '4': [],
-        '4s': ['+'],
-        '5': [],
-        '6': ['5', '6s'],
-        '6s': ['0s'],
-        '7': ['1'],
-        '7b': ['7'],
-        '8': ['0', '6', '9'],
-        '8s': ['0s'],
-        '9': ['3', '5', '9s'],
-        '9s': ['0s', '4', '7b'],
-        '+': ['-'],
-        '-': ['nothing'],
-        '=': ['-']
+        "0": [],
+        "0s": [],
+        "1": ["1s"],
+        "1s": ["nothing"],
+        "2": [],
+        "3": [],
+        "4": [],
+        "4s": ["+"],
+        "5": [],
+        "6": ["5", "6s"],
+        "6s": ["0s"],
+        "7": ["1"],
+        "7b": ["7"],
+        "8": ["0", "6", "9"],
+        "8s": ["0s"],
+        "9": ["3", "5", "9s"],
+        "9s": ["0s", "4", "7b"],
+        "+": ["-"],
+        "-": ["nothing"],
+        "=": ["-"]
     }
     MOVE_MATCH = {
-        '0': ['6', '9'],
-        '0s': ['4', '7b'],
-        '1': ['+'], # 11s
-        '1s': ['-'],
-        '2': ['3'],
-        '3': ['2', '5', '9s'],
-        '4': ['0s', '7b'], #big plus here 11
-        '4s': [],
-        '5': ['3', '6s', '9s'],
-        '6': ['0', '9'],
-        '6s': ['5', '8s', '9s'],
-        '7': [],
-        '7b': ['0s', '4'], # +1 ? 11
-        '8': [],
-        '8s': ['6s', '9s'],
-        '9': ['0', '6'],
-        '9s': ['3', '5', '6s', '8s'],
-        '+': ['1', '='],
-        '-': ['1s'],
-        '=': ['+']
+        "0": ["6", "9"],
+        "0s": ["4", "7b"],
+        "1": ["+"], # 11s
+        "1s": ["-"],
+        "2": ["3"],
+        "3": ["2", "5", "9s"],
+        "4": ["0s", "7b"], #big plus here 11
+        "4s": [],
+        "5": ["3", "6s", "9s"],
+        "6": ["0", "9"],
+        "6s": ["5", "8s", "9s"],
+        "7": [],
+        "7b": ["0s", "4"], # +1 ? 11
+        "8": [],
+        "8s": ["6s", "9s"],
+        "9": ["0", "6"],
+        "9s": ["3", "5", "6s", "8s"],
+        "+": ["1", "="],
+        "-": ["1s"],
+        "=": ["+"]
     }
     SAME_MATCH = {
-        '0': ['0', '0s'],
-        '1': ['1', '1s'],
-        '2': ['2'],
-        '3': ['3'],
-        '4': ['4', '4s'],
-        '5': ['5'],
-        '6': ['6', '6s'],
-        '7': ['7', '7b'],
-        '8': ['8', '8s'],
-        '9': ['9', '9s'],
-        '+': ['+'],
-        '-': ['-'],
-        '=': ['=']
+        "0": ["0", "0s"],
+        "1": ["1", "1s"],
+        "2": ["2"],
+        "3": ["3"],
+        "4": ["4", "4s"],
+        "5": ["5"],
+        "6": ["6", "6s"],
+        "7": ["7", "7b"],
+        "8": ["8", "8s"],
+        "9": ["9", "9s"],
+        "+": ["+"],
+        "-": ["-"],
+        "=": ["="]
     }
     
     
@@ -333,14 +333,14 @@ class Matches_Expression:
         """
         Removes unwanted characters to simplify the expression
         """
-        while 'nothing' in self.chars:
-            self.chars.remove('nothing')
-        while '11s' in self.chars:
-            k = self.index('11s')
-            self = self.chars[:k] + ['1s', '1s'] + self.chars[k + 1:]
-        while '11' in self.chars:
-            k = self.index('11')
-            self = self.chars[:k] + ['1', '1'] + self.chars[k + 1:]
+        while "nothing" in self.chars:
+            self.chars.remove("nothing")
+        while "11s" in self.chars:
+            k = self.index("11s")
+            self = self.chars[:k] + ["1s", "1s"] + self.chars[k + 1:]
+        while "11" in self.chars:
+            k = self.index("11")
+            self = self.chars[:k] + ["1", "1"] + self.chars[k + 1:]
         self._update_str()
 
 
@@ -366,7 +366,7 @@ class Matches_Expression:
 
     def move_far(self):
         """
-        Generator for expression obtained by moving one match from one digit to another, or to create a new '1' or '-'
+        Generator for expression obtained by moving one match from one digit to another, or to create a new "1" or "-"
         ⚠️ this cannot generate partial expressions with digits that are not full
         --
         output:
@@ -394,7 +394,7 @@ class Matches_Expression:
                     
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
-                    new_expr_list.insert(j, '1s')
+                    new_expr_list.insert(j, "1s")
                     
                     new_expr = Matches_Expression(new_expr_list)
                     new_expr.clean()
@@ -402,7 +402,7 @@ class Matches_Expression:
 
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
-                    new_expr_list.insert(j, '-')
+                    new_expr_list.insert(j, "-")
 
                     new_expr = Matches_Expression(new_expr_list)
                     new_expr.clean()
@@ -514,13 +514,13 @@ def gen_equality(nb_num_left, nb_num_right):
 
     # Generating the left part of the equation
     for _ in range(nb_num_left-1):
-        op = ['+', '-'][randint(0, 1)]
+        op = ["+", "-"][randint(0, 1)]
         new_number = gen_number(3)
         left_term += [op] + new_number
         
     right_term = []
     for _ in range(nb_num_right-1):
-        op = ['+', '-'][randint(0, 1)]
+        op = ["+", "-"][randint(0, 1)]
         new_number = gen_number(3)
         right_term += [op] + new_number
 
@@ -528,12 +528,12 @@ def gen_equality(nb_num_left, nb_num_right):
     res_right = evaluate_term(right_term)
 
     if res_left < res_right:
-        pref = ['-']
+        pref = ["-"]
         res = -res
     else:
         pref = []
 
-    res = left_term + ['='] + pref + get_list(abs(res_left - res_right)) + right_term
+    res = left_term + ["="] + pref + get_list(abs(res_left - res_right)) + right_term
     final = [str(t) for t in res]
     #final = alter_some_characters(final) # HEEEEEEEEEEEEEEEEEEEEEEEEEERE
     return Matches_Expression(final)

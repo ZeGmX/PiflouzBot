@@ -140,16 +140,16 @@ class Duel:
         output:
             res: str
         """
-        mention = "anyone" if self.dict["user_id2"] == -1 else f"<@{self.dict['user_id2']}>"
+        mention = "anyone" if self.dict["user_id2"] == -1 else f"<@{self.dict["user_id2"]}>"
 
         if not self.dict["accepted"]:
             return f"Waiting on {mention} to accept\n"
         else:
             res = ""
             if self.dict["result1"] is None:
-                res += f"Waiting on <@{self.dict['user_id1']}> to finish playing\n"
+                res += f"Waiting on <@{self.dict["user_id1"]}> to finish playing\n"
             if self.dict["result2"] is None:
-                res += f"Waiting on <@{self.dict['user_id2']}> to finish playing\n"
+                res += f"Waiting on <@{self.dict["user_id2"]}> to finish playing\n"
             return res
 
 
@@ -242,7 +242,7 @@ class Shifumi_duel(Duel):
 
 
     async def on_accept(self, thread):
-        await thread.send(f"<@{self.dict['user_id2']}> accepted <@{self.dict['user_id1']}>'s challenge! Use `/duel play shifumi [your move]`")
+        await thread.send(f"<@{self.dict["user_id2"]}> accepted <@{self.dict["user_id1"]}>'s challenge! Use `/duel play shifumi [your move]`")
     
 
     async def play(self, user_id, action):
@@ -267,14 +267,14 @@ class Shifumi_duel(Duel):
     
 
     def tie_str(self):
-        return f"They both played {self.dict['result1']}!"
+        return f"They both played {self.dict["result1"]}!"
         
 
     def win_str(self, winner_id, loser_id):
         if winner_id == self.dict["user_id1"]:
-            return f"They played {self.dict['result1']} vs {self.dict['result2']}!"
+            return f"They played {self.dict["result1"]} vs {self.dict["result2"]}!"
         else:
-            return f"They played {self.dict['result2']} vs {self.dict['result1']}!"
+            return f"They played {self.dict["result2"]} vs {self.dict["result1"]}!"
         
 
 class Wordle_duel(Duel):
@@ -299,11 +299,11 @@ class Wordle_duel(Duel):
 
 
     async def on_accept(self, thread):
-        await thread.send(f"<@{self.dict['user_id2']}> accepted <@{self.dict['user_id1']}>'s challenge! Use `/duel play wordle [your guess]`")
+        await thread.send(f"<@{self.dict["user_id2"]}> accepted <@{self.dict["user_id1"]}>'s challenge! Use `/duel play wordle [your guess]`")
     
 
     def status(self, caller_id):
-        mention = "anyone" if self.dict["user_id2"] == -1 else f"<@{self.dict['user_id2']}>"
+        mention = "anyone" if self.dict["user_id2"] == -1 else f"<@{self.dict["user_id2"]}>"
         user = 1 if caller_id == self.dict["user_id1"] else 2
 
         if not self.dict["accepted"]:
@@ -311,12 +311,12 @@ class Wordle_duel(Duel):
         else:
             res = ""
             if self.dict["result1"] is None:
-                res += f"Waiting on <@{self.dict['user_id1']}> to finish playing\n"
+                res += f"Waiting on <@{self.dict["user_id1"]}> to finish playing\n"
             if self.dict["result2"] is None:
-                res += f"Waiting on <@{self.dict['user_id2']}> to finish playing\n"
+                res += f"Waiting on <@{self.dict["user_id2"]}> to finish playing\n"
 
             if self.dict[f"result{user}"] is None and self.dict[f"attempts{user}"] != []:
-                res += f"Here is your progress: {self.dict[f'last_image_url{user}']}\n"
+                res += f"Here is your progress: {self.dict[f"last_image_url{user}"]}\n"
             return res
 
 
@@ -332,10 +332,10 @@ class Wordle_duel(Duel):
         guess = guess.lower()
         self.dict[f"attempts{user}"].append(guess)
 
-        header_str = f"{len(self.dict[f'attempts{user}'])} / {Wordle.NB_ATTEMPTS} attempts made"
+        header_str = f"{len(self.dict[f"attempts{user}"])} / {Wordle.NB_ATTEMPTS} attempts made"
         if guess == self.dict["word"]:
             self.dict[f"result{user}"] = len(self.dict[f"attempts{user}"])
-            header_str = f"You found the word after {len(self.dict[f'attempts{user}'])} attempts!"
+            header_str = f"You found the word after {len(self.dict[f"attempts{user}"])} attempts!"
         elif len(self.dict[f"attempts{user}"]) == Wordle.NB_ATTEMPTS:
             self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = f"You failed to find the word!"
@@ -358,7 +358,7 @@ class Wordle_duel(Duel):
     def tie_str(self):
         if self.dict["result1"] == Wordle.NB_ATTEMPTS + 1:
             return f"They both failed to find the word!"
-        return f"They both found the word in {self.dict['result1']} attempts!"
+        return f"They both found the word in {self.dict["result1"]} attempts!"
         
 
     def win_str(self, winner_id, loser_id):
