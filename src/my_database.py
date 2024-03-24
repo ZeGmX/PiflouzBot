@@ -73,7 +73,7 @@ class Element:
     def __setitem__(self, key, value):
         assert db._check_if_acceptable(value), "Value could not be set because it contains an unacceptable type"
         assert db._check_if_acceptable(key), "Key could not be set because it contains an unacceptable type"
-        self.element[key] = value
+        self.element[key] = Element.convert_from_element(value)
 
         if self.parent_dict is not None:
             self.parent_dict.save_key(self.parent_key, db.folder) 
@@ -212,7 +212,7 @@ class Element_dict(Element):
     def __setitem__(self, key, value):
         assert db._check_if_acceptable(value), "Value could not be set because it contains an unacceptable type"
         assert db._check_if_acceptable(key), "Key could not be set because it contains an unacceptable type"
-        self.element[key] = value
+        self.element[key] = Element.convert_from_element(value)
         if self.stop_parent_propagation:
             self.parent_dict.save_key(self.parent_key, db.folder)
         else:
