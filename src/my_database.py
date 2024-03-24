@@ -1,8 +1,8 @@
-import pickle
 import os
+import pickle
+from shutil import rmtree
 
 
-    
 # Mutable elements in the database
 # In the database, they are stored as the actual element (list, dict), but when accessed, they are converted to Element_list or Element_dict
 class Element:
@@ -222,7 +222,14 @@ class Element_dict(Element):
     def __delitem__(self, key) -> None:
         del self.element[key]
 
-        os.remove(f"{self.get_folder_path(db.folder)}/{key}.dumped")
+        if self.stop_parent_propagation:  # if the dict is in a list, the key is not saved as it's own file
+            self.parent_dict.save_key(self.parent_key, db.folder)
+        else:
+            path = f"{self.get_folder_path(db.folder)}/{key}"
+            if os.path.exists(path) and os.path.isdir(path):
+                rmtree(path)
+            elif os.path.exists(path + ".dumped"):
+                os.remove(path + ".dumped")
 
             
     def __getitem__(self, key):
@@ -405,7 +412,13 @@ class My_database(dict):
     # delete an item
     def __delitem__(self, key):
         super().__delitem__(key)
-        os.remove(f"{self.folder}/{key}.dumped")
+
+        if os.path.exists(f"{self.folder}/{key}.dumped"):
+            os.remove(f"{self.folder}/{key}.dumped")
+        elif os.path.exists(f"{self.folder}/{key}"):
+            rmtree(f"{self.folder}/{key}")
+        else:
+            print("something went wrong")
     
 
     ### I/O ###
@@ -476,14 +489,7 @@ try:
 
 except Exception as e:
     db = My_database(folder="my_db")
-
-# from shutil import rmtree
-
-# for file in os.listdir("test_db"):
-#     if os.path.isdir(f"test_db/{file}"):
-#         rmtree(f"test_db/{file}")
-#     else:
-#         os.remove(f"test_db/{file}")
+    
 
 # a = pickle.load(open("D:/pibot/test_db/f.dumped", "rb"))
 # print(a)
