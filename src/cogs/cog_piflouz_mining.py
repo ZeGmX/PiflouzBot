@@ -71,6 +71,7 @@ class Cog_piflouz_mining(Extension):
         else:
             profile = user_profile.get_profile(str(ctx.author.id))
             output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {profile["mining_combo"]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
+            
             self.bot.dispatch("combo_updated", ctx.author.id)
             db["piflouz_generated"]["get"] += qty
             await utils.update_piflouz_message(self.bot)

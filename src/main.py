@@ -42,19 +42,10 @@ async def on_startup():
 
       # Setting the base parameters in the database
     for key in [
-        # "piflouz_bank",         # money of everyone
-        # "timers_react",         # the time at which the users last used /get
         "random_gifts",         # information about current piboxes
         "mega_piflexers",       # buy date of user doing /piflex
         "piflexers",            # buy date of user doing /buyrankpiflex
         "raffle_participation", # tickets bought by everyone
-        # "powerups",             # powerups of each user
-        # "discovered_piflex",    # ids of the piflex images found
-        # "mining_combo",         # the current combo for mining piflouz
-        # "turbo_piflouz_bank",   # money after each season
-        # "donation_balance",     # money donated - money received throug donations
-        # "season_results",       # recap of the money earned last season
-        # "achievements",         # list of the achievements unlocked by a user
         "wordle_guesses",       # list of the wordle guesses by a user
         "last_birthday_delivery",    # for the birthday event
         "birthday_event_ingredients",# also for the birthday event

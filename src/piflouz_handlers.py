@@ -126,7 +126,7 @@ def update_combo(user_id, current_time):
     """
     profile = user_profile.get_profile(user_id)
     cooldown = user_profile.get_total_cooldown(user_id)
-    old_time = profile["mining_combo"]
+    old_time = profile["previous_get_time"]
 
     if old_time + cooldown <= current_time < old_time + 2 * cooldown:
         profile["mining_combo"] += 1
