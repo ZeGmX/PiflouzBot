@@ -193,7 +193,9 @@ class Element_dict(Element):
         output:
             res: dict_values
         """
-        return Element_dict_values(self.element.values(), self.parent_dict, self.parent_key, self.stop_parent_propagation)
+        if self.stop_parent_propagation:
+            return Element_dict_values(self.element.values(), self.parent_dict, self.parent_key, self.stop_parent_propagation)
+        return Element_dict_values(self.element.values(), self, self.parent_key, self.stop_parent_propagation) # parent_key will be set for each item
     
 
     def items(self):
@@ -342,7 +344,18 @@ class Element_dict_keys(Element_dict_iterator):
 
 
 class Element_dict_values(Element_dict_iterator):
-    pass
+    def __iter__(self):
+        self.iterator = iter(self.collection)
+        self.iterator_keys = iter(self.parent_dict.element.keys())
+        return self
+
+
+    def __next__(self):
+        key, value = next(self.iterator_keys),  next(self.iterator)
+        
+        if self.stop_parent_propagation:
+            return Element.convert_to_element(value, self.parent_dict, self.parent_key, self.stop_parent_propagation)
+        return Element.convert_to_element(value, self.parent_dict, key, self.stop_parent_propagation)
 
 
 class Element_dict_items(Element_dict_iterator):
