@@ -61,7 +61,7 @@ async def end_current_season(bot):
     
     # Adding turbo piflouz based on the amount of piflex images discovered
     piflex_count = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in db["profiles"].items()]
-    reward_piflex = lambda count: int(310 / (12 ** 3) * count ** 3 + 20 * count)  
+    reward_piflex = lambda count: 0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count
     # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
     # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
     reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
