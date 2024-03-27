@@ -278,6 +278,11 @@ class Element_dict(Element):
         if not os.path.exists(subfolder):
             os.mkdir(subfolder)
         
+        # Deletes everything in the subfolder if it's a dict
+        # This allows the removal of items if e.g. db["a"] = dict() is called, where "a" was previously a dict
+        if os.path.isdir(f"{subfolder}/{key}"):
+            rmtree(f"{subfolder}/{key}")
+        
         if isinstance(value, Element_dict):
             value.save(root_folder)
         else:
@@ -419,7 +424,6 @@ class My_database(dict):
         super().__setitem__(key, Element.convert_from_element(value))
         if self.is_loaded:
             self.to_element().save_key(key, self.folder)
-        # self._save_key(key, self.folder)
 
 
     # delete an item
@@ -502,7 +506,6 @@ try:
 
 except Exception as e:
     db = My_database(folder="my_db")
-    
 
 # a = pickle.load(open("D:/pibot/test_db/f.dumped", "rb"))
 # print(a)
