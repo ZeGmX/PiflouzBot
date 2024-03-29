@@ -25,8 +25,9 @@ async def event_handlers(bot):
     then = datetime.datetime(now.year, now.month, now.day, then.hour,
                              then.minute, then.second)
     dt = (then - now).total_seconds() % (3600 * 24)
-    if "current_event_passive" in db.keys():
-        current_event_passive = eval(db["current_event_passive"][len(__package__) + 1:])
+    
+    current_event_passive = get_event_object(Event_type.PASSIVE)
+    if current_event_passive is not None:
         await current_event_passive.actions_every_5min(bot)
 
     if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
@@ -45,16 +46,17 @@ async def update_events(bot):
         bot: interactions.Client
     """
     # End the current event
-    await end_event(bot, "current_event_passive", "current_event_passive_message_id")
-    await end_event(bot, "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id")
-
+    await end_event(bot, Event_type.PASSIVE)
+    await end_event(bot, Event_type.CHALLENGE)
+    
     # Chose the new event of the day
     now = datetime.datetime.now()
 
     if now.month == 4 and now.day == 1:
         new_event_passive = Birthday_event()
     elif now.month == 4 and now.day == 2:
-        new_event_passive = Birthday_raffle_event(db["baked_cakes"]["total"] * Birthday_event.REWARD_PER_CAKE)
+        # The current event is still the birthday event, so get_event_data will return the birthday data
+        new_event_passive = Birthday_raffle_event(get_event_data(Event_type.PASSIVE)["baked_cakes"]["total"] * Birthday_event.REWARD_PER_CAKE)
     else:
         new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
     
@@ -63,27 +65,154 @@ async def update_events(bot):
     id1 = await new_event_passive.on_begin(bot)
     id2_msg, id2_thread = await new_event_challenge.on_begin(bot)
 
-    db["current_event_passive_message_id"] = id1
-    db["current_event_passive"] = new_event_passive.to_str()
-    db["current_event_challenge_message_id"] = id2_msg
-    db["current_event_challenge_thread_id"] = id2_thread
-    db["current_event_challenge"] = new_event_challenge.to_str()
+    db["events"]["passive"]["current_message_id"] = id1
+    db["events"]["passive"]["current_event"] = new_event_passive.to_str()
+    db["events"]["challenge"]["current_message_id"] = id2_msg
+    db["events"]["challenge"]["current_thread_id"] = id2_thread
+    db["events"]["challenge"]["current_event"] = new_event_challenge.to_str()
 
 
-async def end_event(bot, event_key, event_msg_id_key, thread_id_key=None):
+async def end_event(bot, event_type):
     """
     Ends an ongoing event
     --
     input:
         bot: interactions.Client
-        event_key: str -> key in the database of the event to end
-        event_msg_id_key: str -> key in the database of the message announcing the event
-        thread_id_key: str -> key in the database of the thread created for the event
+        event_type: int (Event_type)
     """
-    if event_key in db.keys():
-        current_event = eval(db[event_key][len(__package__) + 1:])
-        await current_event.on_end(bot, db[event_msg_id_key], db[thread_id_key] if thread_id_key is not None else None)
+    current_event = get_event_object(event_type)
+    
+    if current_event is None: return  
 
+    data = db["events"]["passive"] if event_type == Event_type.PASSIVE else db["events"]["challenge"]
+    await current_event.on_end(bot, data["current_message_id"], data["current_thread_id"] if isinstance(current_event, Challenge_event) else None)
+
+
+def get_default_db_data(event_type):
+    """
+    Returns the default dict for the event of the given type
+    --
+    input:
+        event_type: int (Event_type)
+    --
+    output:
+        data: dict
+    """
+    match event_type:
+        case Event_type.PASSIVE:
+            return {
+                "current_event": "",
+                "current_message_id": -1,
+                "raffle": {"participation": dict()},
+                "birthday": {"baked_cakes": {"total": 0}, "ingredients": dict(), "last_delivery": {"id": -1, "qty": dict()}},
+                "birthday_raffle": {"participation": []}
+            }
+        case Event_type.CHALLENGE:
+            return {
+                "current_event": "",
+                "current_message_id": -1,
+                "current_thread_id": -1,
+                "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
+                "subseq": {"subseq": "", "example_solution": "", "completed": dict()},
+                "wordle": {"word": "", "guesses": dict()}
+            }
+
+
+def reset_event_database(event_type):
+    """
+    Resets the database for the event
+    --
+    input:
+        event_type: int (Event_type)
+    """
+    match event_type:
+        case Event_type.PASSIVE:
+            db["events"]["passive"] = get_default_db_data(event_type)
+        case Event_type.CHALLENGE:
+            db["events"]["challenge"] = get_default_db_data(event_type)
+
+
+def get_event_object(event):
+    """
+    Returns the event object of the given type
+    --
+    input:
+        event: int (Event_type)
+    --
+    output:
+        event: Event
+    """
+    match event:
+        case Event_type.PASSIVE:
+            return eval(db["events"]["passive"]["current_event"]) if db["events"]["passive"]["current_event"] != "" else None
+        case Event_type.CHALLENGE:
+            return eval(db["events"]["challenge"]["current_event"]) if db["events"]["challenge"]["current_event"] != "" else None
+    return None
+
+
+def get_event_data(e):
+    """
+    Returns the data dict of the event
+    --
+    input:
+        e: int (Event_type) / Event
+    --
+    output:
+        data: dict (Element_dict)
+    """
+    if isinstance(e, int): # Event type is given
+        e = get_event_object(e)
+    
+    if e is None:
+        return None
+    
+    assert isinstance(e, Event), "The input must be an Event object"
+
+    match e:
+        case Birthday_event(): return db["events"]["passive"]["birthday"]
+        case Birthday_raffle_event(): return db["events"]["passive"]["birthday_raffle"]
+        case Raffle_event(): return db["events"]["passive"]["raffle"]
+        case Wordle_event(): return db["events"]["challenge"]["wordle"]
+        case Move_match_event(): return db["events"]["challenge"]["match"]
+        case Subseq_challenge_event(): return db["events"]["challenge"]["subseq"]
+    
+
+async def fetch_event_message(bot, event_type):
+    """
+    Returns the message announcing the event
+    --
+    input:
+        bot: interactions.Client
+        event_type: int (Event_type)
+    --
+    output:
+        message: interactions.Message
+    """
+    channel = await bot.fetch_channel(db["out_channel"])
+    match event_type:
+        case Event_type.PASSIVE: return await channel.fetch_message(db["events"]["passive"]["current_message_id"])
+        case Event_type.CHALLENGE: return await channel.fetch_message(db["events"]["challenge"]["current_message_id"])
+
+
+async def fetch_event_thread(bot, event_type):
+    """
+    Returns the message announcing the event
+    --
+    input:
+        bot: interactions.Client
+        event_type: int (Event_type)
+    --
+    output:
+        thread: interactions.Thread
+    """
+    match event_type:
+        case Event_type.PASSIVE: return None
+        case Event_type.CHALLENGE: return await bot.fetch_channel(db["events"]["challenge"]["current_thread_id"])
+
+
+class Event_type:
+    PASSIVE = 0
+    CHALLENGE = 1
 
 class Event:
     """
@@ -191,7 +320,8 @@ class Raffle_event(Passive_event):
         await super().on_end(bot, msg_id, thread_id)
 
         out_channel = await bot.fetch_channel(db["out_channel"])
-        participation = db["raffle_participation"]
+        data = get_event_data(self)
+        participation = data["participation"]
 
         # Computing the winner for the last raffle
         if len(participation) > 0:
@@ -206,7 +336,7 @@ class Raffle_event(Passive_event):
                 partial_sum += value
 
             prize = self.get_raffle_total_prize()
-            db["raffle_participation"] = dict()
+            data["participation"] = dict()
 
             # Giving the tax to the bot
             tax_value = total_tickets * self.ticket_price - prize
@@ -221,7 +351,7 @@ class Raffle_event(Passive_event):
 
 
     def to_str(self):
-        return f"{__package__}.{type(self).__name__}({self.ticket_price}, {self.tax_ratio})"
+        return f"{type(self).__name__}({self.ticket_price}, {self.tax_ratio})"
 
 
     async def update_raffle_message(self, bot):
@@ -231,12 +361,9 @@ class Raffle_event(Passive_event):
         input:
             bot: interactions.Client
         """
-        if "current_event_passive_message_id" not in db.keys():
-            return
-
         channel = await bot.fetch_channel(db["out_channel"])
         embed = await self.get_embed(bot)
-        raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
+        raffle_message = await fetch_event_message(bot, Event_type.PASSIVE)
         await raffle_message.edit(embed=embed)
 
 
@@ -247,9 +374,8 @@ class Raffle_event(Passive_event):
 
         fields = []
 
-        if "raffle_participation" in db.keys() and len(db["raffle_participation"]) > 0:
-            participation = db["raffle_participation"]
-
+        participation = get_event_data(self)["participation"]
+        if len(participation) > 0:
             async def get_str(key_val):
                 user_id, nb_tickets = key_val
                 return f"<@{user_id}> - {nb_tickets}\n"
@@ -276,7 +402,7 @@ class Raffle_event(Passive_event):
         output:
             prize: int
         """
-        nb_tickets = sum(db["raffle_participation"].values())
+        nb_tickets = sum(get_event_data(self)["participation"].values())
         prize = floor(nb_tickets * self.ticket_price * (100 - self.tax_ratio) / 100)
         return prize
 
@@ -304,7 +430,7 @@ class Event_from_powerups(Passive_event):
 
     def to_str(self):
         powerups_str = ", ".join([p.to_str() for p in self.powerups])
-        return f"{__package__}.{Event_from_powerups.__name__}({powerups_str})"
+        return f"{Event_from_powerups.__name__}({powerups_str})"
 
 
 class Increased_pibox_drop_rate_event(Event_from_powerups):
@@ -393,22 +519,23 @@ class Wordle_event(Challenge_event):
 
 
     async def on_begin(self, bot):
-        db["word_of_the_day"] = Wordle().solution
+        get_event_data(self)["word"] = Wordle().solution
         
         return await super().on_begin(bot)
 
 
     async def on_end(self, bot, msg_id, thread_id=None):
-        db["wordle_guesses"] = dict()
+        data = get_event_data(self)
+        data["guesses"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
-        await thread.send("The event is over! The word of the day was **" + db["word_of_the_day"] + "**")
+        await thread.send("The event is over! The word of the day was **" + data["word"] + "**")
 
         await super().on_end(bot, msg_id, thread_id)
 
 
     def to_str(self):
-        return f"{__package__}.{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
+        return f"{Wordle_event.__name__}({self.min_reward}, {self.max_reward})"
 
 
 class Birthday_event(Passive_event):
@@ -422,8 +549,9 @@ class Birthday_event(Passive_event):
 
 
     async def on_begin(self, bot):
-        db["baked_cakes"] = {"total": 0}
-        db["birthday_event_ingredients"] = dict()
+        data = get_event_data(self)
+        data["baked_cakes"] = {"total": 0}
+        data["ingredients"] = dict()
         
         return await super().on_begin(bot)
 
@@ -432,8 +560,9 @@ class Birthday_event(Passive_event):
         await super().on_end(bot, msg_id, thread_id)
 
         # Disable previous deliveries
-        delivery = db["last_birthday_delivery"]
-        db["last_birthday_delivery"] = dict()
+        data = get_event_data(self)
+        delivery = data["last_delivery"]
+        data["last_delivery"] = dict()
 
         if "out_channel" not in db.keys(): return
         out_channel = await bot.fetch_channel(db["out_channel"])
@@ -448,10 +577,13 @@ class Birthday_event(Passive_event):
 
 
     async def get_embed(self, bot):
-        nb_backed_cakes = db["baked_cakes"]["total"]
+        nb_backed_cakes = get_event_data(self)["baked_cakes"]["total"]
+
+        current_year = datetime.datetime.now().year
+        age = current_year - 2021
 
         embed = Embed(title="Happy birthday Pibot!", thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
-            description=f"Today is Pibot's 2 years anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {", ".join(f"{nb} {e}" for e, nb in self.INGREDIENTS_PER_CAKE.items())} to be baked. Pibot will earn {self.REWARD_PER_CAKE} {Constants.PIFLOUZ_EMOJI} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
+            description=f"Today is Pibot's {age} years anniversary!\nYour goal is to bake as much birthday cake as possible! To do so, deliveries will appear randomly through the day, bringing cake resources. You can collect these resources, but be quick, or the delivery person will get impatient and leave. You can use the `/role get Birthday Notifications` command to get notified when the delivery arrives.\n Each cake requires {", ".join(f"{nb} {e}" for e, nb in self.INGREDIENTS_PER_CAKE.items())} to be baked. Pibot will earn {self.REWARD_PER_CAKE} {Constants.PIFLOUZ_EMOJI} per cake, and get very happy!\n You can check your progress and inventory using the `/birthday` command.\n\nCakes baked so far: {nb_backed_cakes}",
             color=BrandColors.WHITE
         )
         return embed
@@ -464,7 +596,7 @@ class Birthday_event(Passive_event):
         output:
             embed: interactions.Embed
         """
-        nb_cakes = db["baked_cakes"]["total"]
+        nb_cakes = get_event_data(self)["baked_cakes"]["total"]
         embed = Embed(title="The baking is over!", thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
             description=f"Congratulations, you managed to bake {nb_cakes} cakes. Pibot will invest the earned {nb_cakes * self.REWARD_PER_CAKE} {Constants.PIFLOUZ_EMOJI} in the next event! 👀",
             color=BrandColors.WHITE
@@ -496,8 +628,9 @@ class Birthday_event(Passive_event):
         qty = [random.randint(1, 5) for _ in self.INGREDIENTS]
 
         # Disable previous deliveries
-        delivery = db["last_birthday_delivery"]
-        db["last_birthday_delivery"] = dict()
+        data = get_event_data(self)
+        delivery = data["last_delivery"]
+        data["last_delivery"] = dict()
 
         if len(delivery) > 0:
             msg = await out_channel.fetch_message(delivery["id"])
@@ -512,7 +645,7 @@ class Birthday_event(Passive_event):
         components = [self.get_component(emoji, nb) for emoji, nb in zip(self.INGREDIENTS, qty)]
         role_notif = await bot.guilds[0].fetch_role(Constants.BIRTHDAY_NOTIF_ROLE_ID)
         msg = await out_channel.send(f"{role_notif.mention} A new cake ingredient delivery has appeared! But you can only take one type so chose carefully", components=components)
-        db["last_birthday_delivery"] = {"id": int(msg.id), "qty": {e: nb for e, nb in zip(self.INGREDIENTS, qty)}}
+        data["last_delivery"] = {"id": int(msg.id), "qty": {e: nb for e, nb in zip(self.INGREDIENTS, qty)}}
 
 
     def bake_cakes(self, user_id):
@@ -522,16 +655,17 @@ class Birthday_event(Passive_event):
         input:
             user_id: str (of an int)
         """
-        inv = dict(db["birthday_event_ingredients"][user_id])
+        data = get_event_data(self)
+        inv = dict(data["ingredients"][user_id])
 
         nb_cakes = min(inv[e] // self.INGREDIENTS_PER_CAKE[e] for e in self.INGREDIENTS)
 
         for ingredient in self.INGREDIENTS:
             inv[ingredient] -= nb_cakes * self.INGREDIENTS_PER_CAKE[ingredient]
 
-        db["baked_cakes"]["total"] += nb_cakes
-        db["baked_cakes"][user_id] += nb_cakes
-        db["birthday_event_ingredients"][user_id] = inv
+        data["baked_cakes"]["total"] += nb_cakes
+        data["baked_cakes"][user_id] += nb_cakes
+        data["ingredients"][user_id] = inv
 
 
     async def update_birthday_message(self, bot):
@@ -541,17 +675,13 @@ class Birthday_event(Passive_event):
         input:
             bot: interactions.Client
         """
-        if "current_event_passive_message_id" not in db.keys():
-            return
-
-        channel = await bot.fetch_channel(db["out_channel"])
-        embed = await self.get_embed()
-        message = await channel.fetch_message(db["current_event_passive_message_id"])
+        embed = await self.get_embed(bot)
+        message = await fetch_event_message(bot, Event_type.PASSIVE)
         await message.edit(embed=embed)
 
 
     def to_str(self):
-        return f"{__package__}.{Birthday_event.__name__}()"
+        return f"{Birthday_event.__name__}()"
 
 
 class Birthday_raffle_event(Passive_event):
@@ -580,10 +710,11 @@ class Birthday_raffle_event(Passive_event):
     async def on_end(self, bot, msg_id, thread_id=None):
         await super().on_end(bot, msg_id, thread_id)
         
-        participation = list(db["birthday_raffle_participation"])
+        data = get_event_data(self)
+        participation = list(data["participation"])
 
         # Computing the winner for the last raffle
-        if len(participation) > 3:
+        if len(participation) >= 3:
 
             winner1 = random.choice(participation)
             participation.remove(winner1)
@@ -591,7 +722,7 @@ class Birthday_raffle_event(Passive_event):
             participation.remove(winner2)
             winner3 = random.choice(participation)
 
-            db["birthday_raffle_participation"] = []
+            data["participation"] = []
 
             prize1 = round(self.reward * .5)
             prize2 = round(self.reward * .3)
@@ -612,7 +743,7 @@ class Birthday_raffle_event(Passive_event):
 
 
     def to_str(self):
-        return f"{__package__}.{type(self).__name__}({self.reward})"
+        return f"{type(self).__name__}({self.reward})"
 
 
     async def update_raffle_message(self, bot):
@@ -622,13 +753,9 @@ class Birthday_raffle_event(Passive_event):
         input:
             bot: interactions.Client
         """
-        if "current_event_passive_message_id" not in db.keys():
-            return
-
-        channel = await bot.fetch_channel(db["out_channel"])
         embed = await self.get_embed(bot)
         button = self.get_component()
-        raffle_message = await channel.fetch_message(db["current_event_passive_message_id"])
+        raffle_message = await fetch_event_message(bot, Event_type.PASSIVE)
         await raffle_message.edit(embed=embed, components=button)
 
 
@@ -637,8 +764,8 @@ class Birthday_raffle_event(Passive_event):
 
         embed = Embed(title="Birthday Special Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL))
 
-        if "birthday_raffle_participation" in db.keys() and len(db["birthday_raffle_participation"]) > 0:
-            participation = list(db["birthday_raffle_participation"])
+        participation = get_event_data(self)["participation"]
+        if len(participation) > 0:
             val = "\n".join(f"• <@{user_id}>" for user_id in participation)
 
             embed.add_field(name="Current participants", value=val, inline=False)
@@ -691,7 +818,12 @@ class Move_match_event(Challenge_event):
         url_riddle = utils.upload_image_to_imgur("src/events/riddle.png")
         url_sol = utils.upload_image_to_imgur("src/events/solution.png")
 
-        db["match_challenge"] = {"riddle": event.riddle.str, "main_sol": event.main_sol.str, "all_sols": event.all_sols, "url_riddle": url_riddle, "url_sol": url_sol}
+        data = get_event_data(self)
+        data["riddle"] = event.riddle.str
+        data["main_solution"] = event.main_sol.str
+        data["all_solutions"] = event.all_sols
+        data["url_riddle"] = url_riddle
+        data["url_solution"] = url_sol
 
         # Starting new event
         embed = await self.get_embed(url_riddle)
@@ -703,17 +835,18 @@ class Move_match_event(Challenge_event):
 
 
     async def on_end(self, bot, msg_id, thread_id=None):
-        found_solutions = set(db["match_challenge_solutions"])
+        data = get_event_data(self)
+        found_solutions = set(data["completed"].values())
         found_solutions_str = f"||{", ".join(found_solutions)}||"
 
         thread = await bot.fetch_channel(thread_id)
-        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(db["match_challenge"]["all_sols"])} solutions. Below is one of them.\n You found the following solutions: {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=db["match_challenge"]["url_sol"]))
+        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(data["all_solutions"])} solutions. Below is one of them.\n You found the following solutions: {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=data["url_solution"]))
         await thread.send(embed=embed)
 
         await super().on_end(bot, msg_id, thread_id)
 
-        db["match_challenge_completed"] = []
-        db["match_challenge_solutions"] = []
+        data["completed"] = dict()
+        data["all_solutions"] = []
 
         try:
             os.remove("src/events/riddle.png")
@@ -723,8 +856,7 @@ class Move_match_event(Challenge_event):
 
 
     def to_str(self):
-        return f"{__package__}.{Move_match_event.__name__}({self.reward})"
-
+        return f"{Move_match_event.__name__}({self.reward})"
 
 
 class Subseq_challenge_event(Challenge_event):
@@ -739,29 +871,31 @@ class Subseq_challenge_event(Challenge_event):
     async def get_embed(self, bot):
         desc = f"Use `/subseq guess [word]` to try to find the answer. Find one and you'll earn {self.reward}{Constants.PIFLOUZ_EMOJI}!"
 
-        embed = Embed(title=f"Challenge event of the day: find a french word that has \"{db["subseq_challenge"]["subseq"]}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
+        embed = Embed(title=f"Challenge event of the day: find a french word that has \"{get_event_data(self)["subseq"]}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
 
 
     async def on_begin(self, bot):
         s = Subseq_challenge.new(random.randint(3, 6))
-        db["subseq_challenge"] = {"subseq": s.subseq, "sol": s.sol}
+        data = get_event_data(self)
+        data["subseq"] = s.subseq
+        data["example_solution"] = s.sol
         
         return await super().on_begin(bot)
 
 
     async def on_end(self, bot, msg_id, thread_id=None):
-        found_solutions = set(db["subseq_challenge_solutions"])
+        data = get_event_data(self)
+        found_solutions = set(data["completed"].values())
         found_solutions_str = f"||{", ".join(found_solutions)}||"
         
-        db["subseq_challenge_completed"] = []
-        db["subseq_challenge_solutions"] = []
+        data["completed"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
-        await thread.send("The event is over! Here is my solution: **" + db["subseq_challenge"]["sol"] + "**\nHere are all the solutions you found: " + found_solutions_str)
+        await thread.send("The event is over! Here is my solution: **" + data["example_solution"] + "**\nHere are all the solutions you found: " + found_solutions_str)
 
         await super().on_end(bot, msg_id, thread_id)
     
 
     def to_str(self):
-        return f"{__package__}.{Subseq_challenge_event.__name__}({self.reward})"
+        return f"{Subseq_challenge_event.__name__}({self.reward})"

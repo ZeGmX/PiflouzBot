@@ -6,6 +6,7 @@ import os
 import random
 
 from constant import Constants
+import events
 from my_database import db
 import socials
 import utils
@@ -361,8 +362,7 @@ async def get_embed_end_raffle(bot, winner_id, prize):
     output:
         embed: interactions.Embed
     """
-    channel = await bot.fetch_channel(db["out_channel"])
-    msg = await channel.fetch_message(db["current_event_passive_message_id"])
+    msg = await events.fetch_event_message(bot, events.Event_type.PASSIVE)
     url = msg.jump_url
     
     embed = Embed(

@@ -4,8 +4,7 @@ import os
 
 from constant import Constants
 from embed_messages import get_embed_wordle
-import events  # used in eval()
-from events import Matches_Expression, Subseq_challenge, update_events
+from events import Matches_Expression, Subseq_challenge, Wordle_event, Move_match_event, Subseq_challenge_event, Raffle_event, Birthday_raffle_event, Birthday_event, Event_type, update_events, get_event_object, get_event_data, fetch_event_thread
 from wordle import Wordle
 import piflouz_handlers
 import powerups # used in eval()
@@ -35,7 +34,7 @@ class Cog_event(Extension):
         self.bot = bot
 
         # Register the button callbacks
-        for emoji in events.Birthday_event.INGREDIENTS:
+        for emoji in Birthday_event.INGREDIENTS:
             self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
         
@@ -51,21 +50,23 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             nb_tickets: int
         """
-        await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
+        current_raffle =  get_event_object(Event_type.PASSIVE)
     
-        current_raffle = eval(db["current_event_passive"])
-        await utils.custom_assert(isinstance(current_raffle, events.Raffle_event), "The current event is not a raffle", ctx)
+        await utils.custom_assert(current_raffle is not None, "No current event registered", ctx)
+        await utils.custom_assert(isinstance(current_raffle, Raffle_event), "The current event is not a raffle", ctx)
     
         price = nb_tickets * current_raffle.ticket_price
         
         user_id = str(ctx.author.id)
+
+        data = get_event_data(current_raffle)
     
         # user doesn't have enough money
         await utils.custom_assert(piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False), f"You don't have enough money to buy {nb_tickets} tickets", ctx)
         
-        if not user_id in db["raffle_participation"].keys():
-            db["raffle_participation"][user_id] = 0
-        db["raffle_participation"][user_id] += nb_tickets
+        if not user_id in data["participation"].keys():
+            data["participation"][user_id] = 0
+        data["participation"][user_id] += nb_tickets
     
         await ctx.send(f"Successfully bought {nb_tickets} tickets", ephemeral=True)
         await current_raffle.update_raffle_message(self.bot)
@@ -85,25 +86,25 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             word: str
         """
-        await utils.custom_assert("current_event_challenge" in db.keys(), "No current event registered", ctx)
+        current_wordle = get_event_object(Event_type.CHALLENGE)
     
-        current_wordle = eval(db["current_event_challenge"])
-        await utils.custom_assert(isinstance(current_wordle, events.Wordle_event), "The current event is not a wordle", ctx)
+        await utils.custom_assert(current_wordle is not None, "No current event registered", ctx)
+        await utils.custom_assert(isinstance(current_wordle, Wordle_event), "The current event is not a wordle", ctx)
 
-        wordle = Wordle(db["word_of_the_day"])
+        data = get_event_data(current_wordle)
+        wordle = Wordle(data["word"])
 
         user_id = str(int(ctx.author.id))
-        if user_id not in db["wordle_guesses"].keys():
-            db["wordle_guesses"][user_id] = []
+        if user_id not in data["guesses"].keys():
+            data["guesses"][user_id] = []
 
-        guesses = list(db["wordle_guesses"][user_id])
+        guesses = data["guesses"][user_id]
         word = word.lower()
         await utils.custom_assert(len(guesses) < wordle.NB_ATTEMPTS, "The maximum amount of attempts has been reached!", ctx)
         await utils.custom_assert(wordle.is_valid(word), "This is not a valid word!", ctx)
-        await utils.custom_assert(guesses == [] or wordle.solution != guesses[-1], "You already won!", ctx)
+        await utils.custom_assert(len(guesses) == 0 or wordle.solution != guesses[-1], "You already won!", ctx)
 
-        guesses.append(word)
-        db["wordle_guesses"][user_id] = guesses
+        guesses.append(word) # automatically updates the db
         
         header_str = "\n".join(wordle.guess(w) for w in guesses)
 
@@ -116,7 +117,7 @@ class Cog_event(Extension):
 
             results = "\n".join([wordle.guess(word) for word in guesses])
             announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
-            thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+            thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
             await thread.send(announcement_msg)
 
             db["piflouz_generated"]["event"] += reward
@@ -138,24 +139,25 @@ class Cog_event(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        await utils.custom_assert("current_event_challenge" in db.keys(), "No current event registered", ctx)
+        current_wordle = get_event_object(Event_type.CHALLENGE)
         
-        current_wordle = eval(db["current_event_challenge"])
-        await utils.custom_assert(isinstance(current_wordle, events.Wordle_event), "The current event is not a wordle", ctx)
+        await utils.custom_assert(current_wordle is not None, "No current event registered", ctx)
+        await utils.custom_assert(isinstance(current_wordle, Wordle_event), "The current event is not a wordle", ctx)
         
-        wordle = Wordle(db["word_of_the_day"])
+        data = get_event_data(current_wordle)
+        wordle = Wordle(data["word"])
 
         user_id = str(int(ctx.author.id))
-        await utils.custom_assert(user_id in db["wordle_guesses"].keys(), "You haven't participated to today's wordle yet!", ctx)
+        await utils.custom_assert(user_id in data["guesses"].keys(), "You haven't participated to today's wordle yet!", ctx)
 
-        guesses = list(db["wordle_guesses"][user_id])
+        guesses = data["guesses"][user_id]
 
         await utils.custom_assert(len(guesses) > 0, "You haven't participated to today's wordle yet!", ctx)
         
         header_str = "\n".join(wordle.guess(w) for w in guesses)
         header_str += f"\n{len(guesses)}/{wordle.NB_ATTEMPTS}"
 
-        if guesses != [] and guesses[-1] == wordle.solution:
+        if guesses[-1] == wordle.solution:
             header_str += "\nYou won!"
         elif len(guesses) == wordle.NB_ATTEMPTS:
             header_str += f"\nYou lost :( The correct word was {wordle.solution}"
@@ -187,20 +189,22 @@ class Cog_event(Extension):
         """
         user_id = str(ctx.author.id)
 
-        if user_id not in db["birthday_event_ingredients"].keys():
-            db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.INGREDIENTS}
-            db["birthday_event_ingredients"][user_id]["last_react_time"] = -1
-        if user_id not in db["baked_cakes"].keys():
-            db["baked_cakes"][user_id] = 0
+        event = get_event_object(Event_type.PASSIVE)
+        data = get_event_data(event)
+
+        if user_id not in data["ingredients"].keys():
+            data["ingredients"][user_id] = {e: 0 for e in Birthday_event.INGREDIENTS}
+            data["ingredients"][user_id]["last_react_time"] = -1
+        if user_id not in data["baked_cakes"].keys():
+            data["baked_cakes"][user_id] = 0
 
         date = int(ctx.message.timestamp.timestamp())
-        await utils.custom_assert(db["birthday_event_ingredients"][user_id]["last_react_time"] != date, "You already took one ingredient from this delivery!", ctx)
+        await utils.custom_assert(data["ingredients"][user_id]["last_react_time"] != date, "You already took one ingredient from this delivery!", ctx)
 
-        qty = db["last_birthday_delivery"]["qty"][emoji]
-        db["birthday_event_ingredients"][user_id]["last_react_time"] = date
-        db["birthday_event_ingredients"][user_id][emoji] += qty
+        qty = data["last_delivery"]["qty"][emoji]
+        data["ingredients"][user_id]["last_react_time"] = date
+        data["ingredients"][user_id][emoji] += qty
 
-        event = eval(db["current_event_passive"])
         event.bake_cakes(user_id)
 
         res = self.get_birthday_str(user_id)    
@@ -235,17 +239,19 @@ class Cog_event(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
+        current_bday = get_event_object(Event_type.PASSIVE)
     
-        current_bday = eval(db["current_event_passive"])
-        await utils.custom_assert(isinstance(current_bday, events.Birthday_event), "The current event is not a Birthay event", ctx)
+        await utils.custom_assert(current_bday is not None, "No current event registered", ctx)
+        await utils.custom_assert(isinstance(current_bday, Birthday_event), "The current event is not a Birthay event", ctx)
 
         user_id = str(ctx.author.id)
-        if user_id not in db["birthday_event_ingredients"].keys():
-            db["birthday_event_ingredients"][user_id] = {e: 0 for e in events.Birthday_event.INGREDIENTS}
-            db["birthday_event_ingredients"][user_id]["last_react_time"] = -1
-        if user_id not in db["baked_cakes"].keys():
-            db["baked_cakes"][user_id] = 0
+        data = get_event_data(current_bday)
+
+        if user_id not in data["ingredients"].keys():
+            data["ingredients"][user_id] = {e: 0 for e in Birthday_event.INGREDIENTS}
+            data["ingredients"][user_id]["last_react_time"] = -1
+        if user_id not in data["baked_cakes"].keys():
+            data["baked_cakes"][user_id] = 0
 
         res = self.get_birthday_str(user_id)
         await ctx.send(res, ephemeral=True)
@@ -262,13 +268,14 @@ class Cog_event(Extension):
             res: str
         """
         res = "Your ingredients: \n"
-        for e in events.Birthday_event.INGREDIENTS:
-            res += f"• {e}: {db["birthday_event_ingredients"][user_id][e]}\n"
-        res += f"\nYou baked {db["baked_cakes"][user_id]} cakes!"
+        data = get_event_data(Event_type.PASSIVE)
+        for e in Birthday_event.INGREDIENTS:
+            res += f"• {e}: {data["ingredients"][user_id][e]}\n"
+        res += f"\nYou baked {data["baked_cakes"][user_id]} cakes!"
         return res
 
 
-    @component_callback(events.Birthday_raffle_event.BUTTON_ID)
+    @component_callback(Birthday_raffle_event.BUTTON_ID)
     @auto_defer(ephemeral=True)
     async def birthday_raffle_register(self, ctx):
         """
@@ -277,14 +284,15 @@ class Cog_event(Extension):
         input:
             ctx: interactions.ComponentContext
         """
-        await utils.custom_assert("current_event_passive" in db.keys(), "No current event registered", ctx)
+        current_bday_raffle = get_event_object(Event_type.PASSIVE)
         
-        current_bday_raffle = eval(db["current_event_passive"])
-        await utils.custom_assert(isinstance(current_bday_raffle, events.Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
+        await utils.custom_assert(current_bday_raffle, "No current event registered", ctx)
+        await utils.custom_assert(isinstance(current_bday_raffle, Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
 
         user_id = str(ctx.author.id)
-        await utils.custom_assert(user_id not in db["birthday_raffle_participation"], "You are already registered!", ctx)
-        db["birthday_raffle_participation"].append(user_id)
+        data = get_event_data(current_bday_raffle)
+        await utils.custom_assert(user_id not in data["participation"], "You are already registered!", ctx)
+        data["participation"].append(user_id)
 
         await current_bday_raffle.update_raffle_message(self.bot)
         
@@ -303,25 +311,27 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             guess: str
         """
-        await utils.custom_assert("current_event_challenge" in db.keys(), "No current challenge event registered", ctx)
+        current_match = get_event_object(Event_type.CHALLENGE)
         
-        current_match = eval(db["current_event_challenge"])
-        await utils.custom_assert(isinstance(current_match, events.Move_match_event), "The current event is not a match moving event", ctx)
+        await utils.custom_assert(current_match is not None, "No current challenge event registered", ctx)
+        await utils.custom_assert(isinstance(current_match, Move_match_event), "The current event is not a match moving event", ctx)
 
         user_id = str(ctx.author.id)
-        await utils.custom_assert(user_id not in db["match_challenge_completed"], "You already won the event!", ctx)
+        data = get_event_data(current_match)
+
+        await utils.custom_assert(user_id not in data["completed"].keys(), "You already won the event!", ctx)
 
         expression = Matches_Expression(s=guess)
         await utils.custom_assert(expression.is_valid(), "This is not a valid equation!", ctx)
         await utils.custom_assert(expression.is_correct(), "This equation is incorrect!", ctx)
-        await utils.custom_assert(expression.str in db["match_challenge"]["all_sols"], "This equation is not one of my solution, try again!", ctx)
+        await utils.custom_assert(expression.str in data["all_solutions"], "This equation is not one of my solution, try again!", ctx)
 
-        db["match_challenge_completed"].append(user_id)
-        db["match_challenge_solutions"].append(expression.str)
+        data["completed"][user_id] = expression.str
+        
         piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
         await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
         
-        thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+        thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
         await thread.send(f"{ctx.author.mention} solved today's match event!")
 
         db["piflouz_generated"]["event"] += current_match.reward
@@ -340,26 +350,26 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             guess: str
         """
-        await utils.custom_assert("current_event_challenge" in db.keys(), "No current challenge event registered", ctx)
+        current_subseq = get_event_object(Event_type.CHALLENGE)
         
-        current_match = eval(db["current_event_challenge"])
-        await utils.custom_assert(isinstance(current_match, events.Subseq_challenge_event), "The current event is not a subsequence event", ctx)
+        await utils.custom_assert(current_subseq is not None, "No current challenge event registered", ctx)
+        await utils.custom_assert(isinstance(current_subseq, Subseq_challenge_event), "The current event is not a subsequence event", ctx)
 
         user_id = str(ctx.author.id)
-        await utils.custom_assert(user_id not in db["subseq_challenge_completed"], "You already won the event!", ctx)
+        data = get_event_data(current_subseq)
+        await utils.custom_assert(user_id not in data["completed"].keys(), "You already won the event!", ctx)
 
-        s = Subseq_challenge(subseq=db["subseq_challenge"]["subseq"], sol=db["subseq_challenge"]["sol"])
+        s = Subseq_challenge(subseq=data["subseq"], sol=data["example_solution"])
         await utils.custom_assert(s.check(guess), "Incorrect!", ctx)
 
-        db["subseq_challenge_completed"].append(user_id)
-        db["subseq_challenge_solutions"].append(Subseq_challenge._clean_word(guess))
-        piflouz_handlers.update_piflouz(user_id, current_match.reward, check_cooldown=False)
-        await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
+        data["completed"][user_id] = Subseq_challenge._clean_word(guess)
+        piflouz_handlers.update_piflouz(user_id, current_subseq.reward, check_cooldown=False)
+        await ctx.send(f"Congratulations, this is correct! You earned {current_subseq.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
 
-        thread = await ctx.bot.fetch_channel(db["current_event_challenge_thread_id"])
+        thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
         await thread.send(f"{ctx.author.mention} solved today's subsequence event!")
 
-        db["piflouz_generated"]["event"] += current_match.reward
+        db["piflouz_generated"]["event"] += current_subseq.reward
         await utils.update_piflouz_message(self.bot)
 
 

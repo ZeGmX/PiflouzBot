@@ -1,9 +1,9 @@
 from copy import copy
 
 from constant import Constants
+import events
 from my_database import db
 import powerups  # Used in eval()
-import events  # Used in eval()
 
 
 def get_timer(user_id, current_time):
@@ -43,7 +43,7 @@ def get_total_cooldown(user_id):
     user_id = str(user_id)
     profile = get_profile(user_id)
 
-    current_event = eval(db["current_event_passive"])
+    current_event = events.get_event_object(events.Event_type.PASSIVE)
     powerups_user = [eval(p) for p in profile["powerups"]]
     powerups_event = current_event.get_powerups()
 

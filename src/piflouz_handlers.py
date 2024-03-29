@@ -4,7 +4,7 @@ from interactions import IntervalTrigger
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
-import events  # Used in eval()
+import events
 from my_database import db
 import powerups  # Used in eval()
 import user_profile
@@ -97,10 +97,10 @@ async def random_gift(bot):
         bot: interactions.Client
     """
     drop_rate = Constants.PIBOX_DROP_RATE
+    event = events.get_event_object(events.Event_type.PASSIVE)
 
     # Computing the drop rate based on the current event's powerups
-    if "current_event_passive" in db.keys():
-        event = eval(db["current_event_passive"])
+    if event is not None:
         powerups_list = event.get_powerups()
         drop_rate = functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_rate_multiplier_value(), powerups_list, drop_rate)
     
@@ -171,7 +171,7 @@ def get_max_rewardable_combo(user_id):
     output:
         res: int
     """
-    current_event = eval(db["current_event_passive"])
+    current_event = events.get_event_object(events.Event_type.PASSIVE)
     profile = user_profile.get_profile(user_id)
     powerups_user = [eval(p) for p in profile["powerups"]]
     powerups_event = current_event.get_powerups()
@@ -192,7 +192,7 @@ def get_total_piflouz_earned(user_id, current_time):
     """
     profile = user_profile.get_profile(user_id)
 
-    current_event = eval(db["current_event_passive"])
+    current_event = events.get_event_object(events.Event_type.PASSIVE)
     powerups_user = [eval(p) for p in profile["powerups"]]
     powerups_event = current_event.get_powerups()
     all_powerups = powerups_user + powerups_event
