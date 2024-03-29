@@ -458,6 +458,20 @@ class Combo_event(Event_from_powerups):
         super().__init__(p1, p2)
 
 
+class Increased_piflouz_and_cooldown_event(Event_from_powerups):
+    def __init__(self, val_piflouz, val_cooldown):
+        p1 = powerups.Piflouz_multiplier(None, val_piflouz, None)
+        p2 = powerups.Cooldown_reduction(None, val_cooldown, None)
+        super().__init__(p1, p2)
+
+
+class Pibox_drop_rate_and_reward_event(Event_from_powerups):
+    def __init__(self, val_drop_rate, val_reward):
+        p1 = powerups.Pibox_drop_rate_multiplier(val_drop_rate)
+        p2 = powerups.Pibox_size_multiplier(val_reward)
+        super().__init__(p1, p2)
+
+
 class Challenge_event(Event):
     async def get_embed(self, bot):
         """

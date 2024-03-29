@@ -64,6 +64,16 @@ class Powerups:
         return 1
 
 
+    def get_pibox_reward_multiplier_value(self):
+        """
+        Returns the pibox size multiplier of the powerup
+        --
+        output:
+            res: float
+        """
+        return 1
+
+
     def get_max_combo_increase(self):
         """
         Returns the max combo increase of the powerup
@@ -334,7 +344,7 @@ class Pibox_drop_rate_multiplier(Powerups_permanent):
 
     def get_info_str(self):
         sign = "+" if self.value > 0 else ""
-        return f"Increased pibox drop rate • {sign}{self.value}%"
+        return f"Pibox drop rate • {sign}{self.value}%"
     
 
     def to_str(self):
@@ -357,7 +367,7 @@ class Combo_max_increase(Powerups_permanent):
 
     def get_info_str(self):
         sign = "+" if self.value > 0 else ""
-        return f"Maximum rewardable combo increased • {sign}{self.value}"
+        return f"Maximum rewardable combo • {sign}{self.value}"
     
 
     def to_str(self):
@@ -383,5 +393,28 @@ class Combo_reward_multiplier(Powerups_permanent):
         return f"Combo reward multiplier • {sign}{self.value}%"
     
     
+    def to_str(self):
+        return f"{__name__}.{type(self).__name__}({self.value})"
+
+
+class Pibox_size_multiplier(Powerups_permanent):
+    """
+    Powerup that changes the max pibox reward 
+    Should only be used in events
+    The powerup is multiplicative
+    """
+    def __init__(self, value):
+        self.value = value
+    
+
+    def get_pibox_reward_multiplier_value(self):
+        return 1 + self.value / 100
+
+
+    def get_info_str(self):
+        sign = "+" if self.value > 0 else ""
+        return f"Pibox reward • {sign}{self.value}%"
+
+
     def to_str(self):
         return f"{__name__}.{type(self).__name__}({self.value})"

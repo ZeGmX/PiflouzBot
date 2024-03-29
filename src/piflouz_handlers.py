@@ -97,21 +97,23 @@ async def random_gift(bot):
         bot: interactions.Client
     """
     drop_rate = Constants.PIBOX_DROP_RATE
+    max_size = Constants.MAX_PIBOX_AMOUNT
     event = events.get_event_object(events.Event_type.PASSIVE)
 
     # Computing the drop rate based on the current event's powerups
     if event is not None:
         powerups_list = event.get_powerups()
         drop_rate = functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_rate_multiplier_value(), powerups_list, drop_rate)
+        max_size = round(functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_reward_multiplier_value(), powerups_list, max_size))
     
     if random() < drop_rate:
         # Main piflouz
-        piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
+        piflouz_quantity = randrange(max_size)
         await spawn_pibox(bot, piflouz_quantity, pibox_type=Pibox_type.MAIN)
 
     if random() < drop_rate:
         # Piflouz with the bot's money
-        piflouz_quantity = randrange(Constants.MAX_PIBOX_AMOUNT)
+        piflouz_quantity = randrange(max_size)
         if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
             await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!", pibox_type=Pibox_type.FROM_BOT_MONEY)
 

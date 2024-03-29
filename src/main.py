@@ -102,7 +102,7 @@ async def on_startup():
     rank_handlers.update_ranks.start(bot)
     socials.shuffle_names.start(bot)
 
-    utils.update_db()
+    # utils.update_db()
 
 
 @listen()
