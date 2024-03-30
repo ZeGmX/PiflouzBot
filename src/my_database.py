@@ -308,6 +308,20 @@ class Element_dict(Element):
                 self[key] = Element.convert_from_element(d)
             else:
                 self[key[:-7]] = pickle.load(open(f"{folder}/{key}", "rb"))
+    
+
+    def __str__(self):
+        if len(self.element) == 0:
+            return "{}"
+        
+        res = "{\n"
+        for key, value in self.items():
+            val_str = value.__str__().split("\n")
+            for i in range(1, len(val_str)):
+                val_str[i] = "|  " + val_str[i]
+
+            res += f"|  {key}: {"\n".join(val_str)},\n"
+        return res + "}"
 
 
 class Element_dict_iterator:
@@ -492,6 +506,9 @@ class My_database(dict):
     def to_element(self):
         return Element_dict(None, "", self)
 
+
+    def __str__(self) -> str:
+        return self.to_element().__str__()
 
 
 try:
