@@ -142,11 +142,14 @@ def get_event_object(event):
     output:
         event: Event
     """
-    match event:
-        case Event_type.PASSIVE:
-            return eval(db["events"]["passive"]["current_event"]) if db["events"]["passive"]["current_event"] != "" else None
-        case Event_type.CHALLENGE:
-            return eval(db["events"]["challenge"]["current_event"]) if db["events"]["challenge"]["current_event"] != "" else None
+    try:
+        match event:
+            case Event_type.PASSIVE:
+                return eval(db["events"]["passive"]["current_event"]) if db["events"]["passive"]["current_event"] != "" else None
+            case Event_type.CHALLENGE:
+                return eval(db["events"]["challenge"]["current_event"]) if db["events"]["challenge"]["current_event"] != "" else None
+    except: pass
+    
     return None
 
 
@@ -878,12 +881,19 @@ class Subseq_challenge_event(Challenge_event):
     An event where the user has to find a word with a given subsequence
     """
 
-    def __init__(self, reward):
-        self.reward = reward
+    def __init__(self, reward_default, reward_bonus1, reward_bonus2, reward_bonus3):
+        self.reward_default = reward_default
+        self.reward_bonus1 = reward_bonus1
+        self.reward_bonus2 = reward_bonus2
+        self.reward_bonus3 = reward_bonus3
     
 
     async def get_embed(self, bot):
-        desc = f"Use `/subseq guess [word]` to try to find the answer. Find one and you'll earn {self.reward}{Constants.PIFLOUZ_EMOJI}!"
+        desc = f"Use `/subseq guess [word]` to try to find the answer.\n\n\
+• [1] Find any solution to earn {self.reward_default} {Constants.PIFLOUZ_EMOJI}!\n\
+• [2] Find a solution that contains exactly the same amount of occurences of each subsequence letter to earn an additional {self.reward_bonus1} {Constants.PIFLOUZ_EMOJI}!\n\
+• [3] Find a solution that contains at least one letter between each subsequence letter to earn an additional {self.reward_bonus2} {Constants.PIFLOUZ_EMOJI}!\n\
+• [4] Find a solution that meets the previous two conditions to earn an additional {self.reward_bonus3} {Constants.PIFLOUZ_EMOJI}!"
 
         embed = Embed(title=f"Challenge event of the day: find a french word that has \"{get_event_data(self)["subseq"]}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
@@ -900,8 +910,11 @@ class Subseq_challenge_event(Challenge_event):
 
     async def on_end(self, bot, msg_id, thread_id=None):
         data = get_event_data(self)
-        found_solutions = set(data["completed"].values())
-        found_solutions_str = f"||{", ".join(found_solutions)}||"
+
+        found_solutions = set()
+        for user_sol in data["completed"].values():
+            found_solutions.update(user_sol["guesses"])
+        found_solutions_str = f"||{", ".join(sorted(found_solutions))}||"
         
         data["completed"] = dict()
 
@@ -912,4 +925,4 @@ class Subseq_challenge_event(Challenge_event):
     
 
     def to_str(self):
-        return f"{Subseq_challenge_event.__name__}({self.reward})"
+        return f"{Subseq_challenge_event.__name__}({self.reward_default}, {self.reward_bonus1}, {self.reward_bonus2}, {self.reward_bonus3})"

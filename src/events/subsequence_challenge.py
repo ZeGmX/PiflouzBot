@@ -1,6 +1,7 @@
 import pandas as pd
 from random import randint, sample
 from unidecode import unidecode
+import re
 
 
 class Subseq_challenge:
@@ -14,12 +15,13 @@ class Subseq_challenge:
         self.sol = sol
 
 
-    def check(self, answer):
+    def check_default(self, answer):
         """
         Checks if the given answer has the subsequence
         --
         input:
             answer: str
+        --
         output:
             bool
         """
@@ -31,7 +33,39 @@ class Subseq_challenge:
 
         it = iter(answer)
         return all(c in it for c in self.subseq)
-        
+    
+
+    def check_projection(self, answer):
+        """
+        Verifies that the subsequence is a projection of the answer, ie, all letters in the subsequence appear exactly as many times in the answer
+        E.g. subseq = "abc", answer = "abracadabra" -> False because there are several "a"s and "b"s in the answer
+        E.g. subseq = "aaaaabbc", answer = "abracadabra" -> True
+        --
+        input:
+            answer: str
+        --
+        output:
+            bool
+        """
+        answer = self._clean_word(answer)
+        return all(answer.count(c) == self.subseq.count(c) for c in self.subseq)
+
+
+    def check_with_intermediate(self, answer):
+        """
+        Verifies that the answer has the correct subsequence, including at least one letter between each pair of letters in the subsequence
+        E.g. subseq = "abc", answer = "abracadabra" -> False: need to match as [a][b]ra[c]adabra, but there is no letter between "a" and "b"
+        E.g. subseq = "aba", answer = "abracadabra" -> True: [a]bracada[b]r[a]
+        --
+        input:  
+            answer: str
+        --
+        output:
+            bool
+        """
+        answer = self._clean_word(answer)
+        pattern = ".*" + ".+".join(self.subseq) + ".*"
+        return bool(re.match(pattern, answer))
 
 
     @staticmethod
@@ -76,4 +110,3 @@ class Subseq_challenge:
         """
         res = unidecode(word.lower())
         return "".join(filter(lambda c: c in "abcdefghijklmnopqrstuvwxyz", res))
-    
