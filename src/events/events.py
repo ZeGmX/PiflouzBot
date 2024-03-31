@@ -881,19 +881,25 @@ class Subseq_challenge_event(Challenge_event):
     An event where the user has to find a word with a given subsequence
     """
 
-    def __init__(self, reward_default, reward_bonus1, reward_bonus2, reward_bonus3):
+    def __init__(self, reward_default, reward_bonus1, reward_bonus2, reward_bonus3, reward_uniqueness, max_rewardable_words, reward_per_word):
         self.reward_default = reward_default
         self.reward_bonus1 = reward_bonus1
         self.reward_bonus2 = reward_bonus2
         self.reward_bonus3 = reward_bonus3
+        self.reward_uniqueness = reward_uniqueness
+        self.max_rewardable_words = max_rewardable_words
+        self.reward_per_word = reward_per_word
     
 
     async def get_embed(self, bot):
         desc = f"Use `/subseq guess [word]` to try to find the answer.\n\n\
-• [1] Find any solution to earn {self.reward_default} {Constants.PIFLOUZ_EMOJI}!\n\
-• [2] Find a solution that contains exactly the same amount of occurences of each subsequence letter to earn an additional {self.reward_bonus1} {Constants.PIFLOUZ_EMOJI}!\n\
-• [3] Find a solution that contains at least one letter between each subsequence letter to earn an additional {self.reward_bonus2} {Constants.PIFLOUZ_EMOJI}!\n\
-• [4] Find a solution that meets the previous two conditions to earn an additional {self.reward_bonus3} {Constants.PIFLOUZ_EMOJI}!"
+You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
+• [Level 1] Find any solution to earn {self.reward_default} {Constants.PIFLOUZ_EMOJI}!\n\
+• [Level 2] Find a solution that contains exactly the same amount of occurences of each subsequence letter to earn an additional {self.reward_bonus1} {Constants.PIFLOUZ_EMOJI}!\n\
+• [Level 3] Find a solution that contains at least one letter between each subsequence letter to earn an additional {self.reward_bonus2} {Constants.PIFLOUZ_EMOJI}!\n\
+• [Level 4] Find a solution that meets the previous two conditions to earn an additional {self.reward_bonus3} {Constants.PIFLOUZ_EMOJI}!\n\
+• Up to {self.max_rewardable_words} correct solutions are rewarded with an additional {self.reward_per_word} {Constants.PIFLOUZ_EMOJI} each!\n\
+• If one of your first {self.max_rewardable_words} correct guesses was not in anyone else's first {self.max_rewardable_words} guesses, you will earn an additional {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI} at the end of the event!"
 
         embed = Embed(title=f"Challenge event of the day: find a french word that has \"{get_event_data(self)["subseq"]}\" as a subsequence", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
@@ -911,18 +917,30 @@ class Subseq_challenge_event(Challenge_event):
     async def on_end(self, bot, msg_id, thread_id=None):
         data = get_event_data(self)
 
-        found_solutions = set()
+        found_solutions = set()  # All the submitted words, used in the announcement message
+        found_solutions_nb = dict()  # How many times each word was submitted, used to compute the rewards
         for user_sol in data["completed"].values():
             found_solutions.update(user_sol["guesses"])
+            for w in user_sol["guesses"][:Constants.SUBSEQ_MAX_REWARDABLE_WORDS]:
+                if w not in found_solutions_nb:
+                    found_solutions_nb[w] = 0
+                found_solutions_nb[w] += 1
         found_solutions_str = f"||{", ".join(sorted(found_solutions))}||"
         
+        for user_id, user_sol in data["completed"].items():
+            guesses = user_sol["guesses"][:3]
+            if any(found_solutions_nb[w] == 1 for w in guesses):
+                piflouz_handlers.update_piflouz(user_id, self.reward_uniqueness, check_cooldown=False)
+
         data["completed"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
-        await thread.send("The event is over! Here is my solution: **" + data["example_solution"] + "**\nHere are all the solutions you found: " + found_solutions_str)
+        await thread.send(f"The event is over! Here is my solution: **{data["example_solution"]}**\n\
+Here are all the solutions you found: {found_solutions_str}\n\n\
+if one of your first three correct guesses was not in anyone else's first three guesses, you were rewarded with {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI}!")
 
         await super().on_end(bot, msg_id, thread_id)
     
 
     def to_str(self):
-        return f"{Subseq_challenge_event.__name__}({self.reward_default}, {self.reward_bonus1}, {self.reward_bonus2}, {self.reward_bonus3})"
+        return f"{Subseq_challenge_event.__name__}({self.reward_default}, {self.reward_bonus1}, {self.reward_bonus2}, {self.reward_bonus3}, {self.reward_uniqueness}, {self.max_rewardable_words}, {self.reward_per_word})"

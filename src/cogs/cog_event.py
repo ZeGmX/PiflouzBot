@@ -362,7 +362,7 @@ class Cog_event(Extension):
             data["completed"][user_id] = {"default": False, "projection": False, "intermediate": False, "both": False, "guesses": []}
 
         proposed_words = set(data["completed"][user_id]["guesses"])
-        await utils.custom_assert(len(proposed_words) < Constants.SUBSEQ_MAX_REWARDABLE_WORDS or any(not data["completed"][user_id][key] for key in ["default", "projection", "intermediate", "both"]), "You already completed the event!", ctx)
+        await utils.custom_assert(len(proposed_words) < current_subseq.max_rewardable_words or any(not data["completed"][user_id][key] for key in ["default", "projection", "intermediate", "both"]), "You already completed the event!", ctx)
 
         s = Subseq_challenge(subseq=data["subseq"], sol=data["example_solution"])
         guess_clean = Subseq_challenge._clean_word(guess)
@@ -392,17 +392,17 @@ class Cog_event(Extension):
             data["completed"][user_id]["both"] = True
             earned += current_subseq.reward_bonus3
         
-        if len(proposed_words) < Constants.SUBSEQ_MAX_REWARDABLE_WORDS:
-            earned += Constants.SUBSEQ_REWARD_PER_WORD
+        if len(proposed_words) < current_subseq.max_rewardable_words:
+            earned += current_subseq.reward_per_word
 
         piflouz_handlers.update_piflouz(user_id, earned, check_cooldown=False)
 
         message = f"Congratulations, this is correct! You earned {earned} {Constants.PIFLOUZ_EMOJI}.\n\nHere is your progress:\n\
-• [1]: {"✅" if data["completed"][user_id]["default"] else "❌"}\n\
-• [2]: {"✅" if data["completed"][user_id]["projection"] else "❌"}\n\
-• [3]: {"✅" if data["completed"][user_id]["intermediate"] else "❌"}\n\
-• [4]: {"✅" if data["completed"][user_id]["both"] else "❌"}\n\
-• Rewarded attempts: {min(len(proposed_words) + 1, Constants.SUBSEQ_MAX_REWARDABLE_WORDS)} / {Constants.SUBSEQ_MAX_REWARDABLE_WORDS}"
+• [Level 1]: {"✅" if data["completed"][user_id]["default"] else "❌"}\n\
+• [Level 2]: {"✅" if data["completed"][user_id]["projection"] else "❌"}\n\
+• [Level 3]: {"✅" if data["completed"][user_id]["intermediate"] else "❌"}\n\
+• [Level 4]: {"✅" if data["completed"][user_id]["both"] else "❌"}\n\
+• Rewarded attempts: {min(len(proposed_words) + 1, current_subseq.max_rewardable_words)} / {current_subseq.max_rewardable_words}"
 
         await ctx.send(message, ephemeral=True)
 
