@@ -306,6 +306,11 @@ def get_embed_store_ui():
     
     for emoji, powerup in Constants.POWERUPS_STORE.items():
         embed.add_field(name=emoji, value=powerup.get_store_str(), inline=True)
+        
+    embed.add_field(name="\u200b", value="\u200b", inline=False)
+    
+    embed.add_field(name=Constants.PIFLOUZ_EMOJI, value=f"Flex with a custom rank\nCosts {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", inline=True)
+    embed.add_field(name=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI, value=f"Piflex: when you have too much piflouz\nCosts {Constants.PIFLEX_COST} {Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI}", inline=True)
 
     return embed
 

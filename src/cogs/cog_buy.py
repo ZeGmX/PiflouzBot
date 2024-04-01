@@ -1,4 +1,4 @@
-from interactions import Extension, Button, ButtonStyle, auto_defer, slash_command, component_callback
+from interactions import Extension, Button, ButtonStyle, auto_defer, slash_command, component_callback, spread_to_rows
 import copy
 
 from constant import Constants
@@ -18,11 +18,11 @@ class Cog_buy(Extension):
         store_button_name: str
     --
     Slash commands:
-        /piflex
-        /buy-rank-piflex
         /store
     Components:
         emoji, emoji in Constants.POWERUPS_STORE.keys()
+        piflex
+        buy_rank_piflex
     """
     store_button_name = "store_button"
 
@@ -33,7 +33,7 @@ class Cog_buy(Extension):
             self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
     
-    @slash_command(name="piflex", description=f"When you have too many piflouz ⚠️ Costs {Constants.PIFLEX_COST} piflouz", scopes=Constants.GUILD_IDS)
+    @component_callback("piflex")
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def piflex_cmd(self, ctx):
@@ -41,7 +41,7 @@ class Cog_buy(Extension):
         Callback for the piflex command
         --
         input:
-            ctx: interactions.SlashContext
+            ctx: interactions.ComponentContext
         """
         user_id = str(ctx.author.id)
         profile = user_profile.get_profile(user_id)
@@ -74,7 +74,7 @@ class Cog_buy(Extension):
             await ctx.send(f"You need {Constants.PIFLEX_COST - balance} more {Constants.PIFLOUZ_EMOJI} to piflex!", ephemeral=True)
 
 
-    @slash_command(name="buy-rank-piflex", description=f"Flex with a custom rank ⚠️ Costs {Constants.PIFLEXER_COST} piflouz, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", scopes=Constants.GUILD_IDS)
+    @component_callback("buy_rank_piflex")
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def buy_rank_piflex_cmd(self, ctx):
@@ -119,9 +119,11 @@ class Cog_buy(Extension):
         """
         embed = embed_messages.get_embed_store_ui()
 
-        buttons = [Button(style=ButtonStyle.SECONDARY, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]
+        buttons = [Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]\
+                + [Button(style=ButtonStyle.GRAY, label="", custom_id="buy_rank_piflex", emoji=Constants.PIFLOUZ_EMOJI),
+                   Button(style=ButtonStyle.GRAY, label="", custom_id="piflex", emoji=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI)]
 
-        await ctx.send(embed=embed, components=buttons, ephemeral=True)
+        await ctx.send(embed=embed, components=spread_to_rows(*buttons), ephemeral=True)
     
 
     async def store_button_callback(self, ctx, emoji):
