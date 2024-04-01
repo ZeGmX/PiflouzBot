@@ -364,7 +364,7 @@ class Cog_event(Extension):
         proposed_words = set(data["completed"][user_id]["guesses"])
         await utils.custom_assert(len(proposed_words) < current_subseq.max_rewardable_words or any(not data["completed"][user_id][key] for key in ["default", "projection", "intermediate", "both"]), "You already completed the event!", ctx)
 
-        s = Subseq_challenge(subseq=data["subseq"], sol=data["example_solution"])
+        s = Subseq_challenge(subseq=data["subseq"])
         guess_clean = Subseq_challenge._clean_word(guess)
         await utils.custom_assert(guess_clean not in data["completed"][user_id]["guesses"], "You already proposed this word!", ctx)
         await utils.custom_assert(s.check_default(guess_clean), "Incorrect!", ctx)

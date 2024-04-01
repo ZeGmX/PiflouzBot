@@ -10,14 +10,13 @@ class Subseq_challenge:
     """
 
 
-    def __init__(self, subseq, sol):
+    def __init__(self, subseq):
         self.subseq = subseq
-        self.sol = sol
 
 
-    def check_default(self, answer):
+    def check_default(self, answer, df=None, check_if_real_word=True):
         """
-        Checks if the given answer has the subsequence
+        Checks if the given answer is a real word and has the subsequence
         --
         input:
             answer: str
@@ -26,10 +25,12 @@ class Subseq_challenge:
             bool
         """
         answer = self._clean_word(answer)
-        df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
-        df = df.astype({"Word": "str"})
+        if df is None:
+            df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
+            df = df.astype({"Word": "str"})
         
-        if not any(answer == self._clean_word(w) for w in df["Word"]): return False
+        if check_if_real_word:
+            if not any(answer == self._clean_word(w) for w in df["Word"]): return False
 
         it = iter(answer)
         return all(c in it for c in self.subseq)
@@ -77,24 +78,73 @@ class Subseq_challenge:
             length: int -> length of the subsequence
         output:
             Subseq_challenge
+            List[int] -> how many solutions there are for each level
+            str -> example solution that solves all levels
         """
         df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
         df = df.astype({"Word": "str"})
         df.sort_values(by="freqlivres", inplace=True, ascending=False)
 
-        # We only chose a solution among the 2000 most common words, not containing punctuation
-        # We filter the words that have a length > length + 1 (at least 2 missing letters)
-        df = df.head(2000)
-        df = df[(df["Word"].str.len() > length + 1) & (~df["Word"].str.contains("[ -.']", regex=True))]
+        i = 1
+        res = Subseq_challenge.attempt_find_new(df, length)
+        while res is None:
+            i += 1
+            res = Subseq_challenge.attempt_find_new(df, length)
+
+        print(f"Found in {i} iterations")
         
-        solution = df.iloc[randint(0, len(df) - 1)]["Word"]
-        solution_clean = Subseq_challenge._clean_word(solution)
+        subseq, solutions = res
+        return subseq, [len(set(s)) for s in solutions], solutions[3][0]
+    
+
+    @staticmethod
+    def attempt_find_new(df, length):
+        """
+        Attempts to find a new subsequence challenge, meeting the following difficulty conditions:
+        - There exists a solution in the top 2000 most common words
+        - There exists a solution for each level (= there exists a level 4 condition)
+        - There are no solutions obtained by adding less than 2 letters
+        --
+        input:
+            df: pd.DataFrame -> dataframe of words
+            length: int -> length of the subsequence
+        --
+        output:
+            subseq: Subseq_challenge -> the subsequence object
+            all_sols: List[List[str]] -> list of solutions for each level
+        """
+        # Condition 1: there exists a solution in the top 2000 most common words
+        solution_lvl1 = df.iloc[randint(0, 1999)]["Word"]
+        solution_lvl1_clean = Subseq_challenge._clean_word(solution_lvl1)
+
+        if len(solution_lvl1_clean) < length + 2: return None
 
         # We generate a random subsequence of the solution
-        subseq_indices = sample(range(len(solution_clean)), length)
-        subseq = "".join([solution_clean[i] for i in sorted(subseq_indices)])
+        subseq_indices = sample(range(len(solution_lvl1_clean)), length)
+        subseq = "".join([solution_lvl1_clean[i] for i in sorted(subseq_indices)])
+
+        # Count how many solutions  match each level
+        subseq = Subseq_challenge(subseq)
+        all_sols = [[], [], [], []]
+
+        for word in df["Word"]:
+            word_clean = Subseq_challenge._clean_word(word)
+            b1 = subseq.check_default(word_clean, df=df, check_if_real_word=False)
+            b2 = subseq.check_projection(word_clean)
+            b3 = subseq.check_with_intermediate(word_clean)
+
+            # Condition 2: there are no solutions obtained by adding less than 2 letters
+            if b1 and len(word) < len(subseq.subseq) + 2: return None
+            
+            if b1: all_sols[0].append(word)
+            if b1 and b2: all_sols[1].append(word)
+            if b1 and b3: all_sols[2].append(word)
+            if b1 and b2 and b3: all_sols[3].append(word)
         
-        return Subseq_challenge(subseq, solution)
+        # Condition 3: there exists a solution for each level
+        if any(len(s) == 0 for s in all_sols): return None
+
+        return subseq, all_sols
 
 
     @staticmethod

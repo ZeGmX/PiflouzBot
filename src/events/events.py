@@ -84,8 +84,11 @@ async def end_event(bot, event_type):
     
     if current_event is None: return  
 
-    data = db["events"]["passive"] if event_type == Event_type.PASSIVE else db["events"]["challenge"]
-    await current_event.on_end(bot, data["current_message_id"], data["current_thread_id"] if isinstance(current_event, Challenge_event) else None)
+    try:
+        data = db["events"]["passive"] if event_type == Event_type.PASSIVE else db["events"]["challenge"]
+        await current_event.on_end(bot, data["current_message_id"], data["current_thread_id"] if isinstance(current_event, Challenge_event) else None)
+    except Exception as e:
+        print(f"Error ending event: {e}")
 
 
 def get_default_db_data(event_type):
@@ -113,7 +116,7 @@ def get_default_db_data(event_type):
                 "current_message_id": -1,
                 "current_thread_id": -1,
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
-                "subseq": {"subseq": "", "example_solution": "", "completed": dict()},
+                "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": []},
                 "wordle": {"word": "", "guesses": dict()}
             }
 
@@ -906,11 +909,13 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
 
 
     async def on_begin(self, bot):
-        s = Subseq_challenge.new(random.randint(3, 6))
+        s, nb_sols, main_sol = await asyncio.to_thread(Subseq_challenge.new, random.randint(3, 6))
         data = get_event_data(self)
+
         data["subseq"] = s.subseq
-        data["example_solution"] = s.sol
-        
+        data["example_solution"] = main_sol
+        data["nb_solutions"] = nb_sols
+
         return await super().on_begin(bot)
 
 
@@ -921,7 +926,7 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
         found_solutions_nb = dict()  # How many times each word was submitted, used to compute the rewards
         for user_sol in data["completed"].values():
             found_solutions.update(user_sol["guesses"])
-            for w in user_sol["guesses"][:Constants.SUBSEQ_MAX_REWARDABLE_WORDS]:
+            for w in user_sol["guesses"][:self.max_rewardable_words]:
                 if w not in found_solutions_nb:
                     found_solutions_nb[w] = 0
                 found_solutions_nb[w] += 1
@@ -935,8 +940,9 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
         data["completed"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
-        await thread.send(f"The event is over! Here is my solution: **{data["example_solution"]}**\n\
+        await thread.send(f"The event is over! Here is a level 4 solution: **{data["example_solution"]}**\n\
 Here are all the solutions you found: {found_solutions_str}\n\n\
+There were {data["nb_solutions"][0]} level 1 solutions, {data["nb_solutions"][1]} level 2 solutions, {data["nb_solutions"][2]} level 3 solutions and {data["nb_solutions"][3]} level 4 solutions in total.\n\n\
 if one of your first three correct guesses was not in anyone else's first three guesses, you were rewarded with {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI}!")
 
         await super().on_end(bot, msg_id, thread_id)
