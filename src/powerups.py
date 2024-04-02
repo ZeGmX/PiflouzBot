@@ -18,7 +18,7 @@ async def handle_actions_every_hour(bot):
     """
     print("handling hourly powerups")
 
-    for user_id, profile in db["profiles"].items():
+    for user_id, profile in user_profile.get_active_profiles().items():
         powerups = profile["powerups"]
         for powerup_str in powerups:
             # Removing the '__name__.' at the beginning

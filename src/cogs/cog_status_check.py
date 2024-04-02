@@ -91,7 +91,7 @@ class Cog_status_check(Extension):
             await ctx.send("You are currently a pilord. Kinda flexing right now!", ephemeral=True)
         else:
             amount = profile["piflouz_balance"]
-            max_amount = db["profiles"][db["current_pilords"][0]]["piflouz_balance"]
+            max_amount = user_profile.get_profile(db["current_pilords"][0])["piflouz_balance"]
             await ctx.send(f"You need {max_amount - amount} {Constants.PIFLOUZ_EMOJI} to become pilord!", ephemeral=True)  
     
 

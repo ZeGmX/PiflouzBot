@@ -1,4 +1,5 @@
 from copy import copy
+from itertools import chain
 
 from constant import Constants
 import events
@@ -82,10 +83,14 @@ def get_profile(user_id):
         profile: dict (actually Element_dict)
     """
     user_id = str(user_id)
-    if user_id not in db["profiles"].keys():
-        db["profiles"][user_id] = get_new_user_profile()
+    if user_id in db["profiles"]["inactive"].keys():
+        db["profiles"]["active"][user_id] = db["profiles"]["inactive"][user_id]
+        del db["profiles"]["inactive"][user_id]
+
+    elif user_id not in db["profiles"]["active"].keys():
+        db["profiles"]["active"][user_id] = get_new_user_profile()
     
-    return db["profiles"][user_id]
+    return db["profiles"]["active"][user_id]
 
 
 def get_inverted(key):
@@ -99,7 +104,7 @@ def get_inverted(key):
         dict
     """
     res = dict()
-    for user_id, profile in db["profiles"].items():
+    for user_id, profile in db["profiles"]["active"].items():
         res[user_id] = profile[key]
     return res
 
@@ -113,7 +118,7 @@ def reset_all(key):
     """
     blank_profile = get_new_user_profile()
     default_value = blank_profile[key]
-    for profile in db["profiles"].values():
+    for profile in db["profiles"]["active"].values():
         profile[key] = copy(default_value)
 
 
@@ -122,7 +127,26 @@ def update_profiles():
     Check if all profiles actually contain all the necessary keys
     """
     blank_profile = get_new_user_profile()
-    for user_id, profile in db["profiles"].items():
+    for user_id, profile in chain(db["profiles"]["active"].items(), db["profiles"]["inactive"].items()):
         for key, value in blank_profile.items():
             if key not in profile.keys():
                 profile[key] = copy(value)
+
+
+def get_active_profiles():
+    """
+    Returns the active profiles
+    --
+    output:
+        dict (Element_dict)
+    """
+    return db["profiles"]["active"]
+
+
+def set_all_inactive():
+    """
+    Moves all profiles to the inactive profiles
+    """
+    for user_id, profile in db["profiles"]["active"].items():
+        db["profiles"]["inactive"][user_id] = profile
+    db["profiles"]["active"] = dict()

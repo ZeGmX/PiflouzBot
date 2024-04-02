@@ -31,7 +31,7 @@ async def update_rank_pilord(bot):
     input:
         bot: interactions.Client
     """
-    if len(db["profiles"]) == 0:
+    if len(user_profile.get_active_profiles()) == 0:
         return
 
     guild = bot.guilds[0]

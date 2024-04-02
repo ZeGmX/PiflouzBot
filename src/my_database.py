@@ -518,7 +518,10 @@ try:
 
     # deletes all files and subfolders in the database folder
     for file in os.listdir("my_db"):
-        os.remove(f"my_db/{file}")
+        if os.path.isdir(f"my_db/{file}"):
+            rmtree(f"my_db/{file}")
+        else:
+            os.remove(f"my_db/{file}")
     db._save()
 
 except Exception as e:

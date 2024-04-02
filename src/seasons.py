@@ -41,9 +41,10 @@ async def end_current_season(bot):
         bot: interactions.Client
     """
     # Reseting the previous stats for the season results
-    for profile in db["profiles"].values():
+    profiles = user_profile.get_active_profiles()
+    for profile in profiles.values():
         profile["season_results"] = dict()
-
+    
     # Ending the ongoing duels and giving back the money
     for duel in db["duels"]:
         piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
@@ -60,7 +61,7 @@ async def end_current_season(bot):
     reward_turbo_piflouz_based_on_scores(bank, reward_balance, "Balance")
     
     # Adding turbo piflouz based on the amount of piflex images discovered
-    piflex_count = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in db["profiles"].items()]
+    piflex_count = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in profiles.items()]
     reward_piflex = lambda count: 0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count
     # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
     # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
@@ -77,7 +78,7 @@ async def end_current_season(bot):
     # Adding piflouz based on the ranking in donations
     donations = list(user_profile.get_inverted("donation_balance").items())
     reward_turbo_piflouz_based_on_ranking(donations, bonus_ranking, "Donation ranking")
-    
+
     await utils.update_piflouz_message(bot)
 
     # Reseting the database
@@ -87,6 +88,9 @@ async def end_current_season(bot):
     user_profile.reset_all("powerups")
     user_profile.reset_all("previous_get_time")  # So that the combo is set to 0 for the next /get
     user_profile.reset_all("mining_combo")
+
+    user_profile.set_all_inactive()
+
     db["random_gifts"] = {}
     db["duels"] = []
     
@@ -111,7 +115,7 @@ async def season_task(bot):
     last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
     next_begin = last_begin_time + relativedelta(months=3)
     await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
-    
+
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
         await end_current_season(bot)
         channel = await bot.fetch_channel(db["out_channel"])
@@ -142,7 +146,7 @@ def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
         previous_val, previous_index = score, index
 
         if index < len(rewards):
-            profile = db["profiles"][user_id]
+            profile = user_profile.get_profile(user_id)
             profile["turbo_piflouz_balance"] += rewards[index]
             profile["season_results"][reward_type] = [rewards[index], index]
         else:  # The user has a ranking too low to earn rewards

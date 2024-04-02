@@ -10,6 +10,7 @@ import events
 from my_database import db
 import socials
 import utils
+from user_profile import get_active_profiles
 from wordle import Wordle
 
 
@@ -212,10 +213,11 @@ If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TI
 This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
     # Rankings
-    if len(db["profiles"]) > 0:
-        d_piflouz = [(user_id, profile["piflouz_balance"]) for user_id, profile in db["profiles"].items() if profile["piflouz_balance"] > 0]
-        d_piflex = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in db["profiles"].items() if len(profile["discovered_piflex"]) > 0]
-        d_donations = [(user_id, profile["donation_balance"]) for user_id, profile in db["profiles"].items() if profile["donation_balance"] > 0]
+    profiles = get_active_profiles()
+    if len(profiles) > 0:
+        d_piflouz = [(user_id, profile["piflouz_balance"]) for user_id, profile in profiles.items() if profile["piflouz_balance"] > 0]
+        d_piflex = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in profiles.items() if len(profile["discovered_piflex"]) > 0]
+        d_donations = [(user_id, profile["donation_balance"]) for user_id, profile in profiles.items() if profile["donation_balance"] > 0]
 
         ranking_balance = get_ranking_str(d_piflouz)
         ranking_piflex = get_ranking_str(d_piflex)
