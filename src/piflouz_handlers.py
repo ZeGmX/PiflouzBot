@@ -1,6 +1,7 @@
-from random import random, randrange
+from datetime import datetime
 import functools
 from interactions import IntervalTrigger
+from random import random, randrange
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
@@ -52,8 +53,10 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
     if (not check_cooldown or cooldown == 0) and balance + qty >= 0:
         profile["piflouz_balance"] = balance + qty
         if check_cooldown:
+            bonus = get_update_daily_bonus(user_id, current_time)
             profile["previous_get_time"] = current_time
-            return True, qty
+            profile["piflouz_balance"] += bonus
+            return True, qty + bonus
         return True
 
     if check_cooldown:
@@ -184,6 +187,7 @@ def get_max_rewardable_combo(user_id):
 def get_total_piflouz_earned(user_id, current_time):
     """
     Returns the amount earned with a /get, taking into account the user powerups, the current event, the user combo and the accuracy
+    /!\ This does not take the daily bonus into account (we don't want to update the bonus when checking while on cooldown)
     --
     input:
         user_id: int/str - the id of the user having the powerups
@@ -208,3 +212,30 @@ def get_total_piflouz_earned(user_id, current_time):
     combo_bonus = round(combo_bonus)
 
     return qty + combo_bonus + get_mining_accuracy_bonus(user_id, current_time)
+
+
+def get_update_daily_bonus(user_id, current_time):
+    """
+    Returns the daily bonus for a user
+    This also modifies the bonus data
+    --
+    input:
+        user_id: int/str
+        current_time: int
+    --
+    output:
+        res: int
+    """
+    profile = user_profile.get_profile(user_id)
+
+    d = datetime.fromtimestamp(current_time).date()
+    prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
+
+    if d != prev_date:
+        profile["daily_bonus"] = 1
+        profile["daily_bonus_date"] = d.strftime("%Y-%m-%d")
+        return Constants.DAILY_BONUS_REWARD
+    if profile["daily_bonus"] < Constants.DAILY_BONUS_MAX_STREAK:
+        profile["daily_bonus"] += 1
+        return Constants.DAILY_BONUS_REWARD
+    return 0

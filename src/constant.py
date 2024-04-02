@@ -71,6 +71,8 @@ class Constants:
     BASE_PIFLOUZ_PER_MINING_COMBO = int(os.getenv("BASE_PIFLOUZ_PER_MINING_COMBO"))
     BASE_MINING_AMOUNT = int(os.getenv("BASE_MINING_AMOUNT"))
     MAX_MINING_ACCURACY_BONUS = int(os.getenv("MAX_MINING_ACCURACY_BONUS"))
+    DAILY_BONUS_REWARD = int(os.getenv("DAILY_BONUS_REWARD"))
+    DAILY_BONUS_MAX_STREAK = int(os.getenv("DAILY_BONUS_MAX_STREAK"))
 
     ### Misc
     GUILD_IDS = eval(os.getenv("GUILD_IDS"))

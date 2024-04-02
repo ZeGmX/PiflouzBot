@@ -69,6 +69,8 @@ def get_new_user_profile():
         "powerups": [],
         "achievements": [],
         "season_results": dict(),
+        "daily_bonus": 0,
+        "daily_bonus_date": "0001-01-01",
     }
 
 def get_profile(user_id):

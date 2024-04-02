@@ -70,7 +70,7 @@ class Cog_piflouz_mining(Extension):
             output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
         else:
             profile = user_profile.get_profile(str(ctx.author.id))
-            output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {profile["mining_combo"]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}"
+            output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {profile["mining_combo"]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}\nDaily bonus obtained: {profile["daily_bonus"]} / {Constants.DAILY_BONUS_MAX_STREAK}"
             
             self.bot.dispatch("combo_updated", ctx.author.id)
             db["piflouz_generated"]["get"] += qty
