@@ -73,16 +73,6 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/piflex`",
-                    value=f"When you have too many {Constants.PIFLOUZ_EMOJI}\n ⚠️ Costs {Constants.PIFLEX_COST} {Constants.PIFLOUZ_EMOJI}",
-                    inline=False
-                ),
-                EmbedField(
-                    name="`/buy-rank-piflex`",
-                    value=f"Flex with a custom rank\n ⚠️ Costs {Constants.PIFLEXER_COST} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}",
-                    inline=False
-                ),
-                EmbedField(
                     name="`$tarpin`",
                     value="What could that be? Can be used in any channel",
                     inline=False
