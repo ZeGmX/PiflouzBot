@@ -62,7 +62,7 @@ async def end_current_season(bot):
     
     # Adding turbo piflouz based on the amount of piflex images discovered
     piflex_count = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in profiles.items()]
-    reward_piflex = lambda count: 0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count
+    reward_piflex = lambda count: int(0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count)
     # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
     # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
     reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
@@ -114,7 +114,7 @@ async def season_task(bot):
     """
     last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
     next_begin = last_begin_time + relativedelta(months=3)
-    await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
+    # await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
 
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
         await end_current_season(bot)
