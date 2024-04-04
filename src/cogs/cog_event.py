@@ -175,7 +175,8 @@ class Cog_event(Extension):
             guesses: List[str]
             header_str: str
         """
-        embed = await get_embed_wordle(wordle.solution, guesses, header_str)
+        user_id = ctx.author.id
+        embed = await get_embed_wordle(wordle.solution, guesses, header_str,user_id)
         await ctx.send(embed=embed, ephemeral=True)
 
 
@@ -424,7 +425,7 @@ class Cog_event(Extension):
         input:
             ctf: interactions.SlashContext
         """
-        await utils.custom_assert(ctx.author.id == self.bot.owner.id, "You are not allowed to use this command!", ctx)
+        # await utils.custom_assert(ctx.author.id == self.bot.owner.id, "You are not allowed to use this command!", ctx)
         await update_events(self.bot)
         await ctx.send("Done!", ephemeral=True)
 

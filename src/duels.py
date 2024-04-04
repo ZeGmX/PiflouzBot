@@ -340,7 +340,7 @@ class Wordle_duel(Duel):
             self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = f"You failed to find the word!"
 
-        embed = await get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str)
+        embed = await get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str, user_id)
         self.dict[f"last_image_url{user}"] = embed.images[0].url
         return {"embed": embed}
 

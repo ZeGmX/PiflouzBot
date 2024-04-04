@@ -372,17 +372,19 @@ async def get_embed_end_raffle(bot, winner_id, prize):
     return embed
 
 
-async def get_embed_wordle(solution, guesses, header_str):
+async def get_embed_wordle(solution, guesses, header_str, user_id):
     """
     Generates the wordle image, host it on imgur and put it in an embed
     --
     input:
         solution: str -> the solution of the wordle
         guesses: List[str] -> the guesses
+        header_str: str -> #TODO
+        user_id: int -> id of the guesser
     """
     wordle = Wordle(solution)
 
-    path = "wordle_tmp.png"
+    path = f"wordle_tmp_{user_id}.png"
     await asyncio.to_thread(wordle.generate_image, guesses, path)
     url = utils.upload_image_to_imgur(path)
     os.remove(path)
