@@ -11,8 +11,9 @@ class Wordle:
     WORD_SIZE = 5
     NB_ATTEMPTS = 6
     
-    
-    def __init__(self, solution=None):
+
+    def __init__(self, solution=None,debug=False):
+        self.debug =debug
         if solution is None:
             solution = random.choice(self.SOLUTIONS)
         
@@ -49,25 +50,137 @@ class Wordle:
         tot = {letter: self.solution.count(letter) for letter in self.solution}
 
         for i, letter in enumerate(word):
-            if self.solution[i] == letter: 
-                res.append("🟩")  
+            if self.solution[i] == letter:
+                res.append("🟩")
                 nbs[letter] += 1
             elif letter not in self.solution:
                 res.append("⬛")
             else: res.append("")
 
         for i, (letter, res_status) in enumerate(zip(word, res)):
-            if res_status != "": continue
+            if res_status != "":
+                continue
 
             if nbs[letter] < tot[letter]:
                 res[i] = "🟨"
                 nbs[letter] += 1
-            else: 
+            else:
                 res[i] = "⬛"
 
         return "".join(res)
-        
-        
+
+    def is_hard_solution(self, words: list[str]) -> bool:
+        """
+        Returns whether the solution is for hard mode
+        --
+        input:
+            words (str): The list of guessed words
+
+        output:
+            bool: whether the solution is hard mode.
+        """
+        if self.debug:
+            print(f"Launching is_hard function, words {words}, solution: {self.solution}")
+        green_letters = [None for _ in range(self.WORD_SIZE)]
+
+        yellow_letters = {}
+
+        black_letters = set()
+
+        correct_letters_count = {} # Will contain (letter:number of known occurence)
+
+        for i_word, word in enumerate(words):
+            res = self.guess(word)
+
+            if self.debug:
+                print(f"Handling {word}, results: {res}")
+
+            # Check if the previous constraints are met
+            # Check the green letters are at the right position
+            for letter_position, letter in enumerate(green_letters):
+                if letter is not None and res[letter_position]!="🟩":
+                    if self.debug:
+                        print(f"Index {letter_position} was found to have been {letter}, but is {word[letter_position]} instead")
+                    return False
+
+            # Check the yellow letters are indeed in the word.
+            for yellow_letter,tested_positions in yellow_letters.items():
+                letter_current_position = word.find(yellow_letter)
+                if letter_current_position ==-1:
+                    # Note: this is handled more precisely by the count check, but we check it now to avoid errors.
+                    if self.debug:
+                        print(f"Letter {yellow_letter} should have been in {word}.")
+                    return False
+                elif letter_current_position in tested_positions:
+                    if self.debug:
+                        print(f"Guess {word}: Letter {yellow_letter} has already been tested at position {letter_current_position}.")
+                    return False
+
+            current_correct_letters_count = {letter:0 for letter in word}
+
+            # Check if the localisation constraints are met
+            for letter_position,(letter,color) in enumerate(zip(word,res)):
+                if self.debug:
+                    print(f"Handling position {letter_position}, letter {letter}, color {color}")
+                if color == "⬛":
+                    if letter in black_letters:
+                        if self.debug:
+                            print(f"Letter {letter} was already eliminated in a previous guess")
+                        return False
+
+                elif color == "🟨":
+                    current_correct_letters_count[letter] += 1
+                elif color == "🟩":
+                    current_correct_letters_count[letter] += 1
+                else: # This case should not happen
+                    # TODO: switch this to an error raised?
+                    print(f"Unexpected color {color} in 'is_hard_solution'")
+                    return False
+
+            # Check the correct number of letters of each type is used:
+            for letter,number_constraint in correct_letters_count.items():
+                if letter not in current_correct_letters_count:
+                    if self.debug:
+                        print(f"Letter {letter} should have been in the word {word}")
+                    return False
+                elif current_correct_letters_count[letter]<number_constraint:
+                    if self.debug:
+                        print(f"Letter {letter} should have been in the word {word} at least {number_constraint} times, but was only {current_correct_letters_count[letter]} times.")
+                    return False
+                else:
+                    pass
+
+            if self.debug:
+                print("Updating constraints")
+
+            # Update the count constraints
+            for letter,new_number_constraint in current_correct_letters_count.items():
+                # Note: Could have used a max, but we check new_number_constraint >= correct_letters_count[letter] above
+                if new_number_constraint>0:
+                    correct_letters_count[letter] = new_number_constraint
+
+
+            # Update the spatial constraints
+            for letter_position, (letter,color) in enumerate(zip(word,res)):
+                if color == "⬛":
+                    if letter not in black_letters:
+                        # Note: this should ALSO handle the case of multiple guesses of 1 letter
+                        # The extra one will be black and thus we have the exact number.
+                        black_letters.add(letter)
+                elif color =="🟨":
+                    if letter in yellow_letters:
+                        yellow_letters[letter].append(letter_position)
+                    else: # First time a yellow letter appears
+                        yellow_letters[letter] = [letter_position]
+                if color == "🟩":
+                    green_letters[letter_position] = letter
+            
+
+        if self.debug:
+            print("This was determined to be a hard solution!")
+        return True
+
+
     def generate_image(self, words, path="wordle.png"):
         """
         Creates an image representing the current state of a wordle game
@@ -112,7 +225,7 @@ class Wordle:
                 ax.add_patch(rect)
 
         # Drawing the keyboard
-                keyboard_layout = ["azertyuiop", "qsdfghjklm", "wxcvbn"]   
+                keyboard_layout = ["azertyuiop", "qsdfghjklm", "wxcvbn"]
         for i, row in enumerate(keyboard_layout):
             shift = 5 * (i - .5)
             for j, letter in enumerate(row):
@@ -129,4 +242,34 @@ class Wordle:
         img.load()
         cropped = img.crop((250, 150, img.size[0] - 250, img.size[1] - 130))
         cropped.save(path)
-        
+
+
+if __name__=="__main__":
+    DEBUG = False
+    test_wordle = Wordle("fjord",DEBUG)
+    def is_hard_solution_wrapped(words):
+        res = test_wordle.is_hard_solution(words)
+        print("-" * 50)
+        return res
+
+
+    assert not is_hard_solution_wrapped(["crane","crane","fjord"])
+
+
+    assert is_hard_solution_wrapped(["crane","fjord"])
+
+    assert not is_hard_solution_wrapped(["crane","rythm", "orchi", "fjord"])
+
+    assert is_hard_solution_wrapped(["crane","riris", "fjord"])
+    assert not is_hard_solution_wrapped(["riris","arara", "fjord"])
+
+    # Tests for multiple letters positions
+    test_wordle = Wordle("aabcd",DEBUG)
+    assert is_hard_solution_wrapped(["mlkaa","anabv", "aabcd"])
+    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
+
+    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
+
+    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
+
+    print("All trials are sucessfulls")
