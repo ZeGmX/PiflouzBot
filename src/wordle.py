@@ -251,27 +251,45 @@ if __name__=="__main__":
     test_wordle = Wordle("fjord",DEBUG)
     def is_hard_solution_wrapped(words):
         res = test_wordle.is_hard_solution(words)
+        test_wordle.generate_image(words)
         print("-" * 50)
         return res
 
 
-    assert not is_hard_solution_wrapped(["crane","crane","fjord"])
+    # Constraint 1: cannot use already denied letters
+    assert not is_hard_solution_wrapped(["shush","shush","fjord"]) # all letters from shush reused
+    assert not is_hard_solution_wrapped(["shush","arson","fjord"]) # s from shush reused in arson
+    assert is_hard_solution_wrapped(["shush","imply","fjord"]) # No common letters between shush and imply
 
-
-    assert is_hard_solution_wrapped(["crane","fjord"])
-
-    assert not is_hard_solution_wrapped(["crane","rythm", "orchi", "fjord"])
-
-    assert is_hard_solution_wrapped(["crane","riris", "fjord"])
-    assert not is_hard_solution_wrapped(["riris","arara", "fjord"])
-
-    # Tests for multiple letters positions
-    test_wordle = Wordle("aabcd",DEBUG)
-    assert is_hard_solution_wrapped(["mlkaa","anabv", "aabcd"])
-    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
-
-    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
-
-    assert not is_hard_solution_wrapped(["mlkaa","nbavc", "aabcd"])
+    # Constraint 2: all green letters remain at the same position
+    assert not is_hard_solution_wrapped(["flush","dwarf","fjord"]) # f from dwarf is not at the right place
+    assert not is_hard_solution_wrapped(["flush","frore","fairy","fjord"]) # o is not in fairy
+    assert is_hard_solution_wrapped(["flush","frown","fjord"])  # f remains
+    
+    # Constraint 3: if a yellow letter appears, it must appear again in a non-green part of the word, but at a different position
+    assert not is_hard_solution_wrapped(["voice","youth","fjord"]) # the yellow o remains at the same place
+    assert not is_hard_solution_wrapped(["floor","stomp","photo"]) # the 2nd o from floor is yellow -> there is a o in "stomp" but it corresponds to an already green o
+    assert is_hard_solution_wrapped(["allow","onset","fjord"]) # the o is yellow and changes position
+    assert is_hard_solution_wrapped(["allow","oxids","mound","fjord"])  # the o and d change position
+    
+    # Constraint 4: if a yellow letter appears yellow/green, it must appear again at least as many times
+    test_wordle.solution = "ozone"
+    assert not is_hard_solution_wrapped(["bosom","olive","ozone"]) # the o should appear at least twice
+    assert is_hard_solution_wrapped(["bosom","outgo","ozone"]) # the o always appears 2 times
+    test_wordle.solution = "evade"
+    assert is_hard_solution_wrapped(["merit","elpee","evade"]) # the o appears 3 > 1 time
+    
+    # Constraint 5: if a letter appears gray, it must appear exactly as many times as the amount of times it appears green/yellow
+    test_wordle.solution = "bbabb"
+    assert not is_hard_solution_wrapped(["axxxa","yaayy","evade"]) # the a (yellow in axxxa) should only appear once
+    assert is_hard_solution_wrapped(["axxxa","yayyy","evade"]) # the a appears once
+    test_wordle.solution = "abbba"
+    assert not is_hard_solution_wrapped(["axaax","ayyyy","abbba"]) # the a (green and yellow in axaax) only appears once
+    assert is_hard_solution_wrapped(["axaax","aayyy","abbba"]) # the a (green and yellow in axaax) appears exactly twice
+    assert not is_hard_solution_wrapped(["axaax","aayya","abbba"]) # the a (green and yellow in axaax) appears 3 times instead of 2
+    
+    # Constraint 6: if a letter is gray, it must not appear at the same position
+    # (this is also true for yellow, see constraint 3)
+    assert not is_hard_solution_wrapped(["riris","bored", "fjord"])  # The r from bored appears at the position of the gray r
 
     print("All trials are sucessfulls")
