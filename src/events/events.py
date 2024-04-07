@@ -88,6 +88,10 @@ async def end_event(bot, event_type):
     try:
         data = db["events"]["passive"] if event_type == Event_type.PASSIVE else db["events"]["challenge"]
         await current_event.on_end(bot, data["current_message_id"], data["current_thread_id"] if isinstance(current_event, Challenge_event) else None)
+        
+        match event_type:
+            case Event_type.PASSIVE: db["events"]["passive"]["current_event"] = ""
+            case Event_type.CHALLENGE: db["events"]["challenge"]["current_event"] = ""
     except Exception as e:
         print(f"Error ending event: {e}")
 

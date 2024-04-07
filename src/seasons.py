@@ -9,6 +9,7 @@ from cogs import Cog_piflouz_mining
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 import embed_messages
+from events import end_event, Event_type
 from my_database import db
 import piflouz_handlers
 import user_profile
@@ -41,6 +42,10 @@ async def end_current_season(bot):
     input:
         bot: interactions.Client
     """
+    # Ending current events to avoind passing piflouz from one season to the other with Raffle
+    await end_event(bot, Event_type.PASSIVE)
+    await end_event(bot, Event_type.CHALLENGE)
+    
     # Reseting the previous stats for the season results
     profiles = user_profile.get_active_profiles()
     for profile in profiles.values():
