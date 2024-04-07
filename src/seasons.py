@@ -1,12 +1,13 @@
-from math import sqrt
+import asyncio
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import Button, ButtonStyle, IntervalTrigger
-import asyncio
+from math import sqrt
+from pytz import timezone
 
 from cogs import Cog_piflouz_mining
 from constant import Constants
-from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
+from custom_task_triggers import TaskCustom as Task
 import embed_messages
 from my_database import db
 import piflouz_handlers
@@ -112,9 +113,10 @@ async def season_task(bot):
     input:
         bot: interactions.Client
     """
+    tz = timezone("Europe/Paris")
     last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
-    next_begin = last_begin_time + relativedelta(months=3)
-    await asyncio.sleep((next_begin - datetime.datetime.now()).total_seconds())
+    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(tz)
+    await asyncio.sleep((next_begin - datetime.datetime.now().astimezone(tz)).total_seconds())
 
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
         await end_current_season(bot)

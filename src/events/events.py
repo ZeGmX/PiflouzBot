@@ -4,6 +4,7 @@ from interactions import Embed, EmbedField, EmbedAttachment, Button, ButtonStyle
 from interactions.client.utils.misc_utils import disable_components
 from math import floor
 import os
+from pytz import timezone
 import random
 
 from constant import Constants
@@ -20,11 +21,11 @@ from wordle import Wordle
 
 @Task.create(IntervalTrigger(minutes=5))
 async def event_handlers(bot):
+    tz = timezone("Europe/Paris")
     now = datetime.datetime.now()
     then = Constants.EVENT_TIME
-    then = datetime.datetime(now.year, now.month, now.day, then.hour,
-                             then.minute, then.second)
-    dt = (then - now).total_seconds() % (3600 * 24)
+    then = now.replace(hour=then.hour, minute=then.minute, second=then.second).astimezone(tz)
+    dt = (then - now.astimezone(tz)).total_seconds() % (3600 * 24)
     
     current_event_passive = get_event_object(Event_type.PASSIVE)
     if current_event_passive is not None:

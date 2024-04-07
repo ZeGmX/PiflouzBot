@@ -1,13 +1,14 @@
-import requests
-import datetime
 import asyncio
-import pickle
+import datetime
 from functools import wraps
+from interactions import Button, ButtonStyle
+import pickle
 from pyimgur import Imgur
-from interactions import Button, ButtonStyle, TimeTrigger
+from pytz import timezone
+import requests
 
 from constant import Constants
-from custom_task_triggers import TaskCustom as Task
+from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages
 from my_database import db
 import powerups  # Used in eval()
@@ -53,10 +54,11 @@ async def wait_until(then):
     input:
         then: datetime.datetime
     """
+    tz = timezone("Europe/Paris")
     now = datetime.datetime.now()
-    then = datetime.datetime(now.year, now.month, now.day, then.hour, then.minute, then.second)
+    then = now.replace(hour=then.hour, minute=then.minute, second=then.second).astimezone(tz)
 
-    dt = then - now
+    dt = then - now.astimezone(tz)
 
     print("Waiting for:", dt.total_seconds() % (24 * 3600))
     await asyncio.sleep(dt.total_seconds() % (24 * 3600))
@@ -81,7 +83,7 @@ def check_message_to_be_processed(fun):
     return wrapper
 
 
-@Task.create(TimeTrigger(hour=23))
+@Task.create(TimeTriggerDT(datetime.time(hour=23)))
 async def backup_db(folder=None):
     """
     Creates a daily backup of the database

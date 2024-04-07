@@ -1,5 +1,6 @@
+from datetime import datetime, timedelta
 from interactions import Task, IntervalTrigger, OrTrigger, TimeTrigger
-from datetime import datetime, timezone
+from pytz import timezone
 
 
 class TaskCustom(Task):
@@ -27,7 +28,7 @@ class TaskCustom(Task):
         if self._first_fire: return
 
         if isinstance(trigger, IntervalTrigger):
-            self._fire(datetime.now(tz=timezone.utc), *args, **kwargs)
+            self._fire(datetime.now(tz=timezone("UTC")), *args, **kwargs)
             self._first_fire = True
         
         elif isinstance(trigger, OrTrigger):
@@ -42,8 +43,21 @@ class TaskCustom(Task):
 
 class TimeTriggerDT(TimeTrigger):
     """
-    A TimeTrigger class that can be initialized with a datetime object
+    A TimeTrigger class that can be initialized with a datetime.time object
     """
 
     def __init__(self, datetime: datetime):
         super().__init__(datetime.hour, datetime.minute, datetime.second)
+    
+    
+    # override
+    def next_fire(self) -> datetime | None:
+        t1 = datetime.now()
+        t2 = t1.replace(hour=self.target_time[0], minute=self.target_time[1], second=self.target_time[2], microsecond=0)
+        
+        if t2 < t1:
+            t2 += timedelta(days=1)
+        
+        # Setting timezones make it independent of summer/winter time
+        tz = timezone("Europe/Paris")
+        return tz.localize(t2)
