@@ -42,6 +42,9 @@ COPY . .
 # To apply the fix for the paginator issue, we need to copy the paginators.py file
 RUN cp /app/paginators.py ../usr/local/lib/python3.12/site-packages/interactions/ext/
 
+# To apply the fix for the task issue, we need to copy the task.py file
+RUN cp /app/task.py ../usr/local/lib/python3.12/site-packages/interactions/models/internal/tasks/
+
 
 # Switch to the non-privileged user to run the application.
 USER appuser
