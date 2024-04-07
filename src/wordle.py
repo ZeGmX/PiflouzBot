@@ -167,6 +167,8 @@ class Wordle:
                         # Note: this should ALSO handle the case of multiple guesses of 1 letter
                         # The extra one will be black and thus we have the exact number.
                         black_letters.add(letter)
+                    if letter in yellow_letters:
+                        yellow_letters[letter].append(letter_position)
                 elif color =="🟨":
                     if letter in yellow_letters:
                         yellow_letters[letter].append(letter_position)
@@ -245,7 +247,7 @@ class Wordle:
 
 
 if __name__=="__main__":
-    DEBUG = False
+    DEBUG = True
     test_wordle = Wordle("fjord",DEBUG)
     def is_hard_solution_wrapped(words):
         res = test_wordle.is_hard_solution(words)
