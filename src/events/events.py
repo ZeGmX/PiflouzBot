@@ -520,9 +520,10 @@ class Challenge_event(Event):
 
 
 class Wordle_event(Challenge_event):
-    def __init__(self, min_reward=200, max_reward=250):
+    def __init__(self, min_reward=200, max_reward=250, hard_mode_bonus = 100):
         self.min_reward = min_reward
         self.max_reward = max_reward
+        self.hard_mode_bonus = hard_mode_bonus
 
 
     async def get_embed(self, bot):

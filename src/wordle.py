@@ -12,7 +12,7 @@ class Wordle:
     NB_ATTEMPTS = 6
     
 
-    def __init__(self, solution=None,debug=False):
+    def __init__(self, solution=None, debug=False):
         self.debug =debug
         if solution is None:
             solution = random.choice(self.SOLUTIONS)
