@@ -4,7 +4,7 @@
 # If you need more help, visit the Dockerfile reference guide at
 # https://docs.docker.com/engine/reference/builder/
 
-ARG PYTHON_VERSION=3.11.6
+ARG PYTHON_VERSION=3.12.2
 FROM python:${PYTHON_VERSION}-slim as base
 
 # Prevents Python from writing pyc files.
@@ -40,7 +40,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 COPY . .
 
 # To apply the fix for the paginator issue, we need to copy the paginators.py file
-RUN cp /app/paginators.py ../usr/local/lib/python3.11/site-packages/interactions/ext/
+RUN cp /app/paginators.py ../usr/local/lib/python3.12/site-packages/interactions/ext/
 
 
 # Switch to the non-privileged user to run the application.

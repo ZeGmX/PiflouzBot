@@ -61,10 +61,10 @@ async def on_startup():
             db[key] = []
 
     if "is_currently_live" not in db.keys():
-        db["is_currently_live"] = {streamer_name: False for streamer_name in Constants.streamers_to_check}
+        db["is_currently_live"] = {streamer_name: False for streamer_name in Constants.STREAMERS}
     
     if "previous_live_message_time" not in db.keys():
-        db["previous_live_message_time"] = {name: 0 for name in Constants.streamers_to_check}
+        db["previous_live_message_time"] = {name: 0 for name in Constants.STREAMERS}
     
     if "profiles" not in db.keys():
         db["profiles"] = {"active": {}, "inactive": {}}
