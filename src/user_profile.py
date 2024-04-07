@@ -46,7 +46,7 @@ def get_total_cooldown(user_id):
 
     current_event = events.get_event_object(events.Event_type.PASSIVE)
     powerups_user = [eval(p) for p in profile["powerups"]]
-    powerups_event = current_event.get_powerups()
+    powerups_event = current_event.get_powerups() if current_event is not None else []
 
     cooldown = Constants.REACT_TIME_INTERVAL * (1 + sum(p.get_cooldown_multiplier_value() - 1 for p in powerups_user + powerups_event))
     return cooldown

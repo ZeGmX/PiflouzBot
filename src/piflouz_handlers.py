@@ -179,7 +179,7 @@ def get_max_rewardable_combo(user_id):
     current_event = events.get_event_object(events.Event_type.PASSIVE)
     profile = user_profile.get_profile(user_id)
     powerups_user = [eval(p) for p in profile["powerups"]]
-    powerups_event = current_event.get_powerups()
+    powerups_event = current_event.get_powerups() if current_event is not None else []
     all_powerups = powerups_user + powerups_event
     return round(Constants.MAX_MINING_COMBO + sum(p.get_max_combo_increase() for p in all_powerups))
 
@@ -200,7 +200,7 @@ def get_total_piflouz_earned(user_id, current_time):
 
     current_event = events.get_event_object(events.Event_type.PASSIVE)
     powerups_user = [eval(p) for p in profile["powerups"]]
-    powerups_event = current_event.get_powerups()
+    powerups_event = current_event.get_powerups() if current_event is not None else []
     all_powerups = powerups_user + powerups_event
 
     qty = Constants.BASE_MINING_AMOUNT * (1 + sum(p.get_piflouz_multiplier_value() - 1 for p in all_powerups))
