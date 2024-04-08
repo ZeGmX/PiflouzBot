@@ -18,3 +18,6 @@
 1. Rename `.env` to `.env_prod` and `.env_dev` to `.env`
 2. To build and run, use `build_dev.cmd`
 3. To stop the container, either use `/reboot` on Discord, stop the container in the `Docker Desktop` app (`Containers` page), or run `docker stop devtest`
+
+### Acknowledgements:
+This project uses [data](https://github.com/ZeGmX/PiflouzBot/blob/master/src/events/assets/french_words.csv) from Boris New & Christophe Pallierthe's [`Lexique`](http://www.lexique.org/) database, which is licensed under the [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) license. The database can be queried at [http://www.lexique.org/shiny/openlexicon/](http://www.lexique.org/shiny/openlexicon/). The authors of the database are not responsible for the content of this project.
