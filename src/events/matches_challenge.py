@@ -20,7 +20,7 @@ class Matches_Interface:
         "0" : [0, 1, 2, 3, 4, 5],
         "0s" : [6, 2, 3, 4],
         "1"  : [1, 2],
-        "1s" : [11],
+        "1s" : [7],
         "2"  : [0, 1, 6, 4, 3],
         "3"  : [0, 1, 6, 2, 3],
         "4"  : [1, 2, 5, 6],
@@ -40,7 +40,6 @@ class Matches_Interface:
     }
 
     # Position and orientation of the match image corresponding to each segment
-    # WARNING: segment 11 = segment 7
     POS = [
         (0.5, 2, 90),
         (1, 1.5, 0),
@@ -53,7 +52,6 @@ class Matches_Interface:
         (0.25, 1.25, 135),
         (0.5, 1.25, 90),
         (0.5, 1.5, 90),
-        (0.5, 1, 0)
     ]
 
     IMG_BACKGROUND = Image.open("src/events/assets/framecool2.png").resize((1920, 1080), Image.LANCZOS)
@@ -137,11 +135,8 @@ class Matches_Interface:
 
         Matches_Interface.draw_expr(self.riddle, scale, (241, 615 + Matches_Interface.MATCH_INIT_SCALE * scale / 2), ax)
 
-        y1 = 615 + scale * Matches_Interface.MATCH_INIT_SCALE
-        y2 = 615 - scale * Matches_Interface.MATCH_INIT_SCALE
-
         plt.savefig(folder + "riddle.png", bbox_inches="tight", pad_inches=0)
-    
+
 
     def save_solution(self, folder):
         """
@@ -188,71 +183,70 @@ class Matches_Expression:
     """
     # Caracters: 0, 0s, 1, 1s, 2, 3, 4, 4s, 5, 6, 6s, 7, 7b, 8, 8s, 9, 9s, +, -, =, nothing
     # BIG PLUS ? Small 3 ?
-    ADD_MATCH = {
-        "0": ["8"],
-        "0s": ["6s", "8s", "9s"],
-        "1": ["7"],
-        "1s": ["1", "+"],
+    ADD_MATCH = {  # (new_symbol, new_match_position)
+        "0": [('8', 6)],
+        "0s": [('6s', 5), ('8s', 10), ('9s', 2)],
+        "1": [('7', 0)],
+        "1s": [('1', 1)],
         "2": [],
-        "3": ["9"],
-        "4": ["9s"],
+        "3": [('9', 5)],
+        "4": [('9s', 0)],
         "4s": [],
-        "5": ["6", "9"],
-        "6": ["8"],
-        "6s": ["6"],
-        "7": ["7b"],
-        "7b": ["9s"],
+        "5": [('6', 4), ('9', 1)],
+        "6": [('8', 1)],
+        "6s": [('6', 0)],
+        "7": [('7b', 5)],
+        "7b": [('9s', 6)],
         "8": [],
-        "8s": [],
-        "9": ["8"],
-        "9s": ["9"],
-        "+": ["4s"],
-        "-": ["+", "="],
-        "=": []
+        "9": [('8', 4)],
+        "9s": [('9', 3)],
+        "+": [('4s', 8)],
+        "-": [('+', 7), ('=', 9)],
+        "=": [],
     }
-    REMOVE_MATCH = {
+    REMOVE_MATCH = {  # (new_symbol, removed_match_position)
         "0": [],
         "0s": [],
-        "1": ["1s"],
-        "1s": ["nothing"],
+        "1": [('1s', 1)],
+        "1s": [('nothing', 7)],
         "2": [],
         "3": [],
         "4": [],
-        "4s": ["+"],
+        "4s": [('+', 8)],
         "5": [],
-        "6": ["5", "6s"],
-        "6s": ["0s"],
-        "7": ["1"],
-        "7b": ["7"],
-        "8": ["0", "6", "9"],
-        "8s": ["0s"],
-        "9": ["3", "5", "9s"],
-        "9s": ["0s", "4", "7b"],
-        "+": ["-"],
-        "-": ["nothing"],
-        "=": ["-"]
+        "6": [('5', 4), ('6s', 0)],
+        "6s": [('0s', 5)],
+        "7": [('1', 0)],
+        "7b": [('7', 5)],
+        "8": [('0', 6), ('6', 1), ('9', 4)],
+        "8s": [('0s', 10)],
+        "9": [('3', 5), ('5', 1), ('9s', 3)],
+        "9s": [('0s', 2), ('4', 0), ('7b', 6)],
+        "+": [('-', 7)],
+        "-": [('nothing', 6)],
+        "=": [('-', 9)],
     }
-    MOVE_MATCH = {
-        "0": ["6", "9"],
-        "0s": ["4", "7b"],
-        "1": ["+"], # 11s
-        "1s": ["-"],
-        "2": ["3"],
-        "3": ["2", "5", "9s"],
-        "4": ["0s", "7b"], #big plus here 11
+    MOVE_MATCH = {  # (new_symbol, (removed_match_position, new_match_position))
+        "0": [('6', (1, 6)), ('9', (4, 6))],
+        "0s": [('4', (0, 2)), ('7b', (6, 2))],
+        "1": [('+', (1, 6))],
+        "1s": [('-', (7, 6))],
+        "2": [('3', (4, 2))],
+        "3": [('2', (2, 4)), ('5', (1, 5)), ('9s', (3, 5))],
+        "4": [('0s', (2, 0)), ('7b', (6, 0))],
         "4s": [],
-        "5": ["3", "6s", "9s"],
-        "6": ["0", "9"],
-        "6s": ["5", "8s", "9s"],
+        "5": [('3', (5, 1)), ('6s', (0, 4)), ('9s', (3, 1))],
+        "6": [('0', (6, 1)), ('9', (4, 1))],
+        "6s": [('5', (4, 0)), ('8s', (5, 10)), ('9s', (5, 2))],
         "7": [],
-        "7b": ["0s", "4"], # +1 ? 11
+        "7b": [('0s', (2, 6)), ('4', (0, 6))],
         "8": [],
-        "8s": ["6s", "9s"],
-        "9": ["0", "6"],
-        "9s": ["3", "5", "6s", "8s"],
-        "+": ["1", "="],
-        "-": ["1s"],
-        "=": ["+"]
+        "8s": [('6s', (10, 5)), ('9s', (10, 2))],
+        "9": [('0', (6, 4)), ('6', (1, 4))],
+        "9s": [('3', (5, 3)), ('5', (1, 3)), ('6s', (2, 5)), ('8s', (2, 10))],
+        "+": [('1', (6, 1)), ('=', (7, 9))],
+        "-": [('1s', (6, 7))],
+        "=": [('+', (9, 7))],
     }
     SAME_MATCH = {
         "0": ["0", "0s"],
@@ -329,29 +323,45 @@ class Matches_Expression:
         return evaluate_term(list(e1)) == evaluate_term(list(e2))
 
 
-    def clean(self):
+    def clean(self, prev_move=((-inf, -inf), (-inf, -inf))):
         """
         Removes unwanted characters to simplify the expression
+        --
+        input:
+            prev_move: (from: (int, int), to: (int, int)) -> from/to coordinates of the previous move
+        --
+        output:
+            ((int, int), (int, int)) -> updated indexes of the last moved match (bool indicates whether the position still exists)
+            bool -> whether a character was deleted
         """
+        (from_char_i, from_match_i), (to_char_i, to_match_i) = prev_move
+        deleted = False
         while "nothing" in self.chars:
+            k = self.chars.index("nothing")
+            
+            if k == from_char_i: deleted = True  # Removed the character from which the match was taken
+            if k < from_char_i: from_char_i -= 1
+            if k < to_char_i: to_char_i -= 1
+            
             self.chars.remove("nothing")
         while "11s" in self.chars:
             k = self.index("11s")
+            
+            if k < to_char_i: to_char_i += 1
+            if k < from_char_i: from_char_i += 1
+            if k == from_char_i: from_char_i = k if from_match_i >= 4 else k + 1  # Matches 4, 5 on the left and 1, 2 on the right
+            
             self = self.chars[:k] + ["1s", "1s"] + self.chars[k + 1:]
         while "11" in self.chars:
             k = self.index("11")
+            
+            if k < to_char_i: to_char_i += 1
+            if k < from_char_i: from_char_i += 1
+            if k == from_char_i: from_char_i = k if from_match_i >= 4 else k + 1
+            
             self = self.chars[:k] + ["1", "1"] + self.chars[k + 1:]
         self._update_str()
-
-
-    def alter_some_characters(self):
-        """
-        Returns a semantically equivalent expression, with some altered characters (e.g. smaller numbers)
-        --
-        output:
-            res: char list
-        """
-        return [Matches_Expression.SAME_MATCH[char][randint(0, len(Matches_Expression.SAME_MATCH[char]) - 1)] for char in self.chars]
+        return ((from_char_i, from_match_i), (to_char_i, to_match_i)), deleted
 
 
     def has_fancy_char(self):
@@ -364,67 +374,93 @@ class Matches_Expression:
         return any(len(char) > 1 for char in self.chars)
     
 
-    def move_far(self):
+    def move_far(self, already_moved=((-1, -1), (-1, -1), False)):
         """
         Generator for expression obtained by moving one match from one digit to another, or to create a new "1" or "-"
         ⚠️ this cannot generate partial expressions with digits that are not full
         --
+        input:
+            already_moved: (from: (int, int), to: (int, int), deleted: bool) -> from/to coordinates of the last moved match
+        --
         output:
             new_expr: Matches_Expression
+            dest: (int, int) -> destination indexes of the moved match
+            deleted: bool -> whether the character from the moved match was deleted
         """
+        (from_char_i, from_match_i), (to_char_i, to_match_i), from_deleted = already_moved
         for i, symbol in enumerate(self.chars):
-            for new_symbol in Matches_Expression.REMOVE_MATCH[symbol]:
+            for new_symbol, i_from in Matches_Expression.REMOVE_MATCH[symbol]:
+                
+                if to_char_i == i and to_match_i == i_from: continue  # Moving the same match
                 
                 # Move the match on another digit
                 for j, symbol2 in enumerate(self.chars):
-                    for new_symbol2 in Matches_Expression.ADD_MATCH[symbol2]:
+                    if i == j: continue  # It's the same digit -> handled by move_change
+                    
+                    for new_symbol2, i_to in Matches_Expression.ADD_MATCH[symbol2]:
+                        if from_char_i == j and from_match_i == i_to and not from_deleted: continue  # Move the match back to the original position of the previous match
+                        
+                        dest = (i, i_from), (j, i_to)  # Destination of the moved match
+                        
+                        new_expr_list = copy(self.chars)
+                        new_expr_list[i] = new_symbol
+                        new_expr_list[j] = new_symbol2
 
-                        if i != j:
-                            new_expr_list = copy(self.chars)
-                            new_expr_list[i] = new_symbol
-                            new_expr_list[j] = new_symbol2
+                        new_expr = Matches_Expression(new_expr_list)
+                        dest, deleted = new_expr.clean(dest)
 
-                            new_expr = Matches_Expression(new_expr_list)
-                            new_expr.clean()
-
-                            yield new_expr
+                        yield new_expr, dest, deleted
 
                 # Add a one or a "-" somewhere
                 for j in range(len(self.chars) + 1):
                     
+                    if from_deleted and j == from_char_i: continue  # Trying to put the match back where it initially was
+
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
                     new_expr_list.insert(j, "1s")
-                    
+                
+                    dest = (i, i_from), (j, Matches_Interface.MATCHES["1s"][0])  # Destination of the moved match
                     new_expr = Matches_Expression(new_expr_list)
-                    new_expr.clean()
-                    yield new_expr
+                    dest, deleted = new_expr.clean(dest)
+                    yield new_expr, dest, deleted
 
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
                     new_expr_list.insert(j, "-")
 
+                    dest = (i, i_from), (j, Matches_Interface.MATCHES["-"][0])  # Destination of the moved match
                     new_expr = Matches_Expression(new_expr_list)
-                    new_expr.clean()
-                    yield new_expr
+                    dest, deleted = new_expr.clean(dest)
+                    yield new_expr, dest, deleted
 
 
-    def move_change(self):
+    def move_change(self, already_moved=((-1, -1), (-1, -1), False)):
         """
         Generator for expression obtained by moving one match from one digit to itself
         ⚠️ this cannot generate partial expressions with digits that are not full
         --
+        input:
+            already_moved: (from: (int, int), to: (int, int)) -> from/to coordinates of the last moved match
+        --
         output:
-            final_expr: Matches_Expression
+            new_expr: Matches_Expression
+            dest: (int, int) -> destination indexes of the moved match
+            deleted: bool -> whether the character from the moved match was deleted
         """
+        (from_char_i, from_match_i), (to_char_i, to_match_i), from_deleted = already_moved
         for i, symbol in enumerate(self.chars):
-            for new_symbol in Matches_Expression.MOVE_MATCH[symbol]:
+            for (new_symbol, (i_from, i_to)) in Matches_Expression.MOVE_MATCH[symbol]:
+                if to_char_i == i and to_match_i == i_from: continue  # Move the same match twice
+                if from_char_i == i and from_match_i == i_to and not from_deleted: continue # Move the match back to the original position of the previous match
+                
+                dest = (i, i_from), (i, i_to)  # Destination of the moved match
                 final_expr_list = copy(self.chars)
                 final_expr_list[i] = new_symbol
 
                 final_expr = Matches_Expression(final_expr_list)
-                final_expr.clean()
-                yield final_expr
+                dest, deleted = final_expr.clean(dest)
+                yield final_expr, dest, deleted
 
 
     def __str__(self):
@@ -535,13 +571,12 @@ def gen_equality(nb_num_left, nb_num_right):
 
     res = left_term + ["="] + pref + get_list(abs(res_left - res_right)) + right_term
     final = [str(t) for t in res]
-    #final = alter_some_characters(final) # HEEEEEEEEEEEEEEEEEEEEEEEEEERE
     return Matches_Expression(final)
     
 
 def generate_game(eq, nb_try=300, max_time=inf):
     """
-    Generates a riddle. The solution moves exactly one match on another digit, and one match on the same one
+    Generates a riddle. The solution moves exactly Two matches
     The solution equation is the one with the lowest amount of solutions
     --
     input:
@@ -564,9 +599,10 @@ def generate_game(eq, nb_try=300, max_time=inf):
 
         # Computing a valid candidate
         while not found and (i == 0 or time.time() - t1 < max_time):
-            cand = choice(move_set1)
-            move_set2 = list(chain(cand.move_far(), cand.move_change()))
-            candidate = choice(move_set2)
+            cand, dest, deleted = choice(move_set1)
+            dest = (dest[0], dest[1], deleted)
+            move_set2 = list(chain(cand.move_far(dest), cand.move_change(dest)))
+            candidate, dest2, deleted2 = choice(move_set2)
             found = candidate.is_valid() and not candidate.has_fancy_char() and not candidate.is_correct()
 
         if not found:
@@ -596,8 +632,9 @@ def get_all_solutions(riddle):
         sols: str list -> equations that would be valid solutions for the given riddle
     """
     sols = []
-    for access in chain(riddle.move_change(), riddle.move_far()):
-        for accessible in chain(access.move_far(), access.move_change()):
+    for access, dest, deleted in chain(riddle.move_change(), riddle.move_far()):
+        dest = (dest[0], dest[1], deleted)
+        for accessible, destination, deleted2 in chain(access.move_far(dest), access.move_change(dest)):
             if accessible.is_valid() and accessible.is_correct() and accessible.str not in sols:
                 sols.append(accessible.str)
     
