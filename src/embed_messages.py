@@ -33,6 +33,11 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
+                    name="`/profile`",
+                    value="Check all the data from your profile",
+                    inline=False
+                ),
+                EmbedField(
                     name="`/hello`",
                     value="Say hi!",
                     inline=False
@@ -58,16 +63,6 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/balance [@user]`",
-                    value=f"Check how many {Constants.PIFLOUZ_EMOJI} the user has",
-                    inline=False
-                ),
-                EmbedField(
-                    name="`/cooldown`",
-                    value="When your addiction is stronger than your sense of time",
-                    inline=False
-                ),
-                EmbedField(
                     name="`/get`",
                     value="For the lazy ones",
                     inline=False
@@ -75,11 +70,6 @@ def get_embeds_help_message():
                 EmbedField(
                     name="`$tarpin`",
                     value="What could that be? Can be used in any channel",
-                    inline=False
-                ),
-                EmbedField(
-                    name="`/pilord`",
-                    value="See how much you need to farm to flex with your rank",
                     inline=False
                 ),
                 EmbedField(
@@ -93,11 +83,6 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/powerups`",
-                    value="See how powerful you are",
-                    inline=False
-                ),
-                EmbedField(
                     name="`/giveaway n`",
                     value="Drop a pibox with your own money",
                     inline=False
@@ -108,18 +93,8 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/ranking`",
-                    value="Check how worthy you are",
-                    inline=False
-                ),
-                EmbedField(
                     name="`/role [get|remove]`",
                     value="Get a specific notification role",
-                    inline=False
-                ),
-                EmbedField(
-                    name="`/season-result`",
-                    value="Check how good you were last season",
                     inline=False
                 ),
                 EmbedField(
@@ -339,7 +314,7 @@ async def get_embed_end_season(bot):
     
     embed = Embed(
         title="The season is over!",
-        description=f"The last season has ended! Use the `/season-result` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
+        description=f"The last season has ended! Use the `/profile` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
         color=MaterialColors.PURPLE,
         thumbnail=EmbedAttachment(url=Constants.TURBO_PIFLOUZ_ANIMATED_URL)
     )

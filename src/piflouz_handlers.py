@@ -214,6 +214,27 @@ def get_total_piflouz_earned(user_id, current_time):
     return qty + combo_bonus + get_mining_accuracy_bonus(user_id, current_time)
 
 
+def get_current_daily_bonus(user_id, current_time):
+    """
+    Returns the current daily bonus for a user, without modifying the bonus data
+    --
+    input:
+        user_id: int/str
+        current_time: int
+    --
+    output:
+        res: int
+    """
+    profile = user_profile.get_profile(user_id)
+
+    d = datetime.fromtimestamp(current_time).date()
+    prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
+
+    if d != prev_date:
+        return 0
+    return profile["daily_bonus"]
+
+
 def get_update_daily_bonus(user_id, current_time):
     """
     Returns the daily bonus for a user

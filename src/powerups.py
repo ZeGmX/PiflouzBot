@@ -217,7 +217,7 @@ class Cooldown_reduction(Powerups_non_permanent):
         dt = self.duration - int(time.time()) + self.buy_date
         if dt >= 0:
             sign = "+" if self.value < 0 else ""
-            return f"Cooldown • {sign}{-self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
+            return f"Cooldown • {sign}{-self.value}%\nTime left: {utils.seconds_to_formatted_string(dt)}"
         return ""
 
 
@@ -243,7 +243,7 @@ class Piflouz_multiplier(Powerups_non_permanent):
         dt = self.duration - int(time.time()) + self.buy_date
         if dt >= 0:
             sign = "+" if self.value > 0 else ""
-            return f"Piflouz multiplier • {sign}{self.value}% - Time left: {utils.seconds_to_formatted_string(dt)}"
+            return f"Piflouz multiplier • {sign}{self.value}%\nTime left: {utils.seconds_to_formatted_string(dt)}"
         return ""
 
 
@@ -314,7 +314,7 @@ class Miner_powerup(Powerups_permanent):
     def get_info_str(self):
         if self.qty == 0:
             return ""
-        return f"Miners • {self.qty} • Expires at the end of the season"
+        return f"Miners • {self.qty}\nExpires at the end of the season"
 
 
     def get_store_str(self):

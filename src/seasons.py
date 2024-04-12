@@ -5,7 +5,6 @@ from interactions import Button, ButtonStyle, IntervalTrigger
 from math import sqrt
 from pytz import timezone
 
-from cogs import Cog_piflouz_mining
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 import embed_messages
@@ -14,6 +13,11 @@ from my_database import db
 import piflouz_handlers
 import user_profile
 import utils
+
+
+reward_balance = lambda balance: int(sqrt(balance))
+reward_piflex = lambda count: int(0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count)
+bonus_ranking = [100, 50, 30]
 
 
 async def start_new_season(bot):
@@ -29,9 +33,9 @@ async def start_new_season(bot):
     if "out_channel" in db.keys():
         channel = await bot.fetch_channel(db["out_channel"])
 
-        piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
+        # piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
 
-        msg = await channel.send(embed=embed_messages.get_embed_piflouz(), components=piflouz_button)
+        msg = await channel.send(embed=embed_messages.get_embed_piflouz())
         return msg
 
 
@@ -48,8 +52,8 @@ async def end_current_season(bot):
     
     # Reseting the previous stats for the season results
     profiles = user_profile.get_active_profiles()
-    for profile in profiles.values():
-        profile["season_results"] = dict()
+    user_profile.reset_all("season_results")
+    user_profile.reset_all_inactive("season_results")
     
     # Ending the ongoing duels and giving back the money
     for duel in db["duels"]:
@@ -63,17 +67,14 @@ async def end_current_season(bot):
 
     # Adding turbo piflouz based on the amount of piflouz collected
     bank = list(user_profile.get_inverted("piflouz_balance").items())
-    reward_balance = lambda balance: int(sqrt(balance))
     reward_turbo_piflouz_based_on_scores(bank, reward_balance, "Balance")
     
     # Adding turbo piflouz based on the amount of piflex images discovered
     piflex_count = [(user_id, len(profile["discovered_piflex"])) for user_id, profile in profiles.items()]
-    reward_piflex = lambda count: int(0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count)
     # so that there is at least an increase of 20 per image, and so that the whole 12 images give 550 turbo piflouz
     # the median of the required number of piflex is aroud 35, which lead to 35*8000 piflouz spent, which would lead to 530 turbo piflouz otherwhise
     reward_turbo_piflouz_based_on_scores(piflex_count, reward_piflex, "Discovered piflex")
 
-    bonus_ranking = [100, 50, 30]
     
     # Adding piflouz based on the ranking in piflouz
     reward_turbo_piflouz_based_on_ranking(bank, bonus_ranking, "Balance ranking")
@@ -134,6 +135,7 @@ async def season_task(bot):
     await msg.pin()
     db["current_season_message_id"] = int(msg.id)
     db["piflouz_message_id"] = int(msg.id)
+    await utils.update_piflouz_message(bot)
     
 
 def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):

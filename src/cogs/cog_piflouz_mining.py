@@ -79,25 +79,5 @@ class Cog_piflouz_mining(Extension):
         await ctx.send(output_text, ephemeral=True)
 
 
-    @slash_command(name="cooldown", description="When your addiction is stronger than your sense of time", scopes=Constants.GUILD_IDS)
-    @auto_defer(ephemeral=True)
-    @utils.check_message_to_be_processed
-    async def cooldown_cmd(self, ctx):
-        """
-        Callback for the cooldown command
-        --
-        input:
-            ctx: interactions.CommandContext
-        """
-        user = ctx.author
-        current_time = int(ctx.id.created_at.timestamp())
-        timer = user_profile.get_timer(user.id, current_time)
-        if timer > 0 :
-            output_text = f"You still need to wait {utils.seconds_to_formatted_string(timer)} before earning more {Constants.PIFLOUZ_EMOJI}!"
-        else:
-            output_text = f"You can earn more {Constants.PIFLOUZ_EMOJI}. DO IT RIGHT NOW!"
-        await ctx.send(output_text, ephemeral=True)
-
-
 def setup(bot):
     Cog_piflouz_mining(bot)

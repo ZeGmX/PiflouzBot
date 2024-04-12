@@ -12,11 +12,11 @@ def get_timer(user_id, current_time):
     This function returns the amount of time needed before being able to earn more piflouz
     --
     input:
-    user_id: int/str
+        user_id: int/str
     --
     output:
-    time_needed: int -> time remaining before the end of cooldown
-    current_time: int -> the time at which the interaction was created
+        time_needed: int -> time remaining before the end of cooldown
+        current_time: int -> the time at which the interaction was created
     """
     user_id = str(user_id)
     profile = get_profile(user_id)
@@ -36,10 +36,10 @@ def get_total_cooldown(user_id):
     Returns the time to wait between two /get, taking into account the user powerups and the current event
     --
     input:
-    user_id: int/str - the id of the user having the powerups
+        user_id: int/str - the id of the user having the powerups
     --
     output:
-    cooldown: the time in seconds
+        cooldown: the time in seconds
     """
     user_id = str(user_id)
     profile = get_profile(user_id)
@@ -57,7 +57,7 @@ def get_new_user_profile():
     Generates a new dict representing a blank user profile
     --
     output:
-    profile: dict
+        profile: dict
     """
     return {
         "piflouz_balance": 0,
@@ -72,6 +72,7 @@ def get_new_user_profile():
         "daily_bonus": 0,
         "daily_bonus_date": "0001-01-01",
     }
+
 
 def get_profile(user_id):
     """
@@ -113,7 +114,7 @@ def get_inverted(key):
 
 def reset_all(key):
     """
-    Resets the value associated to a key for all the users
+    Resets the value associated to a key for all the active users
     --
     input:
         key: str
@@ -121,6 +122,20 @@ def reset_all(key):
     blank_profile = get_new_user_profile()
     default_value = blank_profile[key]
     for profile in db["profiles"]["active"].values():
+        profile[key] = copy(default_value)
+
+
+def reset_all_inactive(key):
+    """
+    Resets the value associated to a key for all the inactive users
+    --
+    input:
+        key: str
+    
+    """
+    blank_profile = get_new_user_profile()
+    default_value = blank_profile[key]
+    for profile in db["profiles"]["inactive"].values():
         profile[key] = copy(default_value)
 
 
