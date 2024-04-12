@@ -1,3 +1,4 @@
+import asyncio
 from interactions import Extension, OptionType, slash_command, slash_option, auto_defer
 from io import BytesIO
 from math import sqrt
@@ -95,6 +96,7 @@ class Cog_status_check(Extension):
         """
         member = ctx.author if user is None else user
         path = f"profile_{member.id}.png"
+        await asyncio.to_thread(self.save_profile_image, member, path)
         self.save_profile_image(member, path)
         await ctx.send(file=path, ephemeral=True)
         os.remove(path)
