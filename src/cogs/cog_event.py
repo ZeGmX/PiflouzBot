@@ -50,16 +50,10 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             nb_tickets: int
         """
-        current_raffle =  get_event_object(Event_type.PASSIVE)
-    
-        await utils.custom_assert(current_raffle is not None, "No current event registered", ctx)
-        await utils.custom_assert(isinstance(current_raffle, Raffle_event), "The current event is not a raffle", ctx)
+        current_raffle, data = await self.check_event(Event_type.PASSIVE, Raffle_event, ctx)
     
         price = nb_tickets * current_raffle.ticket_price
-        
         user_id = str(ctx.author.id)
-
-        data = get_event_data(current_raffle)
     
         # user doesn't have enough money
         await utils.custom_assert(piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False), f"You don't have enough money to buy {nb_tickets} tickets", ctx)
@@ -86,12 +80,7 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             word: str
         """
-        current_wordle = get_event_object(Event_type.CHALLENGE)
-    
-        await utils.custom_assert(current_wordle is not None, "No current event registered", ctx)
-        await utils.custom_assert(isinstance(current_wordle, Wordle_event), "The current event is not a wordle", ctx)
-
-        data = get_event_data(current_wordle)
+        current_wordle, data = await self.check_event(Event_type.CHALLENGE, Wordle_event, ctx)
         wordle = Wordle(data["word"])
 
         user_id = str(int(ctx.author.id))
@@ -139,12 +128,7 @@ class Cog_event(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        current_wordle = get_event_object(Event_type.CHALLENGE)
-        
-        await utils.custom_assert(current_wordle is not None, "No current event registered", ctx)
-        await utils.custom_assert(isinstance(current_wordle, Wordle_event), "The current event is not a wordle", ctx)
-        
-        data = get_event_data(current_wordle)
+        current_wordle, data = await self.check_event(Event_type.CHALLENGE, Wordle_event, ctx)
         wordle = Wordle(data["word"])
 
         user_id = str(int(ctx.author.id))
@@ -240,13 +224,8 @@ class Cog_event(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        current_bday = get_event_object(Event_type.PASSIVE)
-    
-        await utils.custom_assert(current_bday is not None, "No current event registered", ctx)
-        await utils.custom_assert(isinstance(current_bday, Birthday_event), "The current event is not a Birthay event", ctx)
-
+        current_bday, data = await self.check_event(Event_type.PASSIVE, Birthday_event, ctx)
         user_id = str(ctx.author.id)
-        data = get_event_data(current_bday)
 
         if user_id not in data["ingredients"].keys():
             data["ingredients"][user_id] = {e: 0 for e in Birthday_event.INGREDIENTS}
@@ -285,13 +264,8 @@ class Cog_event(Extension):
         input:
             ctx: interactions.ComponentContext
         """
-        current_bday_raffle = get_event_object(Event_type.PASSIVE)
-        
-        await utils.custom_assert(current_bday_raffle, "No current event registered", ctx)
-        await utils.custom_assert(isinstance(current_bday_raffle, Birthday_raffle_event), "The current event is not a brithday raffle", ctx)
-
+        current_bday_raffle, data = await self.check_event(Event_type.PASSIVE, Birthday_raffle_event, ctx)
         user_id = str(ctx.author.id)
-        data = get_event_data(current_bday_raffle)
         await utils.custom_assert(user_id not in data["participation"], "You are already registered!", ctx)
         data["participation"].append(user_id)
 
@@ -312,13 +286,8 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             guess: str
         """
-        current_match = get_event_object(Event_type.CHALLENGE)
-        
-        await utils.custom_assert(current_match is not None, "No current challenge event registered", ctx)
-        await utils.custom_assert(isinstance(current_match, Move_match_event), "The current event is not a match moving event", ctx)
-
+        current_match, data = await self.check_event(Event_type.CHALLENGE, Move_match_event, ctx)
         user_id = str(ctx.author.id)
-        data = get_event_data(current_match)
 
         await utils.custom_assert(user_id not in data["completed"].keys(), "You already won the event!", ctx)
 
@@ -351,13 +320,8 @@ class Cog_event(Extension):
             ctx: interactions.SlashContext
             guess: str
         """
-        current_subseq = get_event_object(Event_type.CHALLENGE)
-        
-        await utils.custom_assert(current_subseq is not None, "No current challenge event registered", ctx)
-        await utils.custom_assert(isinstance(current_subseq, Subseq_challenge_event), "The current event is not a subsequence event", ctx)
-
+        current_subseq, data = await self.check_event(Event_type.CHALLENGE, Subseq_challenge_event, ctx)
         user_id = str(ctx.author.id)
-        data = get_event_data(current_subseq)
 
         if user_id not in data["completed"].keys():
             data["completed"][user_id] = {"default": False, "projection": False, "intermediate": False, "both": False, "guesses": []}
@@ -428,6 +392,33 @@ class Cog_event(Extension):
         # await utils.custom_assert(ctx.author.id == self.bot.owner.id, "You are not allowed to use this command!", ctx)
         await update_events(self.bot)
         await ctx.send("Done!", ephemeral=True)
+
+
+    @staticmethod
+    async def check_event(event_type, event_cls, ctx):
+        """
+        Verifies that the current event is of the given type
+        --
+        input:
+            event_type: int (Event_type)
+            event_cls: class (Event subclass)
+            ctx: interactions.SlashContext
+        --
+        output:
+            current_event: Event
+            data: dict (Element_dict)
+        """
+        current_event = get_event_object(event_type)
+        
+        type_str = "challenge" if event_type == Event_type.CHALLENGE else "passive"
+        await utils.custom_assert(current_event is not None, f"No current {type_str} event registered", ctx)
+        await utils.custom_assert(isinstance(current_event, event_cls), "The current event is not of this type", ctx)
+        
+        data = get_event_data(current_event)
+        
+        return current_event, data
+
+        
 
 
 def setup(bot):
