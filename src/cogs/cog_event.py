@@ -97,11 +97,23 @@ class Cog_event(Extension):
         
         header_str = "\n".join(wordle.guess(w) for w in guesses)
 
-        if guesses[-1] == wordle.solution:
+        if guesses[-1] == wordle.solution: # When the wordle is succesfully completed.
             progress = 1 + (1 - len(guesses)) / (wordle.NB_ATTEMPTS - 1)
             reward = round(current_wordle.min_reward + progress * (current_wordle.max_reward - current_wordle.min_reward))
-            
-            header_str += f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\nYou earned {reward}{Constants.PIFLOUZ_EMOJI}"
+
+            is_hard_solution = wordle.is_hard_solution(guesses)
+            if is_hard_solution:
+                reward += current_wordle.hard_mode_bonus
+                header_str += (
+                    f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\n"
+                    + "This was a hard mode solution, congratulations!\n"
+                    + f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
+                )
+            else:
+                header_str += (
+                    f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\n"
+                    +f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
+                )
             piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
 
             results = "\n".join([wordle.guess(word) for word in guesses])

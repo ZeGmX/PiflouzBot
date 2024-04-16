@@ -525,9 +525,10 @@ class Challenge_event(Event):
 
 
 class Wordle_event(Challenge_event):
-    def __init__(self, min_reward=200, max_reward=250):
+    def __init__(self, min_reward=100, max_reward=150, hard_mode_bonus=100):
         self.min_reward = min_reward
         self.max_reward = max_reward
+        self.hard_mode_bonus = hard_mode_bonus
 
 
     async def get_embed(self, bot):
@@ -537,7 +538,7 @@ class Wordle_event(Challenge_event):
         output:
             embed: interactions.Embed
         """
-        desc = f"Use `/wordle guess [word]` to try to find the word of the day and earn up to {self.max_reward}{Constants.PIFLOUZ_EMOJI}!\nYou can also check your progress with `/wordle status`"
+        desc = f"Use `/wordle guess [word]` to try to find the word of the day\nYou can also check your progress with `/wordle status`\nYou can earn between {self.min_reward} and {self.max_reward} {Constants.PIFLOUZ_EMOJI} depending on your score\n You can get an additional {self.hard_mode_bonus} {Constants.PIFLOUZ_EMOJI} if you find the word in hard mode (ie if every attempts respects all constraints from previous attempts)!"
 
         embed = Embed(title="Challenge event of the day: new Wordle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
