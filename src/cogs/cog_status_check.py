@@ -25,7 +25,6 @@ class Cog_status_check(Extension):
     --
     Slash commands:
         /is-live
-        /powerups
         /profile
     """
   
@@ -54,33 +53,6 @@ class Cog_status_check(Extension):
             msg = escape_markdown(f"{streamer_name} is not live yet. Follow https://www.twitch.tv/{streamer_name} to stay tuned ! {Constants.FUEGO_EMOJI}")
             await ctx.send(msg)
 
-
-    @slash_command(name="powerups", description="See how powerful you are", scopes=Constants.GUILD_IDS)
-    @auto_defer(ephemeral=True)
-    @utils.check_message_to_be_processed
-    async def powerups_cmd(self, ctx):
-        """
-        Callback for the powerups command
-        --
-        input:
-            ctx: interactions.SlashContext
-        """
-        user_id = str(ctx.author.id)
-        profile = user_profile.get_profile(user_id)
-        content = "Here is the list of powerups you have at the moment:\n"
-        has_any_powerup = False
-
-        for powerup_str in profile["powerups"]:
-            powerup = eval(powerup_str)
-            info = powerup.get_info_str()
-            if info != "": 
-                content +=  info + "\n"
-                has_any_powerup = True
-
-        if not has_any_powerup:
-            content = "You don't have any power up at the moment. Go buy one, using `/store`!"   
-        await ctx.send(content, ephemeral=True)
-        
 
     @slash_command(name="profile", description="Have a look at all your stats", scopes=Constants.GUILD_IDS)
     @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)
