@@ -294,6 +294,8 @@ class Wordle_duel(Duel):
         d["last_image_url1"] = None
         d["last_image_url2"] = None
         d["word"] = choice(Wordle.SOLUTIONS)
+        d["hard1"] = False
+        d["hard2"] = False
 
         return Wordle_duel(d)
 
@@ -330,17 +332,25 @@ class Wordle_duel(Duel):
         user = 1 if user_id == self.dict["user_id1"] else 2
 
         guess = guess.lower()
-        self.dict[f"attempts{user}"].append(guess)
+        guesses = self.dict[f"attempts{user}"]
+        guesses.append(guess)
+        nb_guesses = len(guesses)
 
-        header_str = f"{len(self.dict[f"attempts{user}"])} / {Wordle.NB_ATTEMPTS} attempts made"
+        header_str = f"{nb_guesses} / {Wordle.NB_ATTEMPTS} attempts made"
         if guess == self.dict["word"]:
-            self.dict[f"result{user}"] = len(self.dict[f"attempts{user}"])
-            header_str = f"You found the word after {len(self.dict[f"attempts{user}"])} attempts!"
-        elif len(self.dict[f"attempts{user}"]) == Wordle.NB_ATTEMPTS:
+
+            wordle = Wordle(self.dict["word"])
+            hard_sol = wordle.is_hard_solution(guesses)
+            self.dict[f"result{user}"] = nb_guesses
+            header_str = f"You found the word after {nb_guesses} attempts!"
+            if hard_sol:
+                header_str += "\nThis was a hard-mode solution!"
+                self.dict[f"hard{user}"] = True
+        elif nb_guesses == Wordle.NB_ATTEMPTS:
             self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = f"You failed to find the word!"
 
-        embed = await get_embed_wordle(self.dict["word"], self.dict[f"attempts{user}"], header_str, user_id)
+        embed = await get_embed_wordle(self.dict["word"], guesses, header_str, user_id)
         self.dict[f"last_image_url{user}"] = embed.images[0].url
         return {"embed": embed}
 
@@ -348,9 +358,15 @@ class Wordle_duel(Duel):
     def get_winner_loser(self):
         n1 = self.dict["result1"]
         n2 = self.dict["result2"]
+        
+        hard1 = self.dict["hard1"]
+        hard2 = self.dict["hard2"]
 
         # Tie
-        if n1 == n2: return None
+        if n1 == n2:
+            if hard1 == hard2: return None
+            if hard1: return self.dict["user_id1"], self.dict["user_id2"]
+            return self.dict["user_id2"], self.dict["user_id1"]
         if n1 < n2: return self.dict["user_id1"], self.dict["user_id2"]
         return self.dict["user_id2"], self.dict["user_id1"]
     
@@ -358,13 +374,19 @@ class Wordle_duel(Duel):
     def tie_str(self):
         if self.dict["result1"] == Wordle.NB_ATTEMPTS + 1:
             return f"They both failed to find the word!"
-        return f"They both found the word in {self.dict["result1"]} attempts!"
+        s = f"They both found the word in {self.dict["result1"]} attempts"
+        if self.dict["hard1"]: s += " (hard-mode)!"
+        else: s += " (not hard-mode)!"
+        return s
         
 
     def win_str(self, winner_id, loser_id):
         n1, n2 = self.dict["result1"], self.dict["result2"]
+        hard1, hard2 = self.dict["hard1"], self.dict["hard2"]
         if n1 == Wordle.NB_ATTEMPTS + 1:
             return f"<@{winner_id}> found the word in {n2} attempts while <@{loser_id}> failed!"
         if n2 == Wordle.NB_ATTEMPTS + 1:
             return f"<@{winner_id}> found the word in {n1} attempts while <@{loser_id}> failed!"
-        return f"<@{winner_id}> found the word in {min(n1, n2)} attempts while <@{loser_id}> found it in {max(n1, n2)} attempts!"
+        if n1 != n2:
+            return f"<@{winner_id}> found the word in {min(n1, n2)} attempts while <@{loser_id}> found it in {max(n1, n2)} attempts!"
+        return f"<@{winner_id}> and <@{loser_id}> both found the word in {n1} attempts, but <@{winner_id}> did it in hard mode while <@{loser_id}> did not!"
