@@ -513,8 +513,8 @@ class My_database(dict):
 
 try:
     db = My_database()
-    db.folder = "D:/pibot/my_db"
-    db._load("my_db")
+    db.folder = "my_db"
+    db._load()
 
     # deletes all files and subfolders in the database folder
     for file in os.listdir("my_db"):
@@ -525,6 +525,7 @@ try:
     db._save()
 
 except Exception as e:
+    print(e)
     db = My_database(folder="my_db")
 
 # a = pickle.load(open("D:/pibot/test_db/f.dumped", "rb"))

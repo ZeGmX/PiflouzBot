@@ -170,7 +170,7 @@ if __name__ == "__main__":
     Constants.load()  # Due to import circular import issues
   
     import achievements # to register the listeners
-
+    
     bot.load_extension("achievement_handler")
     bot.load_extension("cogs.cog_achievements")
     bot.load_extension("cogs.cog_buy")
