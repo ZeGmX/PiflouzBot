@@ -192,6 +192,6 @@ def update_db():
     events.reset_event_database(events.Event_type.PASSIVE)
     events.reset_event_database(events.Event_type.CHALLENGE)
 
-    for key in ["birthday_raffle_participation", "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id", "current_event_message_id", "current_event_passive", "current_event_passive_message_id", "match_challenge_completed", "match_challenge_solutions", "nb_baked_cakes", "subseq_challenge_completed", "subseq_challenge_solutions", "word_of_the_day"]:
+    for key in ["birthday_raffle_participation", "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id", "current_event_message_id", "current_event_passive", "current_event_passive_message_id", "match_challenge_completed", "match_challenge_solutions", "nb_baked_cakes", "subseq_challenge_completed", "subseq_challenge_solutions", "word_of_the_day", "baked_cakes", "birthday_event_ingredients", "last_birthday_delivery", "match_challenge", "raffle_participation", "stats", "subseq_challenge", "wordle_guesses", "twitch_notif_message_id"]:
         if key in db.keys():
             del db[key]
