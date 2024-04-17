@@ -237,7 +237,8 @@ class Cog_status_check(Extension):
             col1 = ["", "Balance", "Rank"]
             col2 = ["Piflouz", f"{results["Balance"]}", "N/A"]
             if "Balance ranking" in results.keys(): col2[2] = f"{results["Balance ranking"][0]} (#{results["Balance ranking"][1] + 1})"
-            col3 = ["Piflex", f"{results["Discovered piflex"]}", "N/A"]
+            col3 = ["Piflex", f"N/A", "N/A"]
+            if "Discovered piflex" in results.keys(): col3[1] = f"{results["Discovered piflex"]}"
             if "Piflex ranking" in results.keys(): col3[2] = f"{results["Piflex ranking"][0]} (#{results["Piflex ranking"][1] + 1})"
             col4 = ["Donations", "", "N/A"]
             if "Donation ranking" in results.keys(): col4[2] = f"{results["Donation ranking"][0]} (#{results["Donation ranking"][1] + 1})"
