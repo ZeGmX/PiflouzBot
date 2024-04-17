@@ -54,6 +54,7 @@ class TimeTriggerDT(TimeTrigger):
     def next_fire(self) -> datetime | None:
         t1 = datetime.now()
         t2 = t1.replace(hour=self.target_time[0], minute=self.target_time[1], second=self.target_time[2], microsecond=0)
+        t2 += timedelta(milliseconds=500)  # to avoid rounding errors where the next fire is actually at t2 - epsilon, so the task is called several times
         
         if t2 < t1:
             t2 += timedelta(days=1)
