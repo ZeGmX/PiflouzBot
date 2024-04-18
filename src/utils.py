@@ -55,10 +55,10 @@ async def wait_until(then):
         then: datetime.datetime
     """
     tz = timezone("Europe/Paris")
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(tz=tz)
     then = now.replace(hour=then.hour, minute=then.minute, second=then.second).astimezone(tz)
 
-    dt = then - now.astimezone(tz)
+    dt = then - now
 
     print("Waiting for:", dt.total_seconds() % (24 * 3600))
     await asyncio.sleep(dt.total_seconds() % (24 * 3600))

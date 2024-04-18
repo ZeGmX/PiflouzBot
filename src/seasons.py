@@ -122,7 +122,7 @@ async def season_task(bot):
     tz = timezone("Europe/Paris")
     last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
     next_begin = (last_begin_time + relativedelta(months=3)).astimezone(tz)
-    await asyncio.sleep((next_begin - datetime.datetime.now().astimezone(tz)).total_seconds())
+    await asyncio.sleep((next_begin - datetime.datetime.now(tz=tz)).total_seconds())
 
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
         await end_current_season(bot)
