@@ -106,7 +106,7 @@ class Cog_event(Extension):
                 reward += current_wordle.hard_mode_bonus
                 header_str += (
                     f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\n"
-                    + "This was a hard mode solution, congratulations!\n"
+                    + "This was a hard mode solution, well done!\n"
                     + f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
                 )
             else:
