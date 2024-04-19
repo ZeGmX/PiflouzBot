@@ -71,6 +71,7 @@ def get_new_user_profile():
         "season_results": dict(),
         "daily_bonus": 0,
         "daily_bonus_date": "0001-01-01",
+        "birthday_date": "0000-00-00",
     }
 
 
