@@ -386,7 +386,17 @@ class Cog_event(Extension):
 
         if len(proposed_words) == 0:
             thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
-            await thread.send(f"{ctx.author.mention} solved today's subsequence event!")
+            output_message = f"{ctx.author.mention} solved today's subsequence event at level "
+            if success_projection and success_intermediate:
+                output_message += "4"
+            elif success_intermediate:
+                output_message += "3"
+            elif success_projection:
+                output_message += "2"
+            else:
+                output_message += "1"
+            output_message+=" !"
+            await thread.send(output_message)
 
         db["piflouz_generated"]["event"] += earned
         await utils.update_piflouz_message(self.bot)
