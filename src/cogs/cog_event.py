@@ -87,7 +87,7 @@ class Cog_event(Extension):
             word: str
         """
         current_wordle:Wordle_event = get_event_object(Event_type.CHALLENGE)
-    
+
         await utils.custom_assert(current_wordle is not None, "No current event registered", ctx)
         await utils.custom_assert(isinstance(current_wordle, Wordle_event), "The current event is not a wordle", ctx)
 
@@ -112,6 +112,7 @@ class Cog_event(Extension):
             progress = 1 + (1 - len(guesses)) / (wordle.NB_ATTEMPTS - 1)
             reward = round(current_wordle.min_reward + progress * (current_wordle.max_reward - current_wordle.min_reward))
 
+            results = "\n".join([wordle.guess(word) for word in guesses])
             is_hard_solution = wordle.is_hard_solution(guesses)
             if is_hard_solution:
                 reward += current_wordle.hard_mode_bonus
@@ -120,15 +121,15 @@ class Cog_event(Extension):
                     + "This was a hard mode solution, congratulations!\n"
                     + f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
                 )
+                announcement_msg = f"{ctx.author.mention} solved today's Wordle in hard mode ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             else:
                 header_str += (
                     f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\n"
                     +f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
                 )
+                announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
 
-            results = "\n".join([wordle.guess(word) for word in guesses])
-            announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
             await thread.send(announcement_msg)
 
@@ -138,7 +139,7 @@ class Cog_event(Extension):
         elif len(guesses) == wordle.NB_ATTEMPTS:
             header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
 
-        await self.send_wordle_embed(ctx, wordle, guesses, header_str)  
+        await self.send_wordle_embed(ctx, wordle, guesses, header_str)
 
 
     @slash_command(name="wordle", description="TBD", sub_cmd_name="status", sub_cmd_description="Check how your wordle is going")
