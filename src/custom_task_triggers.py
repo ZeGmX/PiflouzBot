@@ -55,10 +55,10 @@ class TimeTriggerDT(TimeTrigger):
         tz = timezone("Europe/Paris")
         t1 = datetime.now(tz=tz)
         t2 = t1.replace(hour=self.target_time[0], minute=self.target_time[1], second=self.target_time[2], microsecond=0)
-        t2 += timedelta(seconds=30)  # to avoid rounding errors where the next fire is actually at t2 - epsilon, so the task is called several times
         
         if t2 < t1:
             t2 += timedelta(days=1)
-        
+
+        t2 += timedelta(seconds=5)  # to avoid rounding errors where the next fire is actually at t2 - epsilon, so the task is called several times
         # Setting timezones make it independent of summer/winter time
         return t2
