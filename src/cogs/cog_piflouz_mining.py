@@ -28,7 +28,7 @@ class Cog_piflouz_mining(Extension):
         self.bot = bot
     
 
-    @slash_command(name="get", description="For the lazy ones", scopes=Constants.GUILD_IDS)
+    @slash_command(name="get", description="Get some piflouz!", scopes=Constants.GUILD_IDS)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def get_cmd(self, ctx):
