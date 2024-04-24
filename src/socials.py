@@ -1,15 +1,19 @@
+import copy
 from markdown import escape_markdown as escape_markdown
 import time
 import asyncpraw
 import twitch
+import interactions
 from interactions import IntervalTrigger
-from random import shuffle
+from random import shuffle,choice
+from datetime import datetime
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 from my_database import db
 import embed_messages
-
+import powerups
+import user_profile
 
 def get_live_status(user_name, helix=None):
     """
@@ -134,3 +138,49 @@ async def shuffle_names(bot):
     
     for nick, member in zip(names, chaos_members):
         await member.edit_nickname(nick)
+
+@Task.create(TimeTriggerDT(Constants.BIRTHDAY_CHECK_TIME))
+async def check_birthday(bot:interactions.Client):
+    print("Checking birthdays")
+    birthdays = user_profile.get_all_birthdays()
+
+    current_date = datetime.today().strftime('%Y-%m-%d')
+    to_celebrate = []
+    for member_id, member_birthday_date in birthdays.items():
+        #Check the birthday date of each member.
+        print(f"Birthday date of {member_id} : {member_birthday_date}")
+        if member_birthday_date[5:] == current_date[5:]:
+            to_celebrate.append(member_id)
+    nb_birthdays = len(to_celebrate)
+    if nb_birthdays == 0:
+        return
+    
+    current_time = time.time()
+    birthday_powerup = powerups.Birthday_Multiplier(0,100,86400,current_time)
+    output_message = f"Today is the birthday of "
+    for i,member_id in enumerate(to_celebrate):
+        member_tag = await bot.guilds[0].fetch_member(member_id=member_id)
+
+        # Sanity check
+        if member_tag is None:
+            print("Not found member tag of a member that has a birthday date.")
+            continue # Try to do the other members
+
+        # Add the powerup to the member via a "fake" buy
+        #TODO: check if the user is trying to abuse this powerup - add a 364 days delay somehow.
+        if birthday_powerup.on_buy(member_id,current_time):
+            pass # The powerup is sucessfully applied to the member.
+        else:
+            print(f"Failed to add birthday powerup to {member_id} when I should have been able to.")
+
+        # Add the mention of the current member to the global message.
+        if i == 0:
+            output_message +=  member_tag.mention
+        else:
+            output_message += f", {member_tag.mention}"
+    output_message += " "
+    for _ in range(3):
+        output_message += choice([":birthday:",":tada:",Constants.FUEGO_EMOJI])
+    output_message += f"!\nWish them an happy birthday!" #TODO: add birthday emotes in this message.
+    out_channel = await bot.fetch_channel(db["out_channel"])
+    await out_channel.send(output_message)

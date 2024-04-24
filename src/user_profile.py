@@ -168,3 +168,13 @@ def set_all_inactive():
     for user_id, profile in db["profiles"]["active"].items():
         db["profiles"]["inactive"][user_id] = profile
     db["profiles"]["active"] = dict()
+
+
+def get_all_birthdays():
+    birthdays = {}
+    for user_id, profile in db["profiles"]["active"].items():
+        if "birthday_date" not in profile:
+            profile["birthday_date"] = "0000-00-00"
+        elif profile["birthday_date"] != "0000-00-00":
+            birthdays[int(user_id)] = profile["birthday_date"]
+    return birthdays
