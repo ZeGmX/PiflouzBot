@@ -255,6 +255,25 @@ class Piflouz_multiplier(Powerups_non_permanent):
     def get_store_str(self):
         return f"{self.value}% multiplier for the piflouz mining!\nCosts {self.price} {Constants.PIFLOUZ_EMOJI}"
 
+class Birthday_Multiplier(Piflouz_multiplier):
+    """
+    Birthday piflouz multiplier.
+    Should only be called in very specific conditions.
+    """
+    def get_info_str(self):
+        dt = self.duration - int(time.time()) + self.buy_date
+        if dt >= 0:
+            sign = "+" if self.value > 0 else ""
+            return f"Piflouz birthday multiplier • {sign}{self.value}%\nTime left: {utils.seconds_to_formatted_string(dt)}"
+        return ""
+
+
+    def get_event_str(self):
+        return "This is a bug :eyes:. This should not be used in a event. If you see this message, please signal it."
+
+
+    def get_store_str(self):
+        return "This is a bug :eyes:. This powerup shouldn't be in the store. Please signal this if you see it."
 
 class Powerups_permanent(Powerups):
     """
