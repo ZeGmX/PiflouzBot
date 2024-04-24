@@ -17,7 +17,7 @@ class Cog_birthday_tracker(Extension):
         bot: interactions.Client
         # TODO: finish this docstring
     --
-    Slash commands:
+    Slash commands: #TODO: update this
         /birthday set
         /birthday remove
     Components:
@@ -30,7 +30,7 @@ class Cog_birthday_tracker(Extension):
         self.bot = bot
 
 
-    @slash_command(name="birthday", description="#TODO", sub_cmd_name="set",sub_cmd_description="Set your birthday date for a yearly reminder on the server.", scopes=Constants.GUILD_IDS)
+    @slash_command(name="profile-set", description="#TODO", sub_cmd_name="birthday",sub_cmd_description="Set your birthday date for a yearly reminder on the server.", scopes=Constants.GUILD_IDS)
     @slash_option(name="year", description="Your birthday year. Format YYYY.", opt_type=OptionType.INTEGER, required=True, min_value=1900)
     @slash_option(name="month", description="Your birthday month. Format MM.", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=12)
     @slash_option(name="day", description="Your birthday day. Format DD.", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=31)
