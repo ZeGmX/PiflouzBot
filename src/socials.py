@@ -4,7 +4,7 @@ import time
 import asyncpraw
 import twitch
 import interactions
-from interactions import IntervalTrigger
+from interactions import IntervalTrigger,BrandColors
 from random import shuffle,choice
 from datetime import datetime
 
@@ -185,8 +185,18 @@ async def check_birthday(bot:interactions.Client):
         else:
             output_message += f", {member_tag.mention}"
     output_message += " "
+    title_message = "HAPPY BIRTHDAY "
+    birthday_emojis = [":birthday:",":tada:",Constants.FUEGO_EMOJI]
     for _ in range(3):
-        output_message += choice([":birthday:",":tada:",Constants.FUEGO_EMOJI])
+        output_message += choice(birthday_emojis)
+        title_message += choice(birthday_emojis)
     output_message += f"!\nWish them an happy birthday!\nThey also got a special powerup, use `/profile` to check it out."
+    title_message += "!"
+    
+    embed = embed_messages.Embed(title=title_message, thumbnail=embed_messages.EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
+            description=output_message,
+            color=BrandColors.RED
+    )
+    
     out_channel = await bot.fetch_channel(db["out_channel"])
-    await out_channel.send(output_message)
+    await out_channel.send(embed = embed)
