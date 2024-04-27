@@ -264,7 +264,7 @@ class Birthday_Multiplier(Piflouz_multiplier):
         dt = self.duration - int(time.time()) + self.buy_date
         if dt >= 0:
             sign = "+" if self.value > 0 else ""
-            return f"Piflouz birthday multiplier • {sign}{self.value}%\nTime left: {utils.seconds_to_formatted_string(dt)}"
+            return f"Birthday multiplier • {sign}{self.value}%\nTime left: {utils.seconds_to_formatted_string(dt)}"
         return ""
 
 

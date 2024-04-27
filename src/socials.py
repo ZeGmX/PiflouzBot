@@ -154,24 +154,30 @@ async def check_birthday(bot:interactions.Client):
     nb_birthdays = len(to_celebrate)
     if nb_birthdays == 0:
         return
-    
-    current_time = time.time()
+
+    current_time = int(time.time())
     birthday_powerup = powerups.Birthday_Multiplier(0,100,86400,current_time)
     output_message = f"Today is the birthday of "
     for i,member_id in enumerate(to_celebrate):
         member_tag = await bot.guilds[0].fetch_member(member_id=member_id)
+        current_member_profile = user_profile.get_profile(member_id)
 
         # Sanity check
         if member_tag is None:
             print("Not found member tag of a member that has a birthday date.")
             continue # Try to do the other members
 
+        if (
+            "previous_birthday_powerup" in current_member_profile
+            and current_time - current_member_profile["previous_birthday_powerup"] <= 360*24*60*60
+        ):
+            print(f"Member {member_id} did not get a birthday powerup because their last one was less than 360 days ago.")
+
         # Add the powerup to the member via a "fake" buy
-        #TODO: check if the user is trying to abuse this powerup - add a 364 days delay somehow.
-        if birthday_powerup.on_buy(member_id,current_time):
-            pass # The powerup is sucessfully applied to the member.
+        elif birthday_powerup.on_buy(member_id,current_time):
+            current_member_profile["previous_birthday_powerup"] = current_time # The powerup is sucessfully applied to the member.
         else:
-            print(f"Failed to add birthday powerup to {member_id} when I should have been able to.")
+            print(f"Failed to add birthday powerup to {member_id} when I should have been able to.\nMaybe they already have this powerup?")
 
         # Add the mention of the current member to the global message.
         if i == 0:
@@ -181,6 +187,6 @@ async def check_birthday(bot:interactions.Client):
     output_message += " "
     for _ in range(3):
         output_message += choice([":birthday:",":tada:",Constants.FUEGO_EMOJI])
-    output_message += f"!\nWish them an happy birthday!" #TODO: add birthday emotes in this message.
+    output_message += f"!\nWish them an happy birthday!\nThey also got a special powerup, use `/profile` to check it out."
     out_channel = await bot.fetch_channel(db["out_channel"])
     await out_channel.send(output_message)
