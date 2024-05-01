@@ -3,12 +3,12 @@ load_dotenv()
 
 from interactions import Intents, Activity, ActivityType, Status
 from interactions import listen
-import logging
-import os
+import traceback
 
 from achievement_handler import Achievement_handler_ext
 from constant import Constants
 from custom_client import Client
+from custom_exceptions import Custom_Assert_Exception
 from my_database import db
 import events
 import piflouz_handlers
@@ -21,16 +21,22 @@ import utils
 
 
 intents = Intents.new(guild_members=True, message_content=True, guild_messages=True, guild_message_reactions=True, direct_messages=True, guilds=True)
-activity = Activity(name="Piflouz generator", type=ActivityType.CUSTOM, state="Generating piflouz")
+activity = Activity.create(name="Piflouz generator", type=ActivityType.CUSTOM, state="Generating piflouz")
 bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity, send_command_tracebacks=False)
 
 
 @listen(disable_default_listeners=True)
 async def on_error(error):
-    print(f"Got the following error in {error.source}: {error.error}")
-    print("Had the following arguments:", error.args)
-    print("Had the following kwargs:", error.kwargs)
-    print("Had the following context:", error.ctx)
+
+    if not isinstance(error.error, Custom_Assert_Exception):
+        print(f"\033[91mGot the following error in {error.source}: {error.error}")
+        print("Had the following arguments:", error.args)
+        print("Had the following kwargs:", error.kwargs)
+        print("Had the following context:", error.ctx)
+        print("" + ''.join(traceback.format_exception(error.error)) + "\033[0m")
+    else:
+        print(f"\033[93mGot the following error in {error.source}: {error.error}\033[0m")
+    
 
 
 @listen()

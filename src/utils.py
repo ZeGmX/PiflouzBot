@@ -8,6 +8,7 @@ from pytz import timezone
 import requests
 
 from constant import Constants
+from custom_exceptions import Custom_Assert_Exception
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages
 from my_database import db
@@ -157,7 +158,7 @@ async def custom_assert(condition, msg, ctx):
     """
     if not condition:
         await ctx.send(msg, ephemeral=True)
-        raise Exception(msg)
+        raise Custom_Assert_Exception(msg)
 
 
 def upload_image_to_imgur(path):
