@@ -1,6 +1,9 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import matplotlib
+matplotlib.use('Agg')
+
 from interactions import Intents, Activity, ActivityType, Status
 from interactions import listen
 import traceback
@@ -46,7 +49,7 @@ async def on_startup():
     """
     print(f"I have logged in as {bot.user.display_name} - id: {bot.user.id}")
 
-      # Setting the base parameters in the database
+    # Setting the base parameters in the database
     for key in [
         "random_gifts",         # information about current piboxes
         "mega_piflexers",       # buy date of user doing /piflex

@@ -85,7 +85,7 @@ class Cog_status_check(Extension):
         """
         ### Creating the background
         background = Image.open("src/cogs/assets/profile.png")    
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         plt.axis("off")
         plt.xlim(0, 1600)
         plt.ylim(0, 900)
@@ -267,8 +267,8 @@ class Cog_status_check(Extension):
         ax.text(*content_left_pos, content, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         
         plt.savefig(path, bbox_inches="tight", pad_inches=0, dpi=300)
-        
-                    
+        plt.close(fig)
+
 
 def setup(bot):
     Cog_status_check(bot)

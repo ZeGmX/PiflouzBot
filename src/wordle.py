@@ -239,6 +239,7 @@ class Wordle:
                 plt.text(position[0] + 3.8, position[1] + 3.5, letter.upper(), color=color, fontsize=12, ha="center", va="center")
 
         plt.savefig(path, transparent=True)
+        plt.close(fig)
         # Cropping the white outline
         img = Image.open(path)
         img.load()
