@@ -36,9 +36,9 @@ class Cog_buy(Extension):
     @component_callback("piflex")
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
-    async def piflex_cmd(self, ctx):
+    async def piflex_component(self, ctx):
         """
-        Callback for the piflex command
+        Callback for the piflex component
         --
         input:
             ctx: interactions.ComponentContext
@@ -77,9 +77,9 @@ class Cog_buy(Extension):
     @component_callback("buy_rank_piflex")
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
-    async def buy_rank_piflex_cmd(self, ctx):
+    async def buy_rank_piflex_component(self, ctx):
         """
-        Callback for the buyRankPiflex command
+        Callback for the buyRankPiflex component
         --
         input:
             ctx: interactions.SlashContext
