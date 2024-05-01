@@ -229,7 +229,7 @@ def get_current_daily_bonus(user_id, current_time):
     profile = user_profile.get_profile(user_id)
 
     tz = timezone("Europe/Paris")
-    d = tz.localize(datetime.fromtimestamp(current_time)).date()
+    d = datetime.fromtimestamp(current_time, tz=tz).date()
     prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
 
     if d != prev_date:
@@ -252,7 +252,7 @@ def get_update_daily_bonus(user_id, current_time):
     profile = user_profile.get_profile(user_id)
 
     tz = timezone("Europe/Paris")
-    d = tz.localize(datetime.fromtimestamp(current_time)).date()
+    d = datetime.fromtimestamp(current_time, tz=tz).date()
     prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
 
     if d != prev_date:

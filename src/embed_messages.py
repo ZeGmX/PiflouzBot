@@ -64,7 +64,7 @@ def get_embeds_help_message():
                 ),
                 EmbedField(
                     name="`/get`",
-                    value="For the lazy ones",
+                    value="Get some piflouz!",
                     inline=False
                 ),
                 EmbedField(

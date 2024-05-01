@@ -20,3 +20,4 @@ venv-*
 docs/
 profile.psd
 turbo_piflouz_simu*
+.vscode/

@@ -101,6 +101,7 @@ class Cog_event(Extension):
             progress = 1 + (1 - len(guesses)) / (wordle.NB_ATTEMPTS - 1)
             reward = round(current_wordle.min_reward + progress * (current_wordle.max_reward - current_wordle.min_reward))
 
+            results = "\n".join([wordle.guess(word) for word in guesses])
             is_hard_solution = wordle.is_hard_solution(guesses)
             if is_hard_solution:
                 reward += current_wordle.hard_mode_bonus
@@ -109,15 +110,15 @@ class Cog_event(Extension):
                     + "This was a hard mode solution, well done!\n"
                     + f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
                 )
+                announcement_msg = f"{ctx.author.mention} solved today's Wordle in hard mode ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             else:
                 header_str += (
                     f"\n\nCongratulations, you found the word of the day with {len(guesses)}/{wordle.NB_ATTEMPTS} attempts!\n"
                     +f"You earned {reward}{Constants.PIFLOUZ_EMOJI}"
                 )
+                announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
 
-            results = "\n".join([wordle.guess(word) for word in guesses])
-            announcement_msg = f"{ctx.author.mention} solved today's Wordle ({len(guesses)}/{wordle.NB_ATTEMPTS})!\n{results}"
             thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
             await thread.send(announcement_msg)
 
@@ -127,7 +128,7 @@ class Cog_event(Extension):
         elif len(guesses) == wordle.NB_ATTEMPTS:
             header_str += f"\n\nOuch, you failed :(\nThe answer was: **{wordle.solution}**"
 
-        await self.send_wordle_embed(ctx, wordle, guesses, header_str)  
+        await self.send_wordle_embed(ctx, wordle, guesses, header_str)
 
 
     @slash_command(name="wordle", description="TBD", sub_cmd_name="status", sub_cmd_description="Check how your wordle is going")
@@ -385,7 +386,17 @@ class Cog_event(Extension):
 
         if len(proposed_words) == 0:
             thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
-            await thread.send(f"{ctx.author.mention} solved today's subsequence event!")
+            output_message = f"{ctx.author.mention} solved today's subsequence event at level "
+            if success_projection and success_intermediate:
+                output_message += "4"
+            elif success_intermediate:
+                output_message += "3"
+            elif success_projection:
+                output_message += "2"
+            else:
+                output_message += "1"
+            output_message+=" !"
+            await thread.send(output_message)
 
         db["piflouz_generated"]["event"] += earned
         await utils.update_piflouz_message(self.bot)
