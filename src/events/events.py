@@ -121,7 +121,7 @@ def get_default_db_data(event_type):
                 "current_message_id": -1,
                 "current_thread_id": -1,
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
-                "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": []},
+                "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()}
             }
 
@@ -946,6 +946,7 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
                 user_unique_sol.append(f"<@{user_id}>")
 
         data["completed"] = dict()
+        data["msg_id"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
         await thread.send(f"The event is over! Here is a level 4 solution: **{data["example_solution"]}**\n\
