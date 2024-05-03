@@ -1,7 +1,8 @@
+import bisect
 import pandas as pd
-from random import randint, sample
-from unidecode import unidecode
+from random import sample, choice
 import re
+from unidecode import unidecode
 
 
 class Subseq_challenge:
@@ -14,23 +15,26 @@ class Subseq_challenge:
         self.subseq = subseq
 
 
-    def check_default(self, answer, df=None, check_if_real_word=True):
+    def check_default(self, answer, all_clean_words=None, check_if_real_word=True):
         """
         Checks if the given answer is a real word and has the subsequence
         --
         input:
             answer: str
+            all_clean_words: List[str] -> list of all accepted (clean) words
+            check_if_real_word: bool -> whether to check if the answer is in the list of all accepted words
         --
         output:
             bool
         """
         answer = self._clean_word(answer)
-        if df is None:
-            df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
-            df = df.astype({"Word": "str"})
+        if all_clean_words is None:
+            all_clean_words = Subseq_challenge.get_word_list("src/events/assets/all_french_words_clean.txt")
         
         if check_if_real_word:
-            if not any(answer == self._clean_word(w) for w in df["Word"]): return False
+            # Binary search to check if the answer is in the list of all accepted words (faster than using "in" since the list is sorted)
+            i = bisect.bisect_left(all_clean_words, answer)
+            if i == len(all_clean_words) or all_clean_words[i] != answer: return False
 
         it = iter(answer)
         return all(c in it for c in self.subseq)
@@ -81,15 +85,15 @@ class Subseq_challenge:
             List[int] -> how many solutions there are for each level
             str -> example solution that solves all levels
         """
-        df = pd.read_csv("src/events/assets/french_words.csv", sep=";")
-        df = df.astype({"Word": "str"})
-        df.sort_values(by="freqlivres", inplace=True, ascending=False)
-
+        easy_words = Subseq_challenge.get_word_list("src/events/assets/easy_french_words.txt")
+        all_clean_words = Subseq_challenge.get_word_list("src/events/assets/all_french_words_clean.txt")
+        all_words = Subseq_challenge.get_word_list("src/events/assets/all_french_words.txt")
+        
         i = 1
-        res = Subseq_challenge.attempt_find_new(df, length)
+        res = Subseq_challenge.attempt_find_new(easy_words, all_words, all_clean_words, length)
         while res is None:
             i += 1
-            res = Subseq_challenge.attempt_find_new(df, length)
+            res = Subseq_challenge.attempt_find_new(easy_words, all_words, all_clean_words, length)
 
         print(f"Found in {i} iterations")
         
@@ -98,7 +102,7 @@ class Subseq_challenge:
     
 
     @staticmethod
-    def attempt_find_new(df, length):
+    def attempt_find_new(easy_words, all_words, all_clean_words, length):
         """
         Attempts to find a new subsequence challenge, meeting the following difficulty conditions:
         - There exists a solution in the top 2000 most common words
@@ -106,7 +110,9 @@ class Subseq_challenge:
         - There are no solutions obtained by adding less than 2 letters
         --
         input:
-            df: pd.DataFrame -> dataframe of words
+            easy_words: List[str] -> list of the top 2000 most common words
+            all_words: List[str] -> list of all words  = all accepted answers
+            all_clean_words: List[str] -> list of all (cleaned) words
             length: int -> length of the subsequence
         --
         output:
@@ -114,7 +120,7 @@ class Subseq_challenge:
             all_sols: List[List[str]] -> list of solutions for each level
         """
         # Condition 1: there exists a solution in the top 2000 most common words
-        solution_lvl1 = df.iloc[randint(0, 1999)]["Word"]
+        solution_lvl1 = choice(easy_words)
         solution_lvl1_clean = Subseq_challenge._clean_word(solution_lvl1)
 
         if len(solution_lvl1_clean) < length + 2: return None
@@ -127,9 +133,9 @@ class Subseq_challenge:
         subseq = Subseq_challenge(subseq)
         all_sols = [[], [], [], []]
 
-        for word in df["Word"]:
-            word_clean = Subseq_challenge._clean_word(word)
-            b1 = subseq.check_default(word_clean, df=df, check_if_real_word=False)
+        for i, word_clean in enumerate(all_clean_words):
+            word = all_words[i]
+            b1 = subseq.check_default(word_clean, all_clean_words=easy_words, check_if_real_word=False)
             b2 = subseq.check_projection(word_clean)
             b3 = subseq.check_with_intermediate(word_clean)
 
@@ -160,3 +166,18 @@ class Subseq_challenge:
         """
         res = unidecode(word.lower())
         return "".join(filter(lambda c: c in "abcdefghijklmnopqrstuvwxyz", res))
+
+    
+    @staticmethod
+    def get_word_list(path):
+        """
+        Returns word list from a given path
+        --
+        input:
+            path: str -> path to the file containing the word list. Each word should be on a separate line, with no header
+        --
+        output:
+            List[str]
+        """
+        df = pd.read_csv(path, header=None)
+        return df.astype(str)[0].tolist()
