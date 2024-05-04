@@ -129,12 +129,10 @@ class Cog_status_check(Extension):
         profile = user_profile.get_profile(user_id)
 
         # Getting the piflouz image
-        response = requests.get(Constants.PIFLOUZ_URL)
-        piflouz_img = Image.open(BytesIO(response.content))
+        piflouz_img = Image.open("src/cogs/assets/piflouz.png")
 
         # Getting the turbo piflouz image
-        response = requests.get(Constants.TURBO_PIFLOUZ_ANIMATED_URL)
-        turbo_piflouz_img = Image.open(BytesIO(response.content))        
+        turbo_piflouz_img = Image.open("src/cogs/assets/turbo_piflouz.png")
 
         r_piflouz = 25
         msg_piflouz_left_pos, piflouz_emoji_center = (110, 405), (80, 405)
