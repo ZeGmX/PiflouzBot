@@ -99,7 +99,7 @@ def get_profile(user_id):
 
 def get_inverted(key):
     """
-    Returns a dictionary with the value associated to each user_id
+    Returns a dictionary with the value associated to each user_id (only for active users)
     --
     input:
         key: str
@@ -109,6 +109,22 @@ def get_inverted(key):
     """
     res = dict()
     for user_id, profile in db["profiles"]["active"].items():
+        res[user_id] = profile[key]
+    return res
+
+
+def get_inverted_all(key):
+    """
+    Same as `get_inverted` but for all users (active and inactive)
+    --
+    input:
+        key: str
+    --
+    output:
+        dict
+    """
+    res = dict()
+    for user_id, profile in chain(db["profiles"]["active"].items(), db["profiles"]["inactive"].items()):
         res[user_id] = profile[key]
     return res
 
@@ -171,10 +187,10 @@ def set_all_inactive():
 
 
 def get_all_birthdays():
-    birthdays = {}
-    for user_id, profile in db["profiles"]["active"].items():
-        if "birthday_date" not in profile:
-            profile["birthday_date"] = "0000-00-00"
-        elif profile["birthday_date"] != "0000-00-00":
-            birthdays[int(user_id)] = profile["birthday_date"]
-    return birthdays
+    """
+    Returns the birthday date of all users
+    --
+    output:
+        dict (user_id -> birthday_date)
+    """
+    return get_inverted_all("birthday_date")
