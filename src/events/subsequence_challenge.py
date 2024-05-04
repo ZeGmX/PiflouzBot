@@ -179,5 +179,30 @@ class Subseq_challenge:
         output:
             List[str]
         """
-        df = pd.read_csv(path, header=None)
+        df = pd.read_csv(path, header=None, encoding="latin-1")
         return df.astype(str)[0].tolist()
+
+
+    @staticmethod
+    def get_unclean_equivalent(*words):
+        """
+        Returns the unclean equivalent of the given clean words
+        --
+        input:
+            words: List[str] -> list of clean words
+        --
+        output:
+            List[str] -> list of unclean words
+        """
+        all_clean_words = Subseq_challenge.get_word_list("src/events/assets/all_french_words_clean.txt")
+        all_words = Subseq_challenge.get_word_list("src/events/assets/all_french_words.txt")
+        
+        res = []
+        for word in words:
+            i = bisect.bisect_left(all_clean_words, word)
+            
+            if i == len(all_clean_words) or all_clean_words[i] != word:
+                raise ValueError(f"Word {word} not found in the list of all clean words")
+
+            res.append(all_words[i])
+        return res

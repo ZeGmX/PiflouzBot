@@ -936,6 +936,7 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
                 if w not in found_solutions_nb:
                     found_solutions_nb[w] = 0
                 found_solutions_nb[w] += 1
+        found_solutions = Subseq_challenge.get_unclean_equivalent(*found_solutions)
         found_solutions_str = f"||{", ".join(sorted(found_solutions))}||"
         
         user_unique_sol = []
