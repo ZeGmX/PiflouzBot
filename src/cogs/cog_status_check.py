@@ -43,7 +43,7 @@ class Cog_status_check(Extension):
             ctx: interactions.SlashContext
             streamer_name: str
         """
-        stream = socials.get_live_status(streamer_name)
+        stream = await socials.get_live_status(streamer_name)
         if stream is not None:
             # The streamer is live
             msg = escape_markdown(f"{streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
