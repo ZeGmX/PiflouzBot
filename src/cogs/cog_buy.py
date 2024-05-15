@@ -67,6 +67,7 @@ class Cog_buy(Extension):
 
             await utils.update_piflouz_message(self.bot)
             self.bot.dispatch("piflex_bought", ctx.author.id)
+            await self.update_store_msg(ctx, profile["piflouz_balance"])
 
         # User doesn't have enough money
         else:
@@ -97,6 +98,7 @@ class Cog_buy(Extension):
             await utils.update_piflouz_message(self.bot)
             db["piflexers"][user_id] = int(ctx.id.created_at.timestamp())
             self.bot.dispatch("piflexer_rank_bought", ctx.author.id)
+            await self.update_store_msg(ctx, profile["piflouz_balance"])
         else:
             # User does not have enough money
             if role_id not in member.roles:
@@ -117,11 +119,11 @@ class Cog_buy(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        embed = embed_messages.get_embed_store_ui()
+        balance = user_profile.get_profile(str(ctx.author.id))["piflouz_balance"]
+        
+        embed = embed_messages.get_embed_store_ui(balance)
 
-        buttons = [Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]\
-                + [Button(style=ButtonStyle.GRAY, label="", custom_id="buy_rank_piflex", emoji=Constants.PIFLOUZ_EMOJI),
-                   Button(style=ButtonStyle.GRAY, label="", custom_id="piflex", emoji=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI)]
+        buttons = self.get_all_store_components()
 
         await ctx.send(embed=embed, components=spread_to_rows(*buttons), ephemeral=True)
     
@@ -144,6 +146,8 @@ class Cog_buy(Extension):
             await utils.update_piflouz_message(self.bot)
             await ctx.send("Successfully bought the powerup", ephemeral=True)
             self.bot.dispatch("store_purchase_successful", ctx.author.id)
+            
+            await self.update_store_msg(ctx, profile["piflouz_balance"])
         else:
             await ctx.send("Purchase failed", ephemeral=True)
 
@@ -163,6 +167,28 @@ class Cog_buy(Extension):
         async def callback(ctx):
             await self.store_button_callback(ctx, emoji)
         return callback
+
+    
+    async def update_store_msg(self, ctx, balance):
+        """
+        Updates the store message with the given balance
+        --
+        input:
+            ctx: interactions.SlashContext
+            balance: int
+        """
+        embed = embed_messages.get_embed_store_ui(balance)
+        await ctx.edit(ctx.message, embed=embed, components=spread_to_rows(*self.get_all_store_components()))
+    
+    
+    def get_all_store_components(self):
+        """
+        Returns all the components of the store
+        """
+        buttons = [Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]\
+                + [Button(style=ButtonStyle.GRAY, label="", custom_id="buy_rank_piflex", emoji=Constants.PIFLOUZ_EMOJI),
+                   Button(style=ButtonStyle.GRAY, label="", custom_id="piflex", emoji=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI)]
+        return buttons
 
 
 def setup(bot):
