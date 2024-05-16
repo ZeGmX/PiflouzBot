@@ -79,7 +79,17 @@ class Cog_birthday_tracker(Extension):
         await ctx.send("Removed your birthday from the database!")
 
 
-    def format_date(self,year,month,day):
+    def format_date(self,year:int,month:int,day:int)->str:
+        """Formats dates elements into a string, used to store in the database.
+
+        Args:
+            year (int)
+            month (int)
+            day (int)
+
+        Returns:
+            str: The formatted date, format "YYYY-MM-DD"
+        """
         month_str = str(month)
         if month<10:
             month_str = f"0{month_str}"
@@ -91,7 +101,7 @@ class Cog_birthday_tracker(Extension):
         return f"{year}-{month_str}-{day_str}"
 
 
-    def is_leap_year(self,year):
+    def is_leap_year(self,year:int)->bool:
         """Check whether a year is leap
 
         Args:
