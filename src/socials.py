@@ -1,12 +1,11 @@
+from aiohttp import ClientTimeout
 import asyncpraw
-from datetime import datetime
-import interactions
-from interactions import IntervalTrigger,BrandColors
+from interactions import IntervalTrigger
 from markdown import escape_markdown as escape_markdown
-from pytz import timezone
-from random import shuffle,choice
+from random import shuffle
 import time
-import twitch
+from twitchAPI.twitch import Twitch
+from twitchAPI.helper import first
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
@@ -15,24 +14,21 @@ import embed_messages
 import powerups
 import user_profile
 
-def get_live_status(user_name, helix=None):
+async def get_live_status(user_name=None, helix=None):
     """
     Sends a request to the twich API about a streamer
     --
     input:
         user_name: string -> name of the streamer
-        helix: twitch.Helix
+        helix: twitchAPI.twitch.Twitch
     --
     output:
-        stream: twitch.helix.models.stream.Stream
+        stream: twitchAPI.object.api.Stream
     """
     if helix is None:
-        helix = twitch.Helix(Constants.TWITCH_ID, Constants.TWITCH_SECRET)
-    try:
-        stream = helix.stream(user_login=user_name)  # Returns an error if the streamer is not live
-        return stream
-    except twitch.helix.resources.StreamNotFound:
-        return None
+        helix = await Twitch(Constants.TWITCH_ID, Constants.TWITCH_SECRET, session_timeout=ClientTimeout(total=30))
+
+    return await first(helix.get_streams(user_login=user_name))
 
 
 @Task.create(IntervalTrigger(seconds=30))
@@ -46,20 +42,24 @@ async def task_check_live_status(bot):
     print("checking live status")
 
     if "twitch_channel" in db.keys():
-        helix = twitch.Helix(Constants.TWITCH_ID, Constants.TWITCH_SECRET)
+        helix = await Twitch(Constants.TWITCH_ID, Constants.TWITCH_SECRET, session_timeout=ClientTimeout(total=30))
+
+        is_live = db["is_currently_live"]
+
         for streamer_name in Constants.STREAMERS:
-            stream = get_live_status(streamer_name, helix=helix)
+            stream = await get_live_status(user_name=streamer_name, helix=helix)
+
             if stream is not None:
-                if streamer_name not in db["is_currently_live"].keys() or streamer_name not in db["previous_live_message_time"].keys():
-                    db["is_currently_live"][streamer_name] = False
+                if streamer_name not in is_live.keys() or streamer_name not in db["previous_live_message_time"].keys():
+                    is_live[streamer_name] = False
                     db["previous_live_message_time"][streamer_name] = 0
 
-                if not db["is_currently_live"][streamer_name]:
-                    db["is_currently_live"][streamer_name] = True
+                if not is_live[streamer_name]:
+                    is_live[streamer_name] = True
                     await send_new_live_message(bot, stream, streamer_name)
 
-            else:
-                db["is_currently_live"][streamer_name] = False
+            elif is_live[streamer_name]:
+                is_live[streamer_name] = False
 
 
 async def send_new_live_message(bot, stream, streamer_name):

@@ -64,7 +64,7 @@ def get_embeds_help_message():
                 ),
                 EmbedField(
                     name="`/get`",
-                    value="For the lazy ones",
+                    value="Get some piflouz!",
                     inline=False
                 ),
                 EmbedField(
@@ -258,16 +258,19 @@ def get_embed_piflex(user):
     return embed, index
 
 
-def get_embed_store_ui():
+def get_embed_store_ui(balance):
     """
     Returns an embed message corresponding to the store message
+    --
+    input:
+        balance: int -> the current balance of the user
     --
     output:
         embed: interactions.Embed
     """
     embed = Embed(
         title="Piflouz shop",
-        description="Here you can buy useful upgrades!",
+        description=f"Here you can buy useful upgrades!\n\n**Your balance: {balance} {Constants.PIFLOUZ_EMOJI}**",
         color=RoleColors.DARK_MAGENTA,
     )
     

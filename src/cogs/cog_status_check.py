@@ -43,7 +43,7 @@ class Cog_status_check(Extension):
             ctx: interactions.SlashContext
             streamer_name: str
         """
-        stream = socials.get_live_status(streamer_name)
+        stream = await socials.get_live_status(streamer_name)
         if stream is not None:
             # The streamer is live
             msg = escape_markdown(f"{streamer_name} is currently live on \"{stream.title}\", go check out on https://www.twitch.tv/{streamer_name} ! {Constants.FUEGO_EMOJI}")
@@ -85,7 +85,7 @@ class Cog_status_check(Extension):
         """
         ### Creating the background
         background = Image.open("src/cogs/assets/profile.png")    
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         plt.axis("off")
         plt.xlim(0, 1600)
         plt.ylim(0, 900)
@@ -136,12 +136,10 @@ class Cog_status_check(Extension):
 
         ### Richies
         # Getting the piflouz image
-        response = requests.get(Constants.PIFLOUZ_URL)
-        piflouz_img = Image.open(BytesIO(response.content))
+        piflouz_img = Image.open("src/cogs/assets/piflouz.png")
 
         # Getting the turbo piflouz image
-        response = requests.get(Constants.TURBO_PIFLOUZ_ANIMATED_URL)
-        turbo_piflouz_img = Image.open(BytesIO(response.content))        
+        turbo_piflouz_img = Image.open("src/cogs/assets/turbo_piflouz.png")
 
         r_piflouz = 25
         msg_piflouz_left_pos, piflouz_emoji_center = (110, 410), (80, 410)
@@ -274,8 +272,8 @@ class Cog_status_check(Extension):
         ax.text(*content_left_pos, content, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         
         plt.savefig(path, bbox_inches="tight", pad_inches=0, dpi=300)
-        
-                    
+        plt.close(fig)
+
 
 def setup(bot):
     Cog_status_check(bot)

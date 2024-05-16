@@ -100,7 +100,7 @@ class Achievement_raffle_participation_20(Achievement):
 
 @listen_to("raffle_participation_successful")
 class Achievement_raffle_participation_100(Achievement):
-    name = "Intermediate Gambler"
+    name = "Extreme Gambler"
     description = "Put at least 100 tickets in a single raffle"
     reward = 300
 

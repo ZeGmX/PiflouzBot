@@ -511,29 +511,6 @@ class My_database(dict):
         return self.to_element().__str__()
 
 
-try:
-    db = My_database()
-    db.folder = "my_db"
-    db._load()
-
-    # deletes all files and subfolders in the database folder
-    for file in os.listdir("my_db"):
-        if os.path.isdir(f"my_db/{file}"):
-            rmtree(f"my_db/{file}")
-        else:
-            os.remove(f"my_db/{file}")
-    db._save()
-
-except Exception as e:
-    print(e)
-    db = My_database(folder="my_db")
-
-# a = pickle.load(open("D:/pibot/test_db/f.dumped", "rb"))
-# print(a)
-
-# for key in list(db.keys()):
-#     del db[key]
-
-# a = pickle.load(open("D:/Downloads/pibot/2023_11_02_22_00_00.dump", "rb"))
-# for key in list(a.keys()):
-#     db[key] = a[key]
+db = My_database()
+db.folder = "my_db"
+db._load()

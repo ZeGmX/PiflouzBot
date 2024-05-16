@@ -122,7 +122,7 @@ class Matches_Interface:
         input:
             folder: str -> folder where to save the image
         """
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.imshow(Matches_Interface.IMG_BACKGROUND)
 
         plt.axis("off")
@@ -136,6 +136,7 @@ class Matches_Interface:
         Matches_Interface.draw_expr(self.riddle, scale, (241, 615 + Matches_Interface.MATCH_INIT_SCALE * scale / 2), ax)
 
         plt.savefig(folder + "riddle.png", bbox_inches="tight", pad_inches=0)
+        plt.close(fig)
 
 
     def save_solution(self, folder):
@@ -145,7 +146,7 @@ class Matches_Interface:
         input:
             folder: str -> folder where to save the image
         """
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax.imshow(Matches_Interface.IMG_BACKGROUND)
 
         plt.axis("off")
@@ -160,10 +161,8 @@ class Matches_Interface:
 
         Matches_Interface.draw_expr(self.main_sol, scale, (241, 615 + 1.8 * Matches_Interface.MATCH_INIT_SCALE * scale), ax)
 
-        y1 = 615 + scale * Matches_Interface.MATCH_INIT_SCALE
-        y2 = 615 - scale * Matches_Interface.MATCH_INIT_SCALE
-
         plt.savefig(folder + "solution.png", bbox_inches="tight", pad_inches=0)
+        plt.close(fig)
 
 
     def save_all(self, folder):

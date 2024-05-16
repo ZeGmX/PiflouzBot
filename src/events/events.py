@@ -19,8 +19,15 @@ import utils
 from wordle import Wordle
 
 
+waiting_for_reset = False
+
 @Task.create(IntervalTrigger(minutes=5))
 async def event_handlers(bot):
+    # This global variable keeps track of whether this task is already running in another instance, and is handling the event reset part
+    # If it is, we don't want to run it again
+    # Otherwise, if the task is called at e.g. t = 320 s before the reset, then it would be called again at t = 20 s before, and both instances would try to reset the event
+    global waiting_for_reset
+    
     tz = timezone("Europe/Paris")
     now = datetime.datetime.now(tz=tz)
     then = Constants.EVENT_TIME
@@ -31,12 +38,14 @@ async def event_handlers(bot):
     if current_event_passive is not None:
         await current_event_passive.actions_every_5min(bot)
 
-    if dt > 330:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
+    if dt > 330 or waiting_for_reset:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
         return
 
+    waiting_for_reset = True
     await asyncio.sleep(dt)
 
     await update_events(bot)
+    waiting_for_reset = False
 
 
 async def update_events(bot):

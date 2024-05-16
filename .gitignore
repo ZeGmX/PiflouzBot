@@ -17,4 +17,7 @@ todo.txt
 src/events/riddle.png
 src/events/solution.png
 venv-*
+docs/
+profile.psd
+turbo_piflouz_simu*
 .vscode/
