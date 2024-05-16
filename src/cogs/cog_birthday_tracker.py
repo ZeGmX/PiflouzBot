@@ -15,13 +15,12 @@ class Cog_birthday_tracker(Extension):
     ---
     fields:
         bot: interactions.Client
-        # TODO: finish this docstring
     --
-    Slash commands: #TODO: update this
-        /birthday set
-        /birthday remove
+    Slash commands: 
+        /set-profile birthday
+        /clear-profile birthday
     Components:
-        # TODO: Finish this docstring
+        months_array: List[str] - List of all the months names.
     """
 
     months_array = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
