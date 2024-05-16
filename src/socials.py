@@ -1,5 +1,6 @@
 from aiohttp import ClientTimeout
 import asyncpraw
+import interactions
 from interactions import IntervalTrigger
 from markdown import escape_markdown as escape_markdown
 from random import shuffle
