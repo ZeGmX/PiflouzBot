@@ -117,17 +117,24 @@ class Cog_status_check(Extension):
         ax.imshow(img, extent=(avatar_center[0] - r_avatar, avatar_center[0] + r_avatar, avatar_center[1] + r_avatar, avatar_center[1] - r_avatar))
 
 
-        ### Adding the username
-        name_center_pos = (500, 147)
+        ### Adding the username and bday
+        name_center_pos = (500, 127)
         user_name = member.username
         max_len = 15
         displayed_name = f"@{user_name}" if len(user_name) <= max_len else f"@{user_name[:max_len - 3]}..."
         ax.text(*name_center_pos, displayed_name, fontsize=12, color="white", fontweight="bold", verticalalignment="center", horizontalalignment="center")
-
+        
+        profile = user_profile.get_profile(user_id)
+        
+        bday_center_pos = (500, 182)
+        if profile["birthday_date"] == "0000-00-00":
+            bday_txt = "Birthday: N/A"
+        else:
+            bday = profile["birthday_date"].split("-")  # Format: YYYY-MM-DD
+            bday_txt = f"Birthday: {bday[2].zfill(2)} / {bday[1].zfill(2)} / {bday[0]}"
+        ax.text(*bday_center_pos, bday_txt, fontsize=7, color="white", verticalalignment="center", horizontalalignment="center")
 
         ### Richies
-        profile = user_profile.get_profile(user_id)
-
         # Getting the piflouz image
         response = requests.get(Constants.PIFLOUZ_URL)
         piflouz_img = Image.open(BytesIO(response.content))
@@ -137,12 +144,12 @@ class Cog_status_check(Extension):
         turbo_piflouz_img = Image.open(BytesIO(response.content))        
 
         r_piflouz = 25
-        msg_piflouz_left_pos, piflouz_emoji_center = (110, 405), (80, 405)
-        msg_turbo_piflouz_left_pos, turbo_piflouz_emoji_center = (110, 463), (80, 463)
+        msg_piflouz_left_pos, piflouz_emoji_center = (110, 410), (80, 410)
+        msg_turbo_piflouz_left_pos, turbo_piflouz_emoji_center = (110, 468), (80, 468)
         ax.imshow(piflouz_img, extent=(piflouz_emoji_center[0] - r_piflouz, piflouz_emoji_center[0] + r_piflouz, piflouz_emoji_center[1] + r_piflouz, piflouz_emoji_center[1] - r_piflouz))
         ax.imshow(turbo_piflouz_img, extent=(turbo_piflouz_emoji_center[0] - r_piflouz, turbo_piflouz_emoji_center[0] + r_piflouz, turbo_piflouz_emoji_center[1] + r_piflouz, turbo_piflouz_emoji_center[1] - r_piflouz))
-        ax.text(*msg_piflouz_left_pos, f": {profile["piflouz_balance"]}", fontsize=8, color="white", verticalalignment="center", horizontalalignment="left")
-        ax.text(*msg_turbo_piflouz_left_pos, f": {profile["turbo_piflouz_balance"]}", fontsize=8, color="white", verticalalignment="center", horizontalalignment="left")
+        ax.text(*msg_piflouz_left_pos, f": {profile["piflouz_balance"]}", fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
+        ax.text(*msg_turbo_piflouz_left_pos, f": {profile["turbo_piflouz_balance"]}", fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
 
 
         ### Mining
@@ -155,9 +162,9 @@ class Cog_status_check(Extension):
         combo_msg = f"• Combo: {profile["mining_combo"]} / {piflouz_handlers.get_max_rewardable_combo(user_id)}"
         daily_bonus_msg = f"• Daily bonus: {daily_bonus} / {Constants.DAILY_BONUS_MAX_STREAK}"
 
-        ax.text(*cooldown_left_pos, cooldown_msg, fontsize=8, color="white", verticalalignment="center", horizontalalignment="left")
-        ax.text(*combo_left_pos, combo_msg, fontsize=8, color="white", verticalalignment="center", horizontalalignment="left")
-        ax.text(*daily_bonus_left_pos, daily_bonus_msg, fontsize=8, color="white", verticalalignment="center", horizontalalignment="left")
+        ax.text(*cooldown_left_pos, cooldown_msg, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
+        ax.text(*combo_left_pos, combo_msg, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
+        ax.text(*daily_bonus_left_pos, daily_bonus_msg, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
 
 
         ### Ranking & Roles  

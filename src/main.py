@@ -102,6 +102,7 @@ async def on_startup():
     utils.backup_db.start()
     rank_handlers.update_ranks.start(bot)
     socials.shuffle_names.start(bot)
+    socials.check_birthday.start(bot)
 
     # utils.update_db()
 
