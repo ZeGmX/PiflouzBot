@@ -493,6 +493,12 @@ class Pibox_drop_rate_and_reward_event(Event_from_powerups):
         super().__init__(p1, p2)
 
 
+class Store_discount_event(Event_from_powerups):
+    def __init__(self, value):
+        p1 = powerups.Store_price_multiplier(value)
+        super().__init__(p1)
+
+
 class Challenge_event(Event):
     async def get_embed(self, bot):
         """

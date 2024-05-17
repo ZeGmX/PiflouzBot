@@ -1,8 +1,11 @@
-from interactions import Extension, Button, ButtonStyle, auto_defer, slash_command, component_callback, spread_to_rows
 import copy
+import functools
+from interactions import Extension, Button, ButtonStyle, auto_defer, slash_command, component_callback, spread_to_rows
+from math import ceil
 
 from constant import Constants
 import embed_messages
+from events import get_event_object, Event_type
 from my_database import db
 import piflouz_handlers
 import user_profile
@@ -46,8 +49,11 @@ class Cog_buy(Extension):
         user_id = str(ctx.author.id)
         profile = user_profile.get_profile(user_id)
 
+        price_multiplier = self.get_store_discount_multiplier()
+        price = ceil(Constants.PIFLEX_COST * price_multiplier)
+
         # User has enough money
-        if piflouz_handlers.update_piflouz(user_id, qty=-Constants.PIFLEX_COST, check_cooldown=False):
+        if piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False):
             await ctx.author.add_role(role=Constants.MEGA_PIFLEXER_ROLE_ID)
             t = int(ctx.id.created_at.timestamp())
             db["mega_piflexers"][user_id] = t
@@ -72,7 +78,7 @@ class Cog_buy(Extension):
         # User doesn't have enough money
         else:
             balance = profile["piflouz_balance"]
-            await ctx.send(f"You need {Constants.PIFLEX_COST - balance} more {Constants.PIFLOUZ_EMOJI} to piflex!", ephemeral=True)
+            await ctx.send(f"You need {price - balance} more {Constants.PIFLOUZ_EMOJI} to piflex!", ephemeral=True)
 
 
     @component_callback("buy_rank_piflex")
@@ -90,7 +96,10 @@ class Cog_buy(Extension):
         member = ctx.author
         role_id = Constants.PIFLEXER_ROLE_ID
         
-        if piflouz_handlers.update_piflouz(user_id, qty=-Constants.PIFLEXER_COST, check_cooldown=False) and role_id not in member.roles:
+        price_multiplier = self.get_store_discount_multiplier()
+        price = ceil(Constants.PIFLEXER_COST * price_multiplier)
+        
+        if piflouz_handlers.update_piflouz(user_id, qty=-price, check_cooldown=False) and role_id not in member.roles:
             await member.add_role(role=role_id)
             channel = ctx.channel
             await channel.send(f"{member.mention} just bought the piflexer rank!")
@@ -102,7 +111,7 @@ class Cog_buy(Extension):
         else:
             # User does not have enough money
             if role_id not in member.roles:
-                await ctx.send(f"You need {Constants.PIFLEXER_COST - profile["piflouz_balance"]} {Constants.PIFLOUZ_EMOJI} to buy the rank!", ephemeral=True)
+                await ctx.send(f"You need {price - profile["piflouz_balance"]} {Constants.PIFLOUZ_EMOJI} to buy the rank!", ephemeral=True)
 
             # User already have the rank
             else:
@@ -121,7 +130,8 @@ class Cog_buy(Extension):
         """
         balance = user_profile.get_profile(str(ctx.author.id))["piflouz_balance"]
         
-        embed = embed_messages.get_embed_store_ui(balance)
+        price_multiplier = self.get_store_discount_multiplier()
+        embed = embed_messages.get_embed_store_ui(balance, price_multiplier)
 
         buttons = self.get_all_store_components()
 
@@ -142,6 +152,10 @@ class Cog_buy(Extension):
 
         # We take a copy of the powerup in order not to modify the fields when buying
         powerup = copy.copy(Constants.POWERUPS_STORE[emoji])
+
+        # Apply potential event-related discounts        
+        powerup.price = ceil(self.get_store_discount_multiplier() * powerup.price)
+        
         if powerup.on_buy(user_id, current_time):
             await utils.update_piflouz_message(self.bot)
             await ctx.send("Successfully bought the powerup", ephemeral=True)
@@ -177,7 +191,8 @@ class Cog_buy(Extension):
             ctx: interactions.SlashContext
             balance: int
         """
-        embed = embed_messages.get_embed_store_ui(balance)
+        price_multiplier = self.get_store_discount_multiplier()
+        embed = embed_messages.get_embed_store_ui(balance, price_multiplier)
         await ctx.edit(ctx.message, embed=embed, components=spread_to_rows(*self.get_all_store_components()))
     
     
@@ -189,6 +204,19 @@ class Cog_buy(Extension):
                 + [Button(style=ButtonStyle.GRAY, label="", custom_id="buy_rank_piflex", emoji=Constants.PIFLOUZ_EMOJI),
                    Button(style=ButtonStyle.GRAY, label="", custom_id="piflex", emoji=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI)]
         return buttons
+
+    
+    def get_store_discount_multiplier(self):
+        """
+        Returns the store discount multiplier
+        --
+        output:
+            res: float
+        """
+        current_event = get_event_object(Event_type.PASSIVE)
+        if current_event is not None:
+            return functools.reduce(lambda accu, powerup: accu * powerup.get_store_price_multiplier(), current_event.get_powerups(), 1)
+        return 1
 
 
 def setup(bot):

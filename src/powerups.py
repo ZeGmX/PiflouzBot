@@ -93,6 +93,16 @@ class Powerups:
             res: int
         """
         return 1
+
+    
+    def get_store_price_multiplier(self):
+        """
+        Returns the store price multiplier of the powerup
+        --
+        output:
+            res: int
+        """
+        return 1
     
 
     def get_info_str(self):
@@ -416,6 +426,29 @@ class Pibox_size_multiplier(Powerups_permanent):
         sign = "+" if self.value > 0 else ""
         return f"Pibox reward • {sign}{self.value}%"
 
+
+    def to_str(self):
+        return f"{__name__}.{type(self).__name__}({self.value})"
+
+
+class Store_price_multiplier(Powerups_permanent):
+    """
+    Powerup that changes the price of items in the store
+    Should only be used in events
+    The powerup is multiplicative
+    """
+    def __init__(self, value):
+        self.value = value
+    
+
+    def get_store_price_multiplier(self):
+        return 1 - self.value / 100
+    
+
+    def get_info_str(self):
+        sign = "+" if self.value < 0 else ""
+        return f"Store price • {sign}{-self.value}%"
+    
 
     def to_str(self):
         return f"{__name__}.{type(self).__name__}({self.value})"
