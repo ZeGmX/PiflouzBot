@@ -89,7 +89,7 @@ async def spawn_pibox(bot, piflouz_quantity, custom_message=None, pibox_type=Pib
         text_output += " " + custom_message
     message = await out_channel.send(text_output)
     
-    db["random_gifts"][str(message.id)] = [emoji_id, piflouz_quantity, custom_message, pibox_type]
+    get_all_pibox()[str(message.id)] = [emoji_id, piflouz_quantity, custom_message, pibox_type]
 
 
 @Task.create(IntervalTrigger(seconds=30))
@@ -263,3 +263,13 @@ def get_update_daily_bonus(user_id, current_time):
         profile["daily_bonus"] += 1
         return Constants.DAILY_BONUS_REWARD
     return 0
+
+
+def get_all_pibox():
+    """
+    Returns a dict containing all currently active pibox
+    --
+    output:
+        res: dict (Element_dict)
+    """
+    return db["random_gifts"]

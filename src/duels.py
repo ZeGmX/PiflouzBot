@@ -1,6 +1,6 @@
 from random import choice
 
-from embed_messages import get_embed_wordle
+import embed_messages
 from my_database import db
 from wordle import Wordle
 
@@ -77,6 +77,15 @@ def get_new_duel_id():
     db["last_duel_id"] += 1
     return db["last_duel_id"]
 
+
+def get_all_duels():
+    """
+    Returns the list of all duels
+    --
+    output:
+        res: list (Element_list)
+    """
+    return db["duels"]
 
 class Duel:
     """
@@ -350,7 +359,7 @@ class Wordle_duel(Duel):
             self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = f"You failed to find the word!"
 
-        embed = await get_embed_wordle(self.dict["word"], guesses, header_str, user_id)
+        embed = await embed_messages.get_embed_wordle(self.dict["word"], guesses, header_str, user_id)
         self.dict[f"last_image_url{user}"] = embed.images[0].url
         return {"embed": embed}
 

@@ -1,5 +1,5 @@
 from achievement_handler import listen_to
-from constant import Constants
+from events import get_event_object, get_event_data, Event_type
 from my_database import db
 import piflouz_handlers
 import powerups
@@ -94,7 +94,10 @@ class Achievement_raffle_participation_20(Achievement):
     reward = 50
 
     async def check(self, user_id, *args, **kwargs):
-        if db["raffle_participation"][str(user_id)] >= 20:
+        current_raffle = get_event_object(Event_type.RAFFLE)
+        raffle_data = get_event_data(current_raffle)
+        
+        if raffle_data["participation"][str(user_id)] >= 20:
             self.validate(user_id)
 
 
@@ -105,7 +108,10 @@ class Achievement_raffle_participation_100(Achievement):
     reward = 300
 
     async def check(self, user_id, *args, **kwargs):
-        if db["raffle_participation"][str(user_id)] >= 100:
+        current_raffle = get_event_object(Event_type.RAFFLE)
+        raffle_data = get_event_data(current_raffle)
+        
+        if raffle_data["participation"][str(user_id)] >= 100:
             self.validate(user_id)
 
 

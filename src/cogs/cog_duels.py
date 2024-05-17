@@ -4,7 +4,7 @@ from interactions.ext.paginators import Paginator
 from math import ceil
 
 from constant import Constants
-from duels import generate_duel, recover_duel
+from duels import generate_duel, recover_duel, get_all_duels
 from my_database import db
 import piflouz_handlers
 import utils
@@ -81,7 +81,7 @@ class Cog_duels(Extension):
 
         new_duel.edit("message_id", msg.id)
         new_duel.edit("thread_id", thread.id)
-        db["duels"].append(new_duel.get_dict())
+        get_all_duels().append(new_duel.get_dict())
 
         await ctx.send("Done!", ephemeral=True)
         
@@ -102,7 +102,8 @@ class Cog_duels(Extension):
 
         # Finding the right duel
         duel_index = None
-        for i, duel_dict in enumerate(db["duels"]):
+        all_duels = get_all_duels()
+        for i, duel_dict in enumerate(all_duels):
             if duel_dict["message_id"] == msg_id:
                 duel_index = i
                 break
@@ -121,8 +122,8 @@ class Cog_duels(Extension):
         # Check the user has enough money
         await utils.custom_assert(piflouz_handlers.update_piflouz(ctx.author.id, qty=-duel_dict["amount"], check_cooldown=False), "You don't have enough piflouz to do that", ctx)
 
-        db["duels"][duel_index]["accepted"] = True
-        db["duels"][duel_index]["user_id2"] = int(ctx.author.id)
+        all_duels[duel_index]["accepted"] = True
+        all_duels[duel_index]["user_id2"] = int(ctx.author.id)
 
         duel_id = duel_dict["duel_id"]
         thread_id = duel_dict["thread_id"]
@@ -130,7 +131,7 @@ class Cog_duels(Extension):
         thread = await self.bot.fetch_channel(thread_id)
         await thread.add_member(ctx.author.id)
 
-        duel = recover_duel(db["duels"][duel_index])
+        duel = recover_duel(all_duels[duel_index])
 
         await duel.on_accept(thread)
         await thread.edit(name=f"[Accepted] {thread.name}")
@@ -156,7 +157,8 @@ class Cog_duels(Extension):
 
         # Finding the right duel
         duel_index = None
-        for i, duel_dict in enumerate(db["duels"]):
+        all_duels = get_all_duels()
+        for i, duel_dict in enumerate(all_duels):
             if duel_dict["message_id"] == msg_id:
                 duel_index = i
                 break
@@ -169,7 +171,7 @@ class Cog_duels(Extension):
         # Give back the money to the challenger
         piflouz_handlers.update_piflouz(duel_dict["user_id1"], qty=duel_dict["amount"], check_cooldown=False)
 
-        del db["duels"][duel_index]
+        del all_duels[duel_index]
 
         thread_id = duel_dict["thread_id"]
         thread = await self.bot.fetch_channel(thread_id)
@@ -197,7 +199,8 @@ class Cog_duels(Extension):
 
         # Finding the right duel
         duel_index = None
-        for i, duel_dict in enumerate(db["duels"]):
+        all_duels = get_all_duels()
+        for i, duel_dict in enumerate(all_duels):
             if duel_dict["message_id"] == msg_id:
                 duel_index = i
                 break
@@ -209,7 +212,7 @@ class Cog_duels(Extension):
         # Give back the money to the challenger
         piflouz_handlers.update_piflouz(ctx.author.id, qty=duel_dict["amount"], check_cooldown=False)
 
-        del db["duels"][duel_index]
+        del all_duels[duel_index]
 
         mention = "anyone" if duel_dict["user_id2"] == -1 else f"<@{duel_dict["user_id2"]}>"
 
@@ -235,7 +238,7 @@ class Cog_duels(Extension):
         input:
             ctx: interactions.SlashContext
         """
-        my_duels = filter(lambda duel: int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]] or duel["user_id2"] == -1, db["duels"])
+        my_duels = filter(lambda duel: int(ctx.author.id) in [duel["user_id1"], duel["user_id2"]] or duel["user_id2"] == -1, get_all_duels())
 
         msgs = []
         for duel_dict in my_duels:
@@ -270,7 +273,8 @@ class Cog_duels(Extension):
         """
         thread = ctx.channel
         duel_index = None
-        for i, duel_dict in enumerate(db["duels"]):
+        all_duels = get_all_duels()
+        for i, duel_dict in enumerate(all_duels):
             if duel_dict["thread_id"] == int(thread.id):
                 duel_index = i
                 break
@@ -285,7 +289,7 @@ class Cog_duels(Extension):
         else:
             await utils.custom_assert(duel_dict["result2"] is None, "You already finished playing!", ctx)
 
-        return recover_duel(db["duels"][duel_index]), duel_index
+        return recover_duel(all_duels[duel_index]), duel_index
 
 
     @slash_command(name="duel", description="TBD", group_name="play", group_description="TBD", sub_cmd_name="shifumi", sub_cmd_description="Play shifumi!", scopes=Constants.GUILD_IDS)
@@ -350,7 +354,7 @@ class Cog_duels(Extension):
         qty = duel.dict["amount"]
         duel_type = duel.dict["duel_type"]
 
-        del db["duels"][duel_index]
+        del get_all_duels()[duel_index]
         
         # Tie, everyone gets all of their money back
         if not winner_loser:

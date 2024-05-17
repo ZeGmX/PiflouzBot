@@ -15,6 +15,7 @@ from custom_exceptions import Custom_Assert_Exception
 from my_database import db
 import events
 import piflouz_handlers
+from piflouz_generated import add_to_stat, Piflouz_source
 import powerups
 import rank_handlers
 import seasons
@@ -143,19 +144,20 @@ async def on_message_reaction_add(reac_event):
     """
 
     message_id = reac_event.message.id
-    if str(message_id) not in db["random_gifts"]:
+    piboxes = piflouz_handlers.get_all_pibox()
+    if str(message_id) not in piboxes:
         return
 
     message = reac_event.message
     user = reac_event.author
     emoji = reac_event.reaction.emoji
 
-    id_required, qty, custom_message, pibox_type = db["random_gifts"][str(message_id)]
+    id_required, qty, custom_message, pibox_type = piboxes[str(message_id)]
     
     if emoji.id is not None and int(emoji.id) == id_required:
         piflouz_handlers.update_piflouz(user.id, qty, False)
 
-        del db["random_gifts"][str(message_id)]
+        del piboxes[str(message_id)]
         new_text_message = f"{user.mention} won {qty} {Constants.PIFLOUZ_EMOJI} from a pibox!"
         if custom_message is not None:
             new_text_message += " " + custom_message
@@ -163,7 +165,7 @@ async def on_message_reaction_add(reac_event):
 
         # Add to stats
         if pibox_type in [piflouz_handlers.Pibox_type.MAIN, piflouz_handlers.Pibox_type.FROM_PIBOX_MASTER]:
-            db["piflouz_generated"]["pibox"] += qty
+            add_to_stat(qty, Piflouz_source.PIBOX)
 
         # Check if it was a giveaway
         elif pibox_type == piflouz_handlers.Pibox_type.FROM_GIVEAWAY:

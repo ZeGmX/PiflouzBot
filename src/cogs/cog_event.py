@@ -6,6 +6,7 @@ from constant import Constants
 from embed_messages import get_embed_wordle
 from events import Matches_Expression, Subseq_challenge, Wordle_event, Move_match_event, Subseq_challenge_event, Raffle_event, Birthday_raffle_event, Birthday_event, Event_type, update_events, get_event_object, get_event_data, fetch_event_thread
 from wordle import Wordle
+from piflouz_generated import add_to_stat, Piflouz_source
 import piflouz_handlers
 import powerups # used in eval()
 import utils
@@ -122,7 +123,7 @@ class Cog_event(Extension):
             thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
             await thread.send(announcement_msg)
 
-            db["piflouz_generated"]["event"] += reward
+            add_to_stat(reward, Piflouz_source.EVENT)
             await utils.update_piflouz_message(self.bot)
 
         elif len(guesses) == wordle.NB_ATTEMPTS:
@@ -317,7 +318,7 @@ class Cog_event(Extension):
         thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
         await thread.send(f"{ctx.author.mention} solved today's match event!")
 
-        db["piflouz_generated"]["event"] += current_match.reward
+        add_to_stat(current_match.reward, Piflouz_source.EVENT)
         await utils.update_piflouz_message(self.bot)
 
 
@@ -398,7 +399,7 @@ class Cog_event(Extension):
             output_message+=" !"
             await thread.send(output_message)
 
-        db["piflouz_generated"]["event"] += earned
+        add_to_stat(earned, Piflouz_source.EVENT)
         await utils.update_piflouz_message(self.bot)
 
 

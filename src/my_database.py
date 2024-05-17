@@ -68,6 +68,14 @@ class Element:
             item: list or dict
         """
         return self.element
+
+    
+    def clear(self):
+        """
+        Implements the general clear method
+        """
+        self.element.clear()
+        self.parent_dict.save_key(self.parent_key, db.folder)
     
 
     def __setitem__(self, key, value):

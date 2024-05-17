@@ -7,9 +7,11 @@ from pytz import timezone
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
+import duels
 import embed_messages
-from events import end_event, Event_type
+import events
 from my_database import db
+from piflouz_generated import reset_stats
 import piflouz_handlers
 import user_profile
 import utils
@@ -33,8 +35,6 @@ async def start_new_season(bot):
     if "out_channel" in db.keys():
         channel = await bot.fetch_channel(db["out_channel"])
 
-        # piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
-
         msg = await channel.send(embed=embed_messages.get_embed_piflouz())
         return msg
 
@@ -47,8 +47,8 @@ async def end_current_season(bot):
         bot: interactions.Client
     """
     # Ending current events to avoind passing piflouz from one season to the other with Raffle
-    await end_event(bot, Event_type.PASSIVE)
-    await end_event(bot, Event_type.CHALLENGE)
+    await events.end_event(bot, events.Event_type.PASSIVE)
+    await events.end_event(bot, events.Event_type.CHALLENGE)
     
     # Reseting the previous stats for the season results
     profiles = user_profile.get_active_profiles()
@@ -56,7 +56,8 @@ async def end_current_season(bot):
     user_profile.reset_all_inactive("season_results")
     
     # Ending the ongoing duels and giving back the money
-    for duel in db["duels"]:
+    all_duels = duels.get_all_duels()
+    for duel in all_duels:
         piflouz_handlers.update_piflouz(duel["user_id1"], qty=duel["amount"], check_cooldown=False)
         if duel["accepted"]:
             piflouz_handlers.update_piflouz(duel["user_id2"], qty=duel["amount"], check_cooldown=False)
@@ -98,11 +99,10 @@ async def end_current_season(bot):
 
     user_profile.set_all_inactive()
 
-    db["random_gifts"] = {}
-    db["duels"] = []
+    piflouz_handlers.get_all_pibox().clear()
+    duels.get_all_duels().clear()
     
-    for key in db["piflouz_generated"].keys():
-        db["piflouz_generated"][key] = 0
+    reset_stats()
 
     # Sending the announcement message
     if "out_channel" in db.keys():
@@ -119,10 +119,8 @@ async def season_task(bot):
     input:
         bot: interactions.Client
     """
-    tz = timezone("Europe/Paris")
-    last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
-    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(tz)
-    await asyncio.sleep((next_begin - datetime.datetime.now(tz=tz)).total_seconds())
+    next_begin = get_season_end_datetime()
+    await asyncio.sleep((next_begin - datetime.datetime.now(tz=next_begin.tzinfo)).total_seconds())
 
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
         await end_current_season(bot)
@@ -178,3 +176,38 @@ def reward_turbo_piflouz_based_on_scores(scores, reward, reward_type):
         
         profile["season_results"][reward_type] = turbo_balance
         profile["turbo_piflouz_balance"] += turbo_balance
+
+
+def get_season_end_datetime():
+    """
+    Returns the datetime corresponding to the current season end
+    --
+    output:
+        res: datetime.datetime
+    """
+    tz = timezone("Europe/Paris")
+    last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
+    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(tz)
+    return next_begin
+
+
+def get_season_end_timestamp():
+    """
+    Returns the timestamp corresponding to the current season end
+    --
+    output:
+        res: int
+    """
+    next_begin = get_season_end_datetime()
+    return int(next_begin.timestamp())
+
+
+def get_season_end_date():
+    """
+    Returns the date corresponding to the current season end
+    --
+    output:
+        res: datetime.date
+    """
+    next_begin = get_season_end_datetime()
+    return next_begin.date

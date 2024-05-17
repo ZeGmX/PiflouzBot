@@ -3,6 +3,7 @@ import time
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 from my_database import db
+from piflouz_generated import Piflouz_source, add_to_stat
 import piflouz_handlers
 import user_profile
 import utils
@@ -325,7 +326,7 @@ class Miner_powerup(Powerups_permanent):
         user_id = str(user_id)
         piflouz_earned = self.value * self.qty
         piflouz_handlers.update_piflouz(user_id, qty=piflouz_earned, check_cooldown=False)
-        db["piflouz_generated"]["miner"] += piflouz_earned
+        add_to_stat(piflouz_earned, Piflouz_source.MINER)
 
 
 class Pibox_drop_rate_multiplier(Powerups_permanent):

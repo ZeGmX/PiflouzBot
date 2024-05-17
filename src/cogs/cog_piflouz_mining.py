@@ -2,6 +2,7 @@ from interactions import slash_command, component_callback, Extension, auto_defe
 from my_database import db
 
 from constant import Constants
+from piflouz_generated import Piflouz_source, add_to_stat
 import piflouz_handlers
 import user_profile
 import utils
@@ -73,7 +74,7 @@ class Cog_piflouz_mining(Extension):
             output_text = f"You just earned {qty} {Constants.PIFLOUZ_EMOJI}! Come back later for some more\nYour current combo: {profile["mining_combo"]} / {piflouz_handlers.get_max_rewardable_combo(ctx.author.id)}\nDaily bonus obtained: {profile["daily_bonus"]} / {Constants.DAILY_BONUS_MAX_STREAK}"
             
             self.bot.dispatch("combo_updated", ctx.author.id)
-            db["piflouz_generated"]["get"] += qty
+            add_to_stat(qty, Piflouz_source.GET)
             await utils.update_piflouz_message(self.bot)
 
         await ctx.send(output_text, ephemeral=True)

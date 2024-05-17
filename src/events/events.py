@@ -13,6 +13,7 @@ import embed_messages
 from .matches_challenge import Matches_Interface
 from .subsequence_challenge import Subseq_challenge
 from my_database import db
+from piflouz_generated import Piflouz_source, add_to_stat
 import piflouz_handlers
 import powerups
 import utils
@@ -773,7 +774,7 @@ class Birthday_raffle_event(Passive_event):
             out_channel = await bot.fetch_channel(db["out_channel"])
             await out_channel.send(message)
 
-            db["piflouz_generated"]["event"] += self.reward
+            add_to_stat(self.reward, Piflouz_source.EVENT)
             await utils.update_piflouz_message(bot)
 
 

@@ -8,6 +8,8 @@ import random
 from constant import Constants
 import events
 from my_database import db
+from piflouz_generated import get_stat_str
+import seasons
 import socials
 import utils
 from user_profile import get_active_profiles
@@ -170,12 +172,10 @@ def get_embed_piflouz():
     output:
         embed: interactions.Embed
     """
-    last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
-    end_time = last_begin_time + relativedelta(months=3)
     desc = f"This is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}.\n\n\
 You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the `/get` command.\n\
 If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`.\n\n\
-This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
+This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
     embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail = EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
 
@@ -190,10 +190,7 @@ This season will end on <t:{int(end_time.timestamp())}>.\nYour goal is to earn, 
         ranking_piflex = get_ranking_str(d_piflex)
         ranking_donations = get_ranking_str(d_donations)
         
-        p_get, p_event, p_pibox, p_miner = db["piflouz_generated"]["get"], db["piflouz_generated"]["event"], db["piflouz_generated"]["pibox"], db["piflouz_generated"]["miner"]
-        p_tot = p_get + p_event + p_pibox + p_miner
-        stats = f"This season, I generated a total of {p_tot} {Constants.PIFLOUZ_EMOJI}:\n- {p_get} from `/get` commands\n- {p_event} from events\n- {p_pibox} from piboxes\n- {p_miner} from miner powerups"
-        
+        stats = get_stat_str()
         embed.add_field(name="Season statistics", value=stats, inline=False)
 
         if ranking_balance != "":
@@ -357,7 +354,7 @@ async def get_embed_wordle(solution, guesses, header_str, user_id):
     input:
         solution: str -> the solution of the wordle
         guesses: List[str] -> the guesses
-        header_str: str -> #TODO
+        header_str: str -> message written on the embed
         user_id: int -> id of the guesser
     """
     wordle = Wordle(solution)
