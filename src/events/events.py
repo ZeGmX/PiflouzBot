@@ -131,7 +131,7 @@ def get_default_db_data(event_type):
                 "current_message_id": -1,
                 "current_thread_id": -1,
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
-                "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": []},
+                "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()}
             }
 
@@ -952,20 +952,24 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
                 if w not in found_solutions_nb:
                     found_solutions_nb[w] = 0
                 found_solutions_nb[w] += 1
+        found_solutions = Subseq_challenge.get_unclean_equivalent(*found_solutions)
         found_solutions_str = f"||{", ".join(sorted(found_solutions))}||"
         
+        user_unique_sol = []
         for user_id, user_sol in data["completed"].items():
             guesses = user_sol["guesses"][:3]
             if any(found_solutions_nb[w] == 1 for w in guesses):
                 piflouz_handlers.update_piflouz(user_id, self.reward_uniqueness, check_cooldown=False)
+                user_unique_sol.append(f"<@{user_id}>")
 
         data["completed"] = dict()
+        data["msg_id"] = dict()
 
         thread = await bot.fetch_channel(thread_id)
         await thread.send(f"The event is over! Here is a level 4 solution: **{data["example_solution"]}**\n\
 Here are all the solutions you found: {found_solutions_str}\n\n\
 There were {data["nb_solutions"][0]} level 1 solutions, {data["nb_solutions"][1]} level 2 solutions, {data["nb_solutions"][2]} level 3 solutions and {data["nb_solutions"][3]} level 4 solutions in total.\n\n\
-if one of your first three correct guesses was not in anyone else's first three guesses, you were rewarded with {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI}!")
+The following people earned an additional {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI} for finding a unique solution:{", ".join(user_unique_sol)}")
 
         await super().on_end(bot, msg_id, thread_id)
     

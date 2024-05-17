@@ -340,35 +340,36 @@ class Cog_event(Extension):
         if user_id not in data["completed"].keys():
             data["completed"][user_id] = {"default": False, "projection": False, "intermediate": False, "both": False, "guesses": []}
 
-        proposed_words = set(data["completed"][user_id]["guesses"])
-        await utils.custom_assert(len(proposed_words) < current_subseq.max_rewardable_words or any(not data["completed"][user_id][key] for key in ["default", "projection", "intermediate", "both"]), "You already completed the event!", ctx)
+        comp = data["completed"][user_id]
+        proposed_words = set(comp["guesses"])
+        await utils.custom_assert(len(proposed_words) < current_subseq.max_rewardable_words or any(not comp[key] for key in ["default", "projection", "intermediate", "both"]), "You already completed the event!", ctx)
 
         s = Subseq_challenge(subseq=data["subseq"])
         guess_clean = Subseq_challenge._clean_word(guess)
-        await utils.custom_assert(guess_clean not in data["completed"][user_id]["guesses"], "You already proposed this word!", ctx)
+        await utils.custom_assert(guess_clean not in comp["guesses"], "You already proposed this word!", ctx)
         await utils.custom_assert(s.check_default(guess_clean), "Incorrect!", ctx)
 
         # Checks which levels are now completed
-        data["completed"][user_id]["guesses"].append(guess_clean)
+        comp["guesses"].append(guess_clean)
         earned = 0
 
         success_projection = s.check_projection(guess_clean)
         success_intermediate = s.check_with_intermediate(guess_clean)
 
-        if not data["completed"][user_id]["default"]:
-            data["completed"][user_id]["default"] = True
+        if not comp["default"]:
+            comp["default"] = True
             earned += current_subseq.reward_default
         
-        if success_projection and not data["completed"][user_id]["projection"]:
-            data["completed"][user_id]["projection"] = True
+        if success_projection and not comp["projection"]:
+            comp["projection"] = True
             earned += current_subseq.reward_bonus1
         
-        if success_intermediate and not data["completed"][user_id]["intermediate"]:
-            data["completed"][user_id]["intermediate"] = True
+        if success_intermediate and not comp["intermediate"]:
+            comp["intermediate"] = True
             earned += current_subseq.reward_bonus2
         
-        if success_projection and success_intermediate and not data["completed"][user_id]["both"]:
-            data["completed"][user_id]["both"] = True
+        if success_projection and success_intermediate and not comp["both"]:
+            comp["both"] = True
             earned += current_subseq.reward_bonus3
         
         if len(proposed_words) < current_subseq.max_rewardable_words:
@@ -377,27 +378,27 @@ class Cog_event(Extension):
         piflouz_handlers.update_piflouz(user_id, earned, check_cooldown=False)
 
         message = f"Congratulations, this is correct! You earned {earned} {Constants.PIFLOUZ_EMOJI}.\n\nHere is your progress:\n\
-• [Level 1]: {"✅" if data["completed"][user_id]["default"] else "❌"}\n\
-• [Level 2]: {"✅" if data["completed"][user_id]["projection"] else "❌"}\n\
-• [Level 3]: {"✅" if data["completed"][user_id]["intermediate"] else "❌"}\n\
-• [Level 4]: {"✅" if data["completed"][user_id]["both"] else "❌"}\n\
+• [Level 1]: {"✅" if comp["default"] else "❌"}\n\
+• [Level 2]: {"✅" if comp["projection"] else "❌"}\n\
+• [Level 3]: {"✅" if comp["intermediate"] else "❌"}\n\
+• [Level 4]: {"✅" if comp["both"] else "❌"}\n\
 • Rewarded attempts: {min(len(proposed_words) + 1, current_subseq.max_rewardable_words)} / {current_subseq.max_rewardable_words}"
 
         await ctx.send(message, ephemeral=True)
 
+        thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
+        output_message = f"{ctx.author.mention} solved today's subsequence event at level "
+        
+        solved = [comp["default"], comp["projection"], comp["intermediate"], comp["both"]]
+        solved = [str(i + 1) for i, s in enumerate(solved) if s]
+        output_message += ", ".join(solved) + "!"
+
         if len(proposed_words) == 0:
-            thread = await fetch_event_thread(self.bot, Event_type.CHALLENGE)
-            output_message = f"{ctx.author.mention} solved today's subsequence event at level "
-            if success_projection and success_intermediate:
-                output_message += "4"
-            elif success_intermediate:
-                output_message += "3"
-            elif success_projection:
-                output_message += "2"
-            else:
-                output_message += "1"
-            output_message+=" !"
-            await thread.send(output_message)
+            msg = await thread.send(output_message)
+            data["msg_id"][user_id] = int(msg.id)
+        else:
+            msg = await thread.fetch_message(data["msg_id"][user_id])
+            await msg.edit(content=output_message)
 
         add_to_stat(earned, Piflouz_source.EVENT)
         await utils.update_piflouz_message(self.bot)
