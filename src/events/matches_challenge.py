@@ -183,69 +183,69 @@ class Matches_Expression:
     # Caracters: 0, 0s, 1, 1s, 2, 3, 4, 4s, 5, 6, 6s, 7, 7b, 8, 8s, 9, 9s, +, -, =, nothing
     # BIG PLUS ? Small 3 ?
     ADD_MATCH = {  # (new_symbol, new_match_position)
-        "0": [('8', 6)],
-        "0s": [('6s', 5), ('8s', 10), ('9s', 2)],
-        "1": [('7', 0)],
-        "1s": [('1', 1)],
+        "0": [("8", 6)],
+        "0s": [("6s", 5), ("8s", 10), ("9s", 2)],
+        "1": [("7", 0)],
+        "1s": [("1", 1)],
         "2": [],
-        "3": [('9', 5)],
-        "4": [('9s', 0)],
+        "3": [("9", 5)],
+        "4": [("9s", 0)],
         "4s": [],
-        "5": [('6', 4), ('9', 1)],
-        "6": [('8', 1)],
-        "6s": [('6', 0)],
-        "7": [('7b', 5)],
-        "7b": [('9s', 6)],
+        "5": [("6", 4), ("9", 1)],
+        "6": [("8", 1)],
+        "6s": [("6", 0)],
+        "7": [("7b", 5)],
+        "7b": [("9s", 6)],
         "8": [],
-        "9": [('8', 4)],
-        "9s": [('9', 3)],
-        "+": [('4s', 8)],
-        "-": [('+', 7), ('=', 9)],
+        "9": [("8", 4)],
+        "9s": [("9", 3)],
+        "+": [("4s", 8)],
+        "-": [("+", 7), ("=", 9)],
         "=": [],
     }
     REMOVE_MATCH = {  # (new_symbol, removed_match_position)
         "0": [],
         "0s": [],
-        "1": [('1s', 1)],
-        "1s": [('nothing', 7)],
+        "1": [("1s", 1)],
+        "1s": [("nothing", 7)],
         "2": [],
         "3": [],
         "4": [],
-        "4s": [('+', 8)],
+        "4s": [("+", 8)],
         "5": [],
-        "6": [('5', 4), ('6s', 0)],
-        "6s": [('0s', 5)],
-        "7": [('1', 0)],
-        "7b": [('7', 5)],
-        "8": [('0', 6), ('6', 1), ('9', 4)],
-        "8s": [('0s', 10)],
-        "9": [('3', 5), ('5', 1), ('9s', 3)],
-        "9s": [('0s', 2), ('4', 0), ('7b', 6)],
-        "+": [('-', 7)],
-        "-": [('nothing', 6)],
-        "=": [('-', 9)],
+        "6": [("5", 4), ("6s", 0)],
+        "6s": [("0s", 5)],
+        "7": [("1", 0)],
+        "7b": [("7", 5)],
+        "8": [("0", 6), ("6", 1), ("9", 4)],
+        "8s": [("0s", 10)],
+        "9": [("3", 5), ("5", 1), ("9s", 3)],
+        "9s": [("0s", 2), ("4", 0), ("7b", 6)],
+        "+": [("-", 7)],
+        "-": [("nothing", 6)],
+        "=": [("-", 9)],
     }
     MOVE_MATCH = {  # (new_symbol, (removed_match_position, new_match_position))
-        "0": [('6', (1, 6)), ('9', (4, 6))],
-        "0s": [('4', (0, 2)), ('7b', (6, 2))],
-        "1": [('+', (1, 6))],
-        "1s": [('-', (7, 6))],
-        "2": [('3', (4, 2))],
-        "3": [('2', (2, 4)), ('5', (1, 5)), ('9s', (3, 5))],
-        "4": [('0s', (2, 0)), ('7b', (6, 0))],
+        "0": [("6", (1, 6)), ("9", (4, 6))],
+        "0s": [("4", (0, 2)), ("7b", (6, 2))],
+        "1": [("+", (1, 6))],
+        "1s": [("-", (7, 6))],
+        "2": [("3", (4, 2))],
+        "3": [("2", (2, 4)), ("5", (1, 5)), ("9s", (3, 5))],
+        "4": [("0s", (2, 0)), ("7b", (6, 0))],
         "4s": [],
-        "5": [('3', (5, 1)), ('6s', (0, 4)), ('9s', (3, 1))],
-        "6": [('0', (6, 1)), ('9', (4, 1))],
-        "6s": [('5', (4, 0)), ('8s', (5, 10)), ('9s', (5, 2))],
+        "5": [("3", (5, 1)), ("6s", (0, 4)), ("9s", (3, 1))],
+        "6": [("0", (6, 1)), ("9", (4, 1))],
+        "6s": [("5", (4, 0)), ("8s", (5, 10)), ("9s", (5, 2))],
         "7": [],
-        "7b": [('0s', (2, 6)), ('4', (0, 6))],
+        "7b": [("0s", (2, 6)), ("4", (0, 6))],
         "8": [],
-        "8s": [('6s', (10, 5)), ('9s', (10, 2))],
-        "9": [('0', (6, 4)), ('6', (1, 4))],
-        "9s": [('3', (5, 3)), ('5', (1, 3)), ('6s', (2, 5)), ('8s', (2, 10))],
-        "+": [('1', (6, 1)), ('=', (7, 9))],
-        "-": [('1s', (6, 7))],
-        "=": [('+', (9, 7))],
+        "8s": [("6s", (10, 5)), ("9s", (10, 2))],
+        "9": [("0", (6, 4)), ("6", (1, 4))],
+        "9s": [("3", (5, 3)), ("5", (1, 3)), ("6s", (2, 5)), ("8s", (2, 10))],
+        "+": [("1", (6, 1)), ("=", (7, 9))],
+        "-": [("1s", (6, 7))],
+        "=": [("+", (9, 7))],
     }
     SAME_MATCH = {
         "0": ["0", "0s"],
@@ -414,21 +414,27 @@ class Matches_Expression:
                 for j in range(len(self.chars) + 1):
                     
                     if from_deleted and j == from_char_i: continue  # Trying to put the match back where it initially was
+                    if new_symbol == "nothing" and j == i or j == i + 1: continue  # Removed a "-" or "1s" and put it exactly where it was
 
+                    actual_i = i if i < j else i + 1
+                    
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
                     new_expr_list.insert(j, "1s")
                 
-                    dest = (i, i_from), (j, Matches_Interface.MATCHES["1s"][0])  # Destination of the moved match
+                    dest = (actual_i, i_from), (j, Matches_Interface.MATCHES["1s"][0])  # Destination of the moved match
                     new_expr = Matches_Expression(new_expr_list)
                     dest, deleted = new_expr.clean(dest)
                     yield new_expr, dest, deleted
 
+                    # Putting a "-" next to another "-" will require to remove one, but this would be equivalent to do a single move
+                    if (j - 1 < 0 or self.chars[j - 1] != "-") and (j + 1 >= len(self.chars) or self.chars[j + 1] != "-"): continue
+                    
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
                     new_expr_list.insert(j, "-")
 
-                    dest = (i, i_from), (j, Matches_Interface.MATCHES["-"][0])  # Destination of the moved match
+                    dest = (actual_i, i_from), (j, Matches_Interface.MATCHES["-"][0])  # Destination of the moved match
                     new_expr = Matches_Expression(new_expr_list)
                     dest, deleted = new_expr.clean(dest)
                     yield new_expr, dest, deleted
@@ -585,6 +591,7 @@ def generate_game(eq, nb_try=300, max_time=inf):
     --
     output:
         riddle: Matches_Expression -> the initial riddle
+        eq: Matches_Expression -> the initial equation
         sols: str list -> all found possible solutions
     """
     t1 = time.time()
