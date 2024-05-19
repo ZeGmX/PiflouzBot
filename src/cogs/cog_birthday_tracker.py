@@ -29,10 +29,10 @@ class Cog_birthday_tracker(Extension):
         self.bot = bot
 
 
-    @slash_command(name="set-profile", description="#TODO", sub_cmd_name="birthday",sub_cmd_description="Set your birthday date for a yearly reminder on the server.", scopes=Constants.GUILD_IDS)
-    @slash_option(name="year", description="Your birthday year. Format YYYY.", opt_type=OptionType.INTEGER, required=True, min_value=1900)
-    @slash_option(name="month", description="Your birthday month. Format MM.", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=12)
-    @slash_option(name="day", description="Your birthday day. Format DD.", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=31)
+    @slash_command(name="set-profile", description="#TODO", sub_cmd_name="birthday",sub_cmd_description="Set your birthday date for a yearly reminder on the server", scopes=Constants.GUILD_IDS)
+    @slash_option(name="year", description="Your birthday year. Format YYYY", opt_type=OptionType.INTEGER, required=True, min_value=1900)
+    @slash_option(name="month", description="Your birthday month. Format MM", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=12)
+    @slash_option(name="day", description="Your birthday day. Format DD", opt_type=OptionType.INTEGER, required=True, min_value=1, max_value=31)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def set_profile_cmd(self, ctx:interactions.SlashContext,year:int,month:int,day:int):
@@ -62,7 +62,7 @@ class Cog_birthday_tracker(Extension):
         await ctx.send(output_message)
 
 
-    @slash_command(name="clear-profile", description="#TODO", sub_cmd_name="birthday",sub_cmd_description="Remove your birthday date from the database.", scopes=Constants.GUILD_IDS)
+    @slash_command(name="clear-profile", description="#TODO", sub_cmd_name="birthday",sub_cmd_description="Remove your birthday date from the database", scopes=Constants.GUILD_IDS)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def clear_profile_cmd(self, ctx:interactions.SlashContext):

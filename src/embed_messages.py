@@ -119,7 +119,7 @@ def get_embeds_help_message():
                     name="`/birthday`",
                     value="Check how your baking skills are going ⚠️ Only works during birthday events",
                     inline=False
-                )
+                ),
             ]
         ),
 
@@ -136,6 +136,16 @@ def get_embeds_help_message():
                 EmbedField(
                     name="`/otter`",
                     value="Finally something good in this world",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/set-profile birthday year month day`",
+                    value="Set your birthday date for a yearly reminder on the server",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/clear-profile birthday`",
+                    value="Remove your birthday date from the database",
                     inline=False
                 ),
                 EmbedField(
@@ -156,7 +166,8 @@ def get_embeds_help_message():
 - I update the roles\n\
 - I create events every day\n\
 - I send a cute otter picture everyday\n\
-- I randomize some nicknames",
+- I randomize some nicknames\n\
+- I wish happy birthday to people",
                     inline=False
                 )
             ]
