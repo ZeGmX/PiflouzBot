@@ -1,6 +1,7 @@
 from achievement_handler import listen_to
 from events import get_event_object, get_event_data, Event_type
 from my_database import db
+from piflouz_generated import add_to_stat, Piflouz_source
 import piflouz_handlers
 import powerups
 import user_profile
@@ -36,6 +37,7 @@ class Achievement:
         
         profile["achievements"].append(self.to_str())
         piflouz_handlers.update_piflouz(user_id, qty=self.reward, check_cooldown=False)
+        add_to_stat(self.reward, Piflouz_source.ACHIEVEMENT)
         print(f"validated {self.to_str()} for user {user_id}")
 
 

@@ -95,7 +95,7 @@ async def on_startup():
     if "profiles" not in db.keys():
         db["profiles"] = {"active": {}, "inactive": {}}
     
-    for key in ["get", "event", "pibox", "miner"]:
+    for key in ["get", "event", "pibox", "miner", "achievement"]:
         if key not in db["piflouz_generated"].keys():
             db["piflouz_generated"][key] = 0
 
