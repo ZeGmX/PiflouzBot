@@ -16,6 +16,7 @@ from my_database import db
 from piflouz_generated import Piflouz_source, add_to_stat
 import piflouz_handlers
 import powerups
+from seasons import get_season_end_date
 import utils
 from wordle import Wordle
 
@@ -61,7 +62,13 @@ async def update_events(bot):
     await end_event(bot, Event_type.CHALLENGE)
     
     # Chose the new event of the day
-    now = datetime.datetime.now()
+    tz = timezone("Europe/Paris")
+    now = datetime.datetime.now(tz)
+    
+    if now.date == get_season_end_date():
+        channel = await bot.fetch_channel(db["out_channel"])
+        await channel.send("The season will end today, so the next event will be tomorrow!")
+        return
 
     if now.month == 4 and now.day == 1:
         new_event_passive = Birthday_event()
