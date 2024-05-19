@@ -1,3 +1,4 @@
+import logging.config
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -6,6 +7,7 @@ matplotlib.use('Agg')
 
 from interactions import Intents, Activity, ActivityType, Status
 from interactions import listen
+import logging
 import traceback
 
 from achievement_handler import Achievement_handler_ext
@@ -23,23 +25,34 @@ import socials
 import user_profile
 import utils
 
+logging.basicConfig(filename="logs.log", level=logging.WARNING, format="%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+
+cls_log = logging.getLogger("interactions_log")
+cls_log.setLevel(logging.WARNING)
+
+logger = logging.getLogger("custom_log")
+logger.setLevel(logging.INFO)
+
 
 intents = Intents.new(guild_members=True, message_content=True, guild_messages=True, guild_message_reactions=True, direct_messages=True, guilds=True)
 activity = Activity.create(name="Piflouz generator", type=ActivityType.CUSTOM, state="Generating piflouz")
-bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity, send_command_tracebacks=False)
+bot = Client(token=Constants.DISCORD_TOKEN, intents=intents, scope=Constants.GUILD_IDS, status=Status.ONLINE, activity=activity, send_command_tracebacks=False, logger=cls_log)
 
 
 @listen(disable_default_listeners=True)
 async def on_error(error):
-
     if not isinstance(error.error, Custom_Assert_Exception):
-        print(f"\033[91mGot the following error in {error.source}: {error.error}")
-        print("Had the following arguments:", error.args)
-        print("Had the following kwargs:", error.kwargs)
-        print("Had the following context:", error.ctx)
-        print("" + ''.join(traceback.format_exception(error.error)) + "\033[0m")
+        msg = f"Got the following error in {error.source}: {error.error}"
+        msg += f"\nHad the following arguments: {error.args}"
+        msg += f"\nHad the following kwargs: {error.kwargs}"
+        msg += f"\nHad the following context: {error.ctx}"
+        msg += f"\n" + "".join(traceback.format_exception(error.error))
+        print(f"\033[91m{msg}\033[0m")
+        logger.error(msg)
     else:
-        print(f"\033[93mGot the following error in {error.source}: {error.error}\033[0m")
+        msg = f"Got the following error in {error.source}: {error.error}"
+        print(f"\033[93m{msg}\033[0m")
+        logger.warning(msg)
     
 
 
@@ -49,6 +62,7 @@ async def on_startup():
     Function executed when the bot correctly connected to Discord
     """
     print(f"I have logged in as {bot.user.display_name} - id: {bot.user.id}")
+    logger.info("Bot startup")
 
     # Setting the base parameters in the database
     for key in [

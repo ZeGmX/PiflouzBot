@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta
 from interactions import Task, IntervalTrigger, OrTrigger, TimeTrigger
+import logging
 from pytz import timezone
 import traceback
+
+
+logger = logging.getLogger("custom_log")
 
 
 class TaskCustom(Task):
@@ -38,8 +42,10 @@ class TaskCustom(Task):
 
     
     def on_error(self, error: Exception):
-        print(f"\033[91mError in task {self.callback.__name__}: {error}")
-        print("".join(traceback.format_exception(error)) + "\033[0m")
+        msg = f"Error in task {self.callback.__name__}: {error}"
+        msg += "\n" + "".join(traceback.format_exception(error))
+        print(f"\033[91m{msg}\033[0m")
+        logger.error(msg)
 
 
 
