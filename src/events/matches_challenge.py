@@ -414,7 +414,7 @@ class Matches_Expression:
                 for j in range(len(self.chars) + 1):
                     
                     if from_deleted and j == from_char_i: continue  # Trying to put the match back where it initially was
-                    if new_symbol == "nothing" and j == i or j == i + 1: continue  # Removed a "-" or "1s" and put it exactly where it was
+                    if new_symbol == "nothing" and (j == i or j == i + 1): continue  # Removed a "-" or "1s" and put it exactly where it was
 
                     actual_i = i if i < j else i + 1
                     
@@ -428,7 +428,7 @@ class Matches_Expression:
                     yield new_expr, dest, deleted
 
                     # Putting a "-" next to another "-" will require to remove one, but this would be equivalent to do a single move
-                    if (j - 1 < 0 or self.chars[j - 1] != "-") and (j + 1 >= len(self.chars) or self.chars[j + 1] != "-"): continue
+                    if (j - 1 < 0 or self.chars[j - 1] == "-") and (j + 1 >= len(self.chars) or self.chars[j + 1] == "-"): continue
                     
                     new_expr_list = copy(self.chars)
                     new_expr_list[i] = new_symbol
@@ -655,3 +655,6 @@ async def get_riddle():
         (Matches_Expression, Matches_Expression, Matches_Expression list) -> solution, initial eq, amount of ways to go from one to the other    
     """
     return await asyncio.to_thread(generate_game, gen_equality(2, 2), max_time=30)
+
+res = get_all_solutions(Matches_Expression(s="0+84=631"))
+print(res)
