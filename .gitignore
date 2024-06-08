@@ -21,3 +21,9 @@ docs/
 profile.psd
 turbo_piflouz_simu*
 .vscode/
+board*.png
+
+chess_database/*.csv
+chess_database/*.json
+chess_database/*.zst
+*.tmp
