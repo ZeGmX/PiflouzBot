@@ -93,5 +93,5 @@ with open(f"{bdd_name}_ratingmapping.json","w") as fd:
 
 
 # Delete the downloaded database
-print(f"Cleaning up {main_db_filename}")
-os.remove(main_db_filename)
+# print(f"Cleaning up {main_db_filename}")
+# os.remove(main_db_filename)
