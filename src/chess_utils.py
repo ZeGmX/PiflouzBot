@@ -1,62 +1,54 @@
 import cairosvg
 import chess
 import chess.svg
-import time
+import random
+import json
+import os
 import pandas as pd
 
+def load_chess_database(db_path = "chess_database/"):
+    map_path = None
+    for file in os.listdir(path=db_path):
+        _,filextension = os.path.splitext(file)
+        if filextension  == ".json":
+            map_path = os.path.join(db_path,file)
+            break
 
-def lookup_problem(rating=1500):
-    #TODO: Add other arguments, such as max number of moves?
-    # Path to the CSV file
-    csv_file_path = "lichess_db_puzzle.csv"
-    
-    # Columns needed
-    usecols = ['Rating', 'RatingDeviation', 'PuzzleId']  # Replace 'PuzzleID' with the actual problem identifier column
+    assert map_path is not None
+    with open(map_path,"r") as fd:
+        mapping = json.load(fd)
+    int_mapping = {int(key):[value[0],os.path.join(db_path,value[1])] for key,value in mapping.items()}
+    return int_mapping
 
-    # Chunk size
-    chunksize = 20000  # Adjust based on memory constraints
+def lookup_problem(mapping, rating=1500):
+    """Get a random problem in a given rating range
 
-    # Initialize an empty DataFrame to collect potential problems
-    potential_problems = pd.DataFrame()
+    Args:
+        mapping (dict): A mapping of ratings to a tuple of (shardsize, shardfilename)
+        rating (int, optional): The target problem rating. Defaults to 1500.
 
-    # Read the CSV file in chunks
-    for chunk in pd.read_csv(csv_file_path, usecols=usecols, chunksize=chunksize,header=0):
-        # Calculate the lower and upper bounds
-        chunk['RatingLowerBound'] = chunk['Rating'] - chunk['RatingDeviation']
-        chunk['RatingUpperBound'] = chunk['Rating'] + chunk['RatingDeviation']
+    Returns:
+        pd.dataframe: The selected problem, with all the columns as in the base database.
+    """
+    nb_problems,filename = mapping[rating]
 
-        # Filter the chunk
-        filtered_chunk = chunk[(rating >= chunk['RatingLowerBound']) & (rating <= chunk['RatingUpperBound'])]
+    random_problem_index = random.randint(0,nb_problems)
+    full_problem_db = pd.read_csv(filename,skiprows=range(1,random_problem_index+1),nrows=1)
 
-        # Append the filtered chunk to the potential problems DataFrame
-        potential_problems = pd.concat([potential_problems, filtered_chunk])
-
-    # If no problems are found, return None
-    if potential_problems.empty:
-        print(f"Failed to find a chess problem for rating {rating}")
-        return None
-
-    # Randomly select one problem from the potential problems
-    selected_problem = potential_problems.sample(1)
-    selected_index = selected_problem.index.values.astype(int)[0]
-
-    full_problem_csv = pd.read_csv(csv_file_path,skiprows=range(1,selected_index+1),nrows=1)
-
-    full_problem = full_problem_csv.iloc[0]
-
-    #Sanity check.
-    assert selected_problem.iloc[0]["PuzzleId"] == full_problem["PuzzleId"], "Wrong rating returned."
-
+    full_problem = full_problem_db.iloc[0]
     return full_problem
 
-
-
 if __name__ == "__main__":
-    rating = 1500
 
+    mapping = load_chess_database()
+    print(mapping)
+
+    rating = 1500
+    import time 
     t0 = time.time()
-    result = lookup_problem(rating)
+    result = lookup_problem(mapping=mapping,rating=rating)
     t1 = time.time()
+    assert result is not None
     print(f"Basic function took: {t1-t0:.2f}s")
 
     fen = result["FEN"]
