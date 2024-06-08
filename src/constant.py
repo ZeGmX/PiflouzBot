@@ -1,7 +1,7 @@
 import os
 import datetime # Useful for an eval
 from interactions import TimeTrigger, OrTrigger
-
+from chess_utils import load_chess_database
 
 class Constants:
     ### Login information
@@ -85,7 +85,7 @@ class Constants:
                   "Hello {}! How are you today?",
                   "Greetings {}, I hope you have a great day today"]
     STREAMERS = eval(os.getenv("STREAMERS"))
-
+    CHESS_DATABASE_MAPPING = load_chess_database("chess_database/")
 
     @staticmethod
     def load():

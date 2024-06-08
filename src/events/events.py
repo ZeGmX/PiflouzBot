@@ -10,6 +10,7 @@ import random
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 import embed_messages
+from .chess_problem import ChessProblem
 from .matches_challenge import Matches_Interface
 from .subsequence_challenge import Subseq_challenge
 from my_database import db
@@ -195,6 +196,7 @@ def get_event_data(e):
         case Wordle_event(): return db["events"]["challenge"]["wordle"]
         case Move_match_event(): return db["events"]["challenge"]["match"]
         case Subseq_challenge_event(): return db["events"]["challenge"]["subseq"]
+        case Chess_puzzle_event(): return db["events"]["challenge"]["chess_puzzle"]
     
 
 async def fetch_event_message(bot, event_type):
@@ -233,7 +235,6 @@ async def fetch_event_thread(bot, event_type):
 class Event_type:
     PASSIVE = 0
     CHALLENGE = 1
-
 class Event:
     """
     Base class for the events, inherited by every event class
@@ -965,3 +966,55 @@ if one of your first three correct guesses was not in anyone else's first three 
 
     def to_str(self):
         return f"{Subseq_challenge_event.__name__}({self.reward_default}, {self.reward_bonus1}, {self.reward_bonus2}, {self.reward_bonus3}, {self.reward_uniqueness}, {self.max_rewardable_words}, {self.reward_per_word})"
+
+
+class Chess_puzzle_event(Challenge_event):
+
+    def __init__(self,reward) -> None:
+        self.reward = reward
+
+    async def get_embed(self, img_url):
+        """
+        Returns an embed to announce the event
+        --
+        input:
+            image_url: str -> Imgur url of the image to show
+        --
+        output:
+            embed: interactions.Embed
+        """
+
+        desc = f"Use `/puzzle guess [move]` to try to find the answer."
+        embed = Embed(title="Challenge event of the day: find the solution to this chess puzzle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
+        return embed
+    
+    async def on_begin(self, bot):
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        event = ChessProblem.new_problem(rating = 1500) #TODO - use a random rating, also used to determine the reward?
+        event.save_all("src/events/")
+
+        url_starting_position = utils.upload_image_to_imgur("src/events/board0.png")
+
+        embed = await self.get_embed(url_starting_position)
+
+        message = await out_channel.send(embed=embed)
+        await message.pin()
+        now = datetime.date.today()
+        thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
+        return int(message.id), int(thread.id)
+    
+    async def on_end(self,bot):
+
+        path = "src/events"
+        for filename in os.listdir(path):
+            base,extension = os.path.splitext(filename)
+            if extension == ".png" and "board" in base:
+                try:
+                    os.remove(os.path.join("src/events",filename))
+                except:
+                    print(f"Could not remove chess event file {filename}")
+
+    def to_str(self):
+        return f"{Chess_puzzle_event.__name__}({self.reward})"

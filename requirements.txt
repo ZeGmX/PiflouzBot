@@ -10,3 +10,6 @@ unidecode
 pandas
 wget
 zstandard
+cairosvg
+chess
+imageio
