@@ -655,6 +655,3 @@ async def get_riddle():
         (Matches_Expression, Matches_Expression, Matches_Expression list) -> solution, initial eq, amount of ways to go from one to the other    
     """
     return await asyncio.to_thread(generate_game, gen_equality(2, 2), max_time=30)
-
-res = get_all_solutions(Matches_Expression(s="0+84=631"))
-print(res)

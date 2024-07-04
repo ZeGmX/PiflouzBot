@@ -11,6 +11,7 @@ from twitchAPI.twitch import Twitch
 from twitchAPI.helper import first
 
 from constant import Constants
+from custom_exceptions import Custom_Task_Exception
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 from my_database import db
 import embed_messages
@@ -28,10 +29,13 @@ async def get_live_status(user_name=None, helix=None):
     output:
         stream: twitchAPI.object.api.Stream
     """
-    if helix is None:
-        helix = await Twitch(Constants.TWITCH_ID, Constants.TWITCH_SECRET, session_timeout=ClientTimeout(total=30))
-
-    return await first(helix.get_streams(user_login=user_name))
+    try:
+        if helix is None:
+            helix = await Twitch(Constants.TWITCH_ID, Constants.TWITCH_SECRET, session_timeout=ClientTimeout(total=30))
+        
+        return await first(helix.get_streams(user_login=user_name))
+    except TimeoutError:
+       raise Custom_Task_Exception("TimeoutError in get_live_status")
 
 
 @Task.create(IntervalTrigger(seconds=30))

@@ -4,6 +4,8 @@ import logging
 from pytz import timezone
 import traceback
 
+from custom_exceptions import Custom_Task_Exception
+
 
 logger = logging.getLogger("custom_log")
 
@@ -42,11 +44,15 @@ class TaskCustom(Task):
 
     
     def on_error(self, error: Exception):
-        msg = f"Error in task {self.callback.__name__}: {error}"
-        msg += "\n" + "".join(traceback.format_exception(error))
-        print(f"\033[91m{msg}\033[0m")
-        logger.error(msg)
-
+        if not isinstance(error, Custom_Task_Exception):
+            msg = f"Error in task {self.callback.__name__}: {error}"
+            msg += "\n" + "".join(traceback.format_exception(error))
+            print(f"\033[91m{msg}\033[0m")
+            logger.error(msg)
+        else:
+            msg = f"Error in task {self.callback.__name__}: {error}"
+            print(f"\033[93m{msg}\033[0m")
+            logger.warning(msg)
 
 
 class TimeTriggerDT(TimeTrigger):
