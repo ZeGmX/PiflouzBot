@@ -178,21 +178,9 @@ def upload_image_to_imgur(path):
 
 def update_db():
     """
-    Upgrades the database when going from v1.10 to v1.11
+    Upgrades the database when going from v1.12 to v1.13
     """
-    import user_profile
-    old_keys = ["piflouz_bank", "turbo_piflouz_bank", "donation_balance", "timers_react", "mining_combo", "discovered_piflex", "powerups", "achievements", "season_results"]
-    new_keys = ["piflouz_balance", "turbo_piflouz_balance", "donation_balance", "previous_get_time", "mining_combo", "discovered_piflex", "powerups", "achievements", "season_results"]
-
-    for old, new in zip(old_keys, new_keys):
-        for user_id, value in db[old].items():
-            profile = user_profile.get_profile(user_id)
-            profile[new] = value
-        del db[old]
-    
-    events.reset_event_database(events.Event_type.PASSIVE)
-    events.reset_event_database(events.Event_type.CHALLENGE)
-
-    for key in ["birthday_raffle_participation", "current_event_challenge", "current_event_challenge_message_id", "current_event_challenge_thread_id", "current_event_message_id", "current_event_passive", "current_event_passive_message_id", "match_challenge_completed", "match_challenge_solutions", "nb_baked_cakes", "subseq_challenge_completed", "subseq_challenge_solutions", "word_of_the_day", "baked_cakes", "birthday_event_ingredients", "last_birthday_delivery", "match_challenge", "raffle_participation", "stats", "subseq_challenge", "wordle_guesses", "twitch_notif_message_id"]:
-        if key in db.keys():
-            del db[key]
+    db["events"]["passive"]["buffered_event"] = ""
+    db["events"]["challenge"]["buffered_event"] = ""
+    db["events"]["passive"]["buffered_data"] = dict()
+    db["events"]["challenge"]["buffered_data"] = dict()

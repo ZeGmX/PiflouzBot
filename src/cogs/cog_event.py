@@ -414,7 +414,6 @@ class Cog_event(Extension):
         input:
             ctf: interactions.SlashContext
         """
-        # await utils.custom_assert(ctx.author.id == self.bot.owner.id, "You are not allowed to use this command!", ctx)
         await update_events(self.bot)
         await ctx.send("Done!", ephemeral=True)
 

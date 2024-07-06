@@ -65,20 +65,30 @@ async def update_events(bot):
     tz = timezone("Europe/Paris")
     now = datetime.datetime.now(tz)
     
+    # Overrides the buffered event
     if now.date == get_season_end_date():
         channel = await bot.fetch_channel(db["out_channel"])
         await channel.send("The season will end today, so the next event will be tomorrow!")
+        reset_buffered_events()
+        await prepare_events(bot)
+        print("Done preparing the future events")
         return
 
+    # This may happen if the bot is restarted while buffering the event
+    if db["events"]["passive"]["buffered_event"] == "" or db["events"]["challenge"]["buffered_event"] == "":
+        reset_buffered_events()
+        await prepare_events(bot)
+
+    # Overrides the buffered event
     if now.month == 4 and now.day == 1:
         new_event_passive = Birthday_event()
     elif now.month == 4 and now.day == 2:
         # The current event is still the birthday event, so get_event_data will return the birthday data
         new_event_passive = Birthday_raffle_event(get_event_data(Event_type.PASSIVE)["baked_cakes"]["total"] * Birthday_event.REWARD_PER_CAKE)
     else:
-        new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
+        new_event_passive = eval(db["events"]["passive"]["buffered_event"])
     
-    new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
+    new_event_challenge = eval(db["events"]["challenge"]["buffered_event"])
 
     id1 = await new_event_passive.on_begin(bot)
     id2_msg, id2_thread = await new_event_challenge.on_begin(bot)
@@ -88,7 +98,39 @@ async def update_events(bot):
     db["events"]["challenge"]["current_message_id"] = id2_msg
     db["events"]["challenge"]["current_thread_id"] = id2_thread
     db["events"]["challenge"]["current_event"] = new_event_challenge.to_str()
+    
+    reset_buffered_events()
+    await prepare_events(bot)
+    print("Done preparing the future events")
 
+
+async def prepare_events(bot):
+    """
+    Buffers the event for the next day in the database
+    Date-related events are not buffered, but override the buffered event in `update_events`
+    --
+    input:
+        bot: interactions.Client
+    """
+    new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
+    new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
+    
+    await new_event_passive.prepare(bot)
+    db["events"]["passive"]["buffered_event"] = new_event_passive.to_str()
+    
+    await new_event_challenge.prepare(bot)
+    db["events"]["challenge"]["buffered_event"] = new_event_challenge.to_str()
+
+
+def reset_buffered_events():
+    """
+    Resets the buffered events in the database
+    """
+    db["events"]["passive"]["buffered_event"] = ""
+    db["events"]["challenge"]["buffered_event"] = ""
+    db["events"]["passive"]["buffered_data"] = dict()
+    db["events"]["challenge"]["buffered_data"] = dict()
+    
 
 async def end_event(bot, event_type):
     """
@@ -127,7 +169,9 @@ def get_default_db_data(event_type):
         case Event_type.PASSIVE:
             return {
                 "current_event": "",
+                "buffered_event": "",
                 "current_message_id": -1,
+                "buffered_data": dict(),
                 "raffle": {"participation": dict()},
                 "birthday": {"baked_cakes": {"total": 0}, "ingredients": dict(), "last_delivery": {"id": -1, "qty": dict()}},
                 "birthday_raffle": {"participation": []}
@@ -135,8 +179,10 @@ def get_default_db_data(event_type):
         case Event_type.CHALLENGE:
             return {
                 "current_event": "",
+                "buffered_event": "",
                 "current_message_id": -1,
                 "current_thread_id": -1,
+                "buffered_data": dict(),
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
                 "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()}
@@ -203,6 +249,22 @@ def get_event_data(e):
         case Wordle_event(): return db["events"]["challenge"]["wordle"]
         case Move_match_event(): return db["events"]["challenge"]["match"]
         case Subseq_challenge_event(): return db["events"]["challenge"]["subseq"]
+
+
+def get_buffer_event_data(e):
+    """
+    Returns the buffered data dict of the event
+    --
+    input:
+        e: int (Event_type) / Event
+    """
+    if e is None: return None
+    
+    if isinstance(e, Event): e = Event_type.PASSIVE if isinstance(e, Passive_event) else Event_type.CHALLENGE
+    
+    match e:
+        case Event_type.PASSIVE: return db["events"]["passive"]["buffered_data"]
+        case Event_type.CHALLENGE: return db["events"]["challenge"]["buffered_data"]
     
 
 async def fetch_event_message(bot, event_type):
@@ -246,6 +308,17 @@ class Event:
     """
     Base class for the events, inherited by every event class
     """
+    
+    async def prepare(self, bot):
+        """
+        Prepares the event for the next day
+        -- 
+        input:
+            bot: interactions.Client
+        """
+        pass
+            
+    
 
     async def on_begin(self, bot):
         """
@@ -566,9 +639,14 @@ class Wordle_event(Challenge_event):
         embed = Embed(title="Challenge event of the day: new Wordle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[])
         return embed
 
+    
+    async def prepare(self, bot):
+        data = get_buffer_event_data(self)
+        data["word"] = Wordle().solution
+
 
     async def on_begin(self, bot):
-        get_event_data(self)["word"] = Wordle().solution
+        get_event_data(self)["word"] = get_buffer_event_data(self)["word"]
         
         return await super().on_begin(bot)
 
@@ -857,25 +935,33 @@ class Move_match_event(Challenge_event):
         embed = Embed(title="Challenge event of the day: move exactly two matches to make the equation correct!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
         return embed
 
-
-    async def on_begin(self, bot):
-        if "out_channel" not in db.keys(): return
-        out_channel = await bot.fetch_channel(db["out_channel"])
-
+    
+    async def prepare(self, bot):
         event = await Matches_Interface.new()
         event.save_all("src/events/")
         url_riddle = utils.upload_image_to_imgur("src/events/riddle.png")
         url_sol = utils.upload_image_to_imgur("src/events/solution.png")
-
-        data = get_event_data(self)
+        
+        data = get_buffer_event_data(self)
         data["riddle"] = event.riddle.str
         data["main_solution"] = event.main_sol.str
         data["all_solutions"] = event.all_sols
         data["url_riddle"] = url_riddle
         data["url_solution"] = url_sol
 
+
+    async def on_begin(self, bot):
+        if "out_channel" not in db.keys(): return
+        out_channel = await bot.fetch_channel(db["out_channel"])
+
+        data = get_event_data(self)
+        buffer = get_buffer_event_data(self)
+
+        for key, val in buffer.items():
+            data[key] = val
+
         # Starting new event
-        embed = await self.get_embed(url_riddle)
+        embed = await self.get_embed(data["url_riddle"])
         message = await out_channel.send(embed=embed)
         await message.pin()
         now = datetime.date.today()
@@ -937,13 +1023,23 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
         return embed
 
 
-    async def on_begin(self, bot):
+    async def prepare(self, bot):
+        data = get_buffer_event_data(self)
+        
         s, nb_sols, main_sol = await asyncio.to_thread(Subseq_challenge.new, random.randint(3, 6))
-        data = get_event_data(self)
+        data = get_buffer_event_data(self)
 
         data["subseq"] = s.subseq
         data["example_solution"] = main_sol
         data["nb_solutions"] = nb_sols
+    
+
+    async def on_begin(self, bot):
+        data = get_event_data(self)
+        buffer = get_buffer_event_data(self)
+        
+        for key, val in buffer.items():
+            data[key] = val
 
         return await super().on_begin(bot)
 
