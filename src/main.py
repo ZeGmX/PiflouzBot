@@ -130,6 +130,7 @@ async def on_startup():
     socials.shuffle_names.start(bot)
     socials.check_birthday.start(bot)
 
+    await events.wait_for_buffer_ready(bot)
     # utils.update_db()
 
 
@@ -209,5 +210,5 @@ if __name__ == "__main__":
     bot.load_extension("cogs.cog_status_check")
     bot.load_extension("cogs.cog_would_you_rather")
     bot.load_extension("cogs.cog_birthday_tracker")
-
+    
     bot.start()

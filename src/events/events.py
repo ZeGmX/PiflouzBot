@@ -2,6 +2,7 @@ import asyncio
 import datetime
 from interactions import Embed, EmbedField, EmbedAttachment, Button, ButtonStyle, IntervalTrigger, Color, BrandColors
 from interactions.client.utils.misc_utils import disable_components
+import logging
 from math import floor
 import os
 from pytz import timezone
@@ -21,7 +22,11 @@ import utils
 from wordle import Wordle
 
 
+logger = logging.getLogger("custom_log")
+
 waiting_for_reset = False
+waiting_for_prepare = False
+
 
 @Task.create(IntervalTrigger(minutes=5))
 async def event_handlers(bot):
@@ -57,6 +62,8 @@ async def update_events(bot):
     input:
         bot: interactions.Client
     """
+    logger.info("Updating the events")
+    
     # End the current event
     await end_event(bot, Event_type.PASSIVE)
     await end_event(bot, Event_type.CHALLENGE)
@@ -69,15 +76,10 @@ async def update_events(bot):
     if now.date == get_season_end_date():
         channel = await bot.fetch_channel(db["out_channel"])
         await channel.send("The season will end today, so the next event will be tomorrow!")
-        reset_buffered_events()
-        await prepare_events(bot)
-        print("Done preparing the future events")
         return
 
-    # This may happen if the bot is restarted while buffering the event
-    if db["events"]["passive"]["buffered_event"] == "" or db["events"]["challenge"]["buffered_event"] == "":
-        reset_buffered_events()
-        await prepare_events(bot)
+    # Ensure there is an event ready to start
+    await wait_for_buffer_ready(bot)
 
     # Overrides the buffered event
     if now.month == 4 and now.day == 1:
@@ -99,9 +101,36 @@ async def update_events(bot):
     db["events"]["challenge"]["current_thread_id"] = id2_thread
     db["events"]["challenge"]["current_event"] = new_event_challenge.to_str()
     
+    logger.info("Successfully started the events")
+    
     reset_buffered_events()
     await prepare_events(bot)
-    print("Done preparing the future events")
+
+
+async def wait_for_buffer_ready(bot):
+    """
+    Checks if all buffered events are ready, otherwise computes a new set of events
+    Note 1: if we are already computing the events from another source, this function will asynchronously wait until the other source is finished
+    Note 2: if two or more sources are waiting, all of them will be released all at once (so it's best to avoid that    )
+    --
+    input:
+        - bot: interactions.Client
+    """
+    global waiting_for_prepare
+    
+    if waiting_for_prepare:  # Buffered events are being computed from another source
+        print("Currently waiting for buffered events to be prepared somewhere else")
+        while waiting_for_prepare:
+            await asyncio.sleep(10)
+        print("Done waiting")
+        return
+        
+    
+    waiting_for_prepare = True
+    if db["events"]["passive"]["buffered_event"] == "" or db["events"]["challenge"]["buffered_event"] == "":
+        reset_buffered_events()
+        await prepare_events(bot)
+    waiting_for_prepare = False
 
 
 async def prepare_events(bot):
@@ -112,6 +141,11 @@ async def prepare_events(bot):
     input:
         bot: interactions.Client
     """
+    global waiting_for_prepare
+    
+    logger.info("Event preparation started")
+    
+    waiting_for_prepare = True
     new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
     new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
     
@@ -120,6 +154,10 @@ async def prepare_events(bot):
     
     await new_event_challenge.prepare(bot)
     db["events"]["challenge"]["buffered_event"] = new_event_challenge.to_str()
+    
+    print("Done preparing events")
+    logger.info("Event preparation completed")
+    waiting_for_prepare = False
 
 
 def reset_buffered_events():
