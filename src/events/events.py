@@ -5,7 +5,6 @@ from interactions.client.utils.misc_utils import disable_components
 import logging
 from math import floor
 import os
-from pytz import timezone
 import random
 
 from constant import Constants
@@ -35,8 +34,7 @@ async def event_handlers(bot):
     # Otherwise, if the task is called at e.g. t = 320 s before the reset, then it would be called again at t = 20 s before, and both instances would try to reset the event
     global waiting_for_reset
     
-    tz = timezone("Europe/Paris")
-    now = datetime.datetime.now(tz=tz)
+    now = datetime.datetime.now(tz=Constants.TIMEZONE)
     then = Constants.EVENT_TIME
     then = now.replace(hour=then.hour, minute=then.minute, second=then.second)
     dt = (then - now).total_seconds() % (3600 * 24)
@@ -69,8 +67,7 @@ async def update_events(bot):
     await end_event(bot, Event_type.CHALLENGE)
     
     # Chose the new event of the day
-    tz = timezone("Europe/Paris")
-    now = datetime.datetime.now(tz)
+    now = datetime.datetime.now(Constants.TIMEZONE)
     
     # Overrides the buffered event
     if now.date == get_season_end_date():

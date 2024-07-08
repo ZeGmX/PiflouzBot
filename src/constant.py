@@ -1,6 +1,7 @@
-import os
 import datetime # Useful for an eval
 from interactions import TimeTrigger, OrTrigger
+import os
+from pytz import timezone
 
 
 class Constants:
@@ -57,7 +58,7 @@ class Constants:
     SHUFFLE_NAME_TIME = eval(os.getenv("SHUFFLE_NAME_TIME"))
     BIRTHDAY_CHECK_TIME = eval(os.getenv("BIRTHDAY_CHECK_TIME"))
     EVERY_HOUR_TRIGGER = OrTrigger(*[TimeTrigger(hour=i) for i in range(24)])
-    
+    TIMEZONE = timezone(os.getenv("TIMEZONE"))
 
     ### Costs
     PIFLEX_COST = int(os.getenv("PIFLEX_COST"))

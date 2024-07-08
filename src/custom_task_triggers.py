@@ -4,6 +4,7 @@ import logging
 from pytz import timezone
 import traceback
 
+from constant import Constants
 from custom_exceptions import Custom_Task_Exception
 
 
@@ -66,8 +67,7 @@ class TimeTriggerDT(TimeTrigger):
     
     # override
     def next_fire(self) -> datetime | None:
-        tz = timezone("Europe/Paris")
-        t1 = datetime.now(tz=tz)
+        t1 = datetime.now(tz=Constants.TIMEZONE)
         t2 = t1.replace(hour=self.target_time[0], minute=self.target_time[1], second=self.target_time[2], microsecond=0)
         
         if t2 < t1:

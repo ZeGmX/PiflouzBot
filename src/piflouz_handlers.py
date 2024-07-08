@@ -1,7 +1,6 @@
 from datetime import datetime
 import functools
 from interactions import IntervalTrigger
-from pytz import timezone
 from random import random, randrange
 
 from constant import Constants
@@ -228,8 +227,7 @@ def get_current_daily_bonus(user_id, current_time):
     """
     profile = user_profile.get_profile(user_id)
 
-    tz = timezone("Europe/Paris")
-    d = datetime.fromtimestamp(current_time, tz=tz).date()
+    d = datetime.fromtimestamp(current_time, tz=Constants.TIMEZONE).date()
     prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
 
     if d != prev_date:
@@ -251,8 +249,7 @@ def get_update_daily_bonus(user_id, current_time):
     """
     profile = user_profile.get_profile(user_id)
 
-    tz = timezone("Europe/Paris")
-    d = datetime.fromtimestamp(current_time, tz=tz).date()
+    d = datetime.fromtimestamp(current_time, tz=Constants.TIMEZONE).date()
     prev_date = datetime.strptime(profile["daily_bonus_date"], "%Y-%m-%d").date()
 
     if d != prev_date:

@@ -4,7 +4,6 @@ from functools import wraps
 from interactions import Button, ButtonStyle
 import pickle
 from pyimgur import Imgur
-from pytz import timezone
 import requests
 
 from constant import Constants
@@ -55,7 +54,7 @@ async def wait_until(then):
     input:
         then: datetime.datetime
     """
-    tz = timezone("Europe/Paris")
+    tz = Constants.TIMEZONE
     now = datetime.datetime.now(tz=tz)
     then = now.replace(hour=then.hour, minute=then.minute, second=then.second).astimezone(tz)
 

@@ -1,9 +1,8 @@
 import asyncio
 import datetime
 from dateutil.relativedelta import relativedelta
-from interactions import Button, ButtonStyle, IntervalTrigger
+from interactions import IntervalTrigger
 from math import sqrt
-from pytz import timezone
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
@@ -185,9 +184,8 @@ def get_season_end_datetime():
     output:
         res: datetime.datetime
     """
-    tz = timezone("Europe/Paris")
     last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
-    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(tz)
+    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(Constants.TIMEZONE)
     return next_begin
 
 

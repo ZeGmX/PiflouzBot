@@ -4,7 +4,6 @@ from datetime import datetime
 import interactions
 from interactions import IntervalTrigger, BrandColors
 from markdown import escape_markdown as escape_markdown
-from pytz import timezone
 from random import shuffle, choice
 import time
 from twitchAPI.twitch import Twitch
@@ -158,8 +157,7 @@ async def check_birthday(bot:interactions.Client):
     print("Checking birthdays")
     birthdays = user_profile.get_all_birthdays()
 
-    tz = timezone("Europe/Paris")
-    current_date = datetime.now(tz=tz).date().strftime('%Y-%m-%d')
+    current_date = datetime.now(tz=Constants.TIMEZONE).date().strftime('%Y-%m-%d')
     to_celebrate = []
     for member_id, member_birthday_date in birthdays.items():
         #Check the birthday date of each member.
