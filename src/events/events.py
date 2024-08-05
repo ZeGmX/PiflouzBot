@@ -1007,10 +1007,18 @@ class Move_match_event(Challenge_event):
     async def on_end(self, bot, msg_id, thread_id=None):
         data = get_event_data(self)
         found_solutions = set(data["completed"].values())
-        found_solutions_str = f"||{", ".join(found_solutions)}||"
+        
+        desc_str = f"The event is over! {bot.user.mention} found {len(data["all_solutions"])} solutions. Below is one of them.\n\n"
+        
+        if len(found_solutions) > 0:
+            found_solutions_str = f"||{", ".join(found_solutions)}||"
+            desc_str += f"You found the following solutions: {found_solutions_str}"
+        else:
+            desc_str += "Unfortunately, no one found any solution this time :("        
+        
 
         thread = await bot.fetch_channel(thread_id)
-        embed = Embed(title="The event is over!", description=f"The event is over! {bot.user.mention} found {len(data["all_solutions"])} solutions. Below is one of them.\n You found the following solutions: {found_solutions_str}", color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=data["url_solution"]))
+        embed = Embed(title="The event is over!", description=desc_str, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=data["url_solution"]))
         await thread.send(embed=embed)
 
         await super().on_end(bot, msg_id, thread_id)
@@ -1090,9 +1098,16 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
                 if w not in found_solutions_nb:
                     found_solutions_nb[w] = 0
                 found_solutions_nb[w] += 1
-        found_solutions = Subseq_challenge.get_unclean_equivalent(*found_solutions)
-        found_solutions_str = f"||{", ".join(sorted(found_solutions))}||"
+        found_solutions_unclean = Subseq_challenge.get_unclean_equivalent(*found_solutions)
         
+        # Bold unique solutions
+        for i, w in enumerate(found_solutions):
+            if found_solutions_nb[w] == 1:
+                found_solutions_unclean[i] = f"**{found_solutions_unclean[i]}**"
+        
+        found_solutions_str = f"||{", ".join(sorted(found_solutions_unclean))}||"
+        
+        # Find users who found a unique solution
         user_unique_sol = []
         for user_id, user_sol in data["completed"].items():
             guesses = user_sol["guesses"][:3]
@@ -1102,12 +1117,26 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
 
         data["completed"] = dict()
         data["msg_id"] = dict()
-
+        
+        res_str = f"The event is over! Here is a level 4 solution: **{data["example_solution"]}**\n"
+        
+        # All solutions found
+        if len(found_solutions_unclean) > 0:
+            res_str += f"Here are all the solutions you found (bold ones are unique): {found_solutions_str}\n\n"
+        else:
+            res_str += "Unfortunately, no one found any solution this time :(\n\n"
+        
+        # All existing solutions
+        res_str += f"There were {data["nb_solutions"][0]} level 1 solutions, {data["nb_solutions"][1]} level 2 solutions, {data["nb_solutions"][2]} level 3 solutions and {data["nb_solutions"][3]} level 4 solutions in total.\n\n"
+        
+        # Users who found unique solutions
+        if len(user_unique_sol) > 0:
+            res_str += f"The following people earned an additional {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI} for finding a unique solution:{", ".join(user_unique_sol)}"
+        else:
+            res_str += "Unfortunately, no one found a unique solution this time :("
+            
         thread = await bot.fetch_channel(thread_id)
-        await thread.send(f"The event is over! Here is a level 4 solution: **{data["example_solution"]}**\n\
-Here are all the solutions you found: {found_solutions_str}\n\n\
-There were {data["nb_solutions"][0]} level 1 solutions, {data["nb_solutions"][1]} level 2 solutions, {data["nb_solutions"][2]} level 3 solutions and {data["nb_solutions"][3]} level 4 solutions in total.\n\n\
-The following people earned an additional {self.reward_uniqueness} {Constants.PIFLOUZ_EMOJI} for finding a unique solution:{", ".join(user_unique_sol)}")
+        await thread.send(res_str)
 
         await super().on_end(bot, msg_id, thread_id)
     
