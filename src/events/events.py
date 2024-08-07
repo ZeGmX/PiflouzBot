@@ -23,8 +23,9 @@ from wordle import Wordle
 
 logger = logging.getLogger("custom_log")
 
-waiting_for_reset = False
-waiting_for_prepare = False
+waiting_for_reset = asyncio.Lock()  # Lock to prevent multiple instances of the event reset task
+prepare_free = asyncio.Event()  # False by default, True means we can run the prepare_events task with no concurrency issues
+prepare_free.set()
 
 
 @Task.create(IntervalTrigger(minutes=5))
@@ -42,15 +43,15 @@ async def event_handlers(bot):
     current_event_passive = get_event_object(Event_type.PASSIVE)
     if current_event_passive is not None:
         await current_event_passive.actions_every_5min(bot)
-
-    if dt > 330 or waiting_for_reset:  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
+        
+    if dt > 330 or waiting_for_reset.locked():  # More than 5 minutes before the next event (with a few more seconds to be extra safe)
         return
 
-    waiting_for_reset = True
+    await waiting_for_reset.acquire()
     await asyncio.sleep(dt)
 
     await update_events(bot)
-    waiting_for_reset = False
+    waiting_for_reset.release()
 
 
 async def update_events(bot):
@@ -113,21 +114,22 @@ async def wait_for_buffer_ready(bot):
     input:
         - bot: interactions.Client
     """
-    global waiting_for_prepare
+    global prepare_free
     
-    if waiting_for_prepare:  # Buffered events are being computed from another source
+    if not prepare_free.is_set():  # Buffered events are being computed from another source
         print("Currently waiting for buffered events to be prepared somewhere else")
-        while waiting_for_prepare:
-            await asyncio.sleep(10)
+        # while waiting_for_prepare:
+            # await asyncio.sleep(10)
+        await prepare_free.wait()
         print("Done waiting")
         return
         
     
-    waiting_for_prepare = True
+    prepare_free.clear()
     if db["events"]["passive"]["buffered_event"] == "" or db["events"]["challenge"]["buffered_event"] == "":
         reset_buffered_events()
         await prepare_events(bot)
-    waiting_for_prepare = False
+    prepare_free.set()
 
 
 async def prepare_events(bot):
@@ -138,11 +140,11 @@ async def prepare_events(bot):
     input:
         bot: interactions.Client
     """
-    global waiting_for_prepare
+    global prepare_free
     
     logger.info("Event preparation started")
     
-    waiting_for_prepare = True
+    prepare_free.clear()
     new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
     new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
     
@@ -154,7 +156,7 @@ async def prepare_events(bot):
     
     print("Done preparing events")
     logger.info("Event preparation completed")
-    waiting_for_prepare = False
+    prepare_free.set()
 
 
 def reset_buffered_events():
