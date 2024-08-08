@@ -25,6 +25,7 @@ DEALINGS IN THE SOFTWARE.
 
 import re
 
+
 _MARKDOWN_ESCAPE_SUBREGEX = '|'.join(r'\{0}(?=([\s\S]*((?<!\{0})\{0})))'.format(c) for c in ('*', '`', '_', '~', '|'))
 
 _MARKDOWN_ESCAPE_COMMON = r'^>(?:>>)?\s|\[.+\]\(.+\)|^#{1,3}|^\s*-'
@@ -46,7 +47,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
             if the input contains ``10 * 5`` then it will be converted into ``10  5``.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to remove markdown from.
     ignore_links: :class:`bool`
@@ -55,7 +56,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
         be left alone. Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters removed.
     """
@@ -74,7 +75,7 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
     r"""A helper function that escapes Discord's markdown.
 
     Parameters
-    -----------
+    ----------
     text: :class:`str`
         The text to escape markdown from.
     as_needed: :class:`bool`
@@ -90,11 +91,10 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
         Defaults to ``True``.
 
     Returns
-    --------
+    -------
     :class:`str`
         The text with the markdown special characters escaped with a slash.
     """
-
     if not as_needed:
 
         def replacement(match):

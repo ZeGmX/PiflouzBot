@@ -1,7 +1,11 @@
-import datetime # Useful for an eval
-from interactions import TimeTrigger, OrTrigger
+import datetime  # Useful for an eval  # noqa: F401
+from dotenv import load_dotenv
+from interactions import OrTrigger, TimeTrigger
 import os
 from pytz import timezone
+
+
+load_dotenv()
 
 
 class Constants:
@@ -24,7 +28,7 @@ class Constants:
     PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
     PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
     BIRTHDAY_NOTIF_ROLE_ID = int(os.getenv("BIRTHDAY_NOTIF_ROLE_ID"))
-    
+
     ### Emojis
     PIFLOUZ_EMOJI_ID = int(os.getenv("PIFLOUZ_EMOJI_ID"))
     PIFLOUZ_EMOJI = f"<:piflouz:{PIFLOUZ_EMOJI_ID}>"
@@ -50,7 +54,7 @@ class Constants:
 
     ### Dates and durations
     REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))  # How many seconds between each react to earn piflouz
-    TWITCH_ANNOUNCEMENT_DELAY = int(os.getenv("TWITCH_ANNOUNCEMENT_DELAY")) #Time between announcement of streams, to avoid spam if the stream crashes.
+    TWITCH_ANNOUNCEMENT_DELAY = int(os.getenv("TWITCH_ANNOUNCEMENT_DELAY"))  # Time between announcement of streams, to avoid spam if the stream crashes.
     PIFLEX_ROLE_DURATION = int(os.getenv("PIFLEX_ROLE_DURATION"))
     MEGA_PIFLEXER_ROLE_DURATION = int(os.getenv("MEGA_PIFLEXER_ROLE_DURATION"))
     EVENT_TIME = eval(os.getenv("EVENT_TIME"))
@@ -80,22 +84,21 @@ class Constants:
     GUILD_IDS = eval(os.getenv("GUILD_IDS"))
     POWERUPS_STORE = None  # Set in load()
     RANDOM_EVENTS_PASSIVE = None  # Set in load()
-    GREETINGS = [ "Greetings {}! Nice to meet you!",
+    GREETINGS = [
+        "Greetings {}! Nice to meet you!",
                   "Hello there {}, how are you doing today?",
                   "Hello, oh great {}. Hope you are doing great!",
                   "Oh, I didn't see you there {}. Hello!",
                   "Hello {}! How are you today?",
-                  "Greetings {}, I hope you have a great day today"]
+                  "Greetings {}, I hope you have a great day today"
+    ]
     STREAMERS = eval(os.getenv("STREAMERS"))
-
 
     @staticmethod
     def load():
-        import powerups, events
+        import events  # noqa: F401
+        import powerups  # noqa: F401
 
         Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
         Constants.RANDOM_EVENTS_PASSIVE = eval(os.getenv("RANDOM_EVENTS_PASSIVE"))
         Constants.RANDOM_EVENTS_CHALLENGE = eval(os.getenv("RANDOM_EVENTS_CHALLENGE"))
-
-    
-    

@@ -7,22 +7,22 @@ from pyimgur import Imgur
 import requests
 
 from constant import Constants
-from custom_exceptions import Custom_Assert_Exception
+from custom_exceptions import CustomAssertError
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
 import embed_messages
 from my_database import db
-import powerups  # Used in eval()
-import events  # Used in eval()
 
 
 def get_new_joke():
     """
     Checks a joke API to format a new random joke
-    --
-    output:
-        joke: str -> the formatted joke
+
+    Returns
+    -------
+    joke (str):
+        the formatted joke
     """
-    r = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist").json()  
+    r = requests.get("https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist").json()
     if r["type"] == "twopart":
         joke = r["setup"] + "\n||**" + r["delivery"] + "**||"
     else:
@@ -33,26 +33,28 @@ def get_new_joke():
 async def update_piflouz_message(bot):
     """
     Updates the piflouz message with the rankings
-    --
-    input:
-        bot: interactions.Client
+
+    Parameters
+    ----------
+    bot (interactions.Client)
     """
-    from cogs import Cog_piflouz_mining
-    
+    from cogs import CogPiflouzMining
+
     channel = await bot.fetch_channel(db["out_channel"])
     embed = embed_messages.get_embed_piflouz()
     piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
     piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id="piflouz_mining_button", emoji=Constants.PIFLOUZ_EMOJI)
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=Cog_piflouz_mining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
+    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=CogPiflouzMining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
     await piflouz_message.edit(embeds=embed, components=piflouz_button)
 
 
 async def wait_until(then):
     """
     Waits until a certain time of the day (or the next day)
-    --
-    input:
-        then: datetime.datetime
+
+    Parameters
+    ----------
+    then (datetime.datetime)
     """
     tz = Constants.TIMEZONE
     now = datetime.datetime.now(tz=tz)
@@ -67,19 +69,21 @@ async def wait_until(then):
 def check_message_to_be_processed(fun):
     """
     Check if the bot should treat the command as a real one (sent by a user, in the setuped channel)
-    --
-    input:
-        fun: async function for a function defined in an extension, taking a context as first argument
-    --
-    output:
-        wrapper: async function
+
+    Parameters
+    ----------
+    fun (async function for a function defined in an extension)
+
+    Returns
+    -------
+    wrapper (async function)
     """
     @wraps(fun)
-    async def wrapper(self, ctx, *args, **kwargs): # the other parameters will be added later
+    async def wrapper(self, ctx, *args, **kwargs):  # the other parameters will be added later
 
         await custom_assert("out_channel" in db.keys() and db["out_channel"] == int(ctx.channel_id), "Command attempt in the wrong channel", ctx)
         return await fun(self, ctx, *args, **kwargs)
-    
+
     return wrapper
 
 
@@ -87,11 +91,13 @@ def check_message_to_be_processed(fun):
 async def backup_db(folder=None):
     """
     Creates a daily backup of the database
-    --
-    input:
-        filename: str -> the path to the file where the database will be saved. If None, the name is based on the date
+
+    Parameters
+    ----------
+    filename (str):
+        the path to the file where the database will be saved. If None, the name is based on the date
     """
-    parent_folder ="backups_db"
+    parent_folder = "backups_db"
     if folder is None:
         now = datetime.datetime.now()
         folder = now.strftime("%Y_%m_%d_%Hh%Mmin%Ss")
@@ -103,9 +109,11 @@ async def backup_db(folder=None):
 async def recover_db(filename):
     """
     Overrides the current database with one from a backed up file
-    --
-    input:
-        filename: str -> the path to the file
+
+    Parameters
+    ----------
+    filename (str):
+        the path to the file
     """
     new_db = pickle.load(open(filename, "rb"))
     print("loaded the database from file: ", filename)
@@ -118,7 +126,7 @@ async def recover_db(filename):
     print("Overriding the current database")
     for key in db.keys():
         del db[key]
-    
+
     for key in new_db.keys():
         db[key] = new_db[key]
 
@@ -126,9 +134,11 @@ async def recover_db(filename):
 def seconds_to_formatted_string(s):
     """
     Returns a formated string 'Xh Ymin Zs' corresponding to a certain amount of seconds
-    --
-    input:
-        s: int -> the number of seconds
+
+    Parameters
+    ----------
+    s (int):
+        the number of seconds
     """
     seconds = s % 60
     min = (s // 60) % 60
@@ -149,26 +159,29 @@ async def custom_assert(condition, msg, ctx):
     """
     Respond to an interaction with an error message if the condition is not met
     This also raises an exception to stop the coroutine handling the interaction
-    --
-    input:
-        cont: bool
-        msg: str
-        ctx: interactions.CommandContext
+
+    Parameters
+    ----------
+    cont (bool)
+    msg (str)
+    ctx (interactions.CommandContext)
     """
     if not condition:
         await ctx.send(msg, ephemeral=True)
-        raise Custom_Assert_Exception(msg)
+        raise CustomAssertError(msg)
 
 
 def upload_image_to_imgur(path):
     """
     Uploads an image file to imgur and returns the link
-    --
-    input:
-        path: str
-    --
-    output:
-        res: str
+
+    Parameters
+    ----------
+    path (str)
+
+    Returns
+    -------
+    res (str)
     """
     imgur = Imgur(Constants.IMGUR_CLIENT_ID)
     img = imgur.upload_image(path)

@@ -2,39 +2,43 @@ from aiohttp import ClientTimeout
 import asyncpraw
 from datetime import datetime
 import interactions
-from interactions import IntervalTrigger, BrandColors
-from markdown import escape_markdown as escape_markdown
-from random import shuffle, choice
+from interactions import BrandColors, IntervalTrigger
+from random import choice, shuffle
 import time
-from twitchAPI.twitch import Twitch
 from twitchAPI.helper import first
+from twitchAPI.twitch import Twitch
 
 from constant import Constants
-from custom_exceptions import Custom_Task_Exception
+from custom_exceptions import CustomTaskError
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
-from my_database import db
 import embed_messages
+from markdown import escape_markdown as escape_markdown
+from my_database import db
 import powerups
 import user_profile
+
 
 async def get_live_status(user_name=None, helix=None):
     """
     Sends a request to the twich API about a streamer
-    --
-    input:
-        user_name: string -> name of the streamer
-        helix: twitchAPI.twitch.Twitch
-    --
-    output:
-        stream: twitchAPI.object.api.Stream
+
+    Parameters
+    ----------
+    user_name (string):
+        name of the streamer
+    helix (twitchAPI.twitch.Twitch)
+
+    Returns
+    -------
+    stream (twitchAPI.object.api.Stream)
     """
     try:
         if helix is None:
             helix = await Twitch(Constants.TWITCH_ID, Constants.TWITCH_SECRET, session_timeout=ClientTimeout(total=30))
-        
+
         return await first(helix.get_streams(user_login=user_name))
     except TimeoutError:
-       raise Custom_Task_Exception("TimeoutError in get_live_status")
+        raise CustomTaskError("TimeoutError in get_live_status")
 
 
 @Task.create(IntervalTrigger(seconds=30))
@@ -42,8 +46,6 @@ async def task_check_live_status(bot):
     """
     Checks if the best streamers are live on Twitch every few seconds
     This will be executed every 30 seconds
-    --
-    bot: interactions.Client
     """
     print("checking live status")
 
@@ -71,16 +73,18 @@ async def task_check_live_status(bot):
 async def send_new_live_message(bot, stream, streamer_name):
     """
     Sends a message saying a streamer is now live
-    --
-    input:
-        bot: interactions.Client
-        stream: twitch.helix.Stream
-        streamer_name: str -> the name of the streamer who went live
+
+    Parameters
+    ----------
+    bot (interactions.Client)
+    stream (twitch.helix.Stream)
+    streamer_name (str):
+        the name of the streamer who went live
     """
     current_live_message_time = int(time.time())
     if (current_live_message_time - db["previous_live_message_time"][streamer_name]) >= Constants.TWITCH_ANNOUNCEMENT_DELAY:  # Checks if we waited long enough
         db["previous_live_message_time"][streamer_name] = current_live_message_time
-        
+
         out_channel = await bot.fetch_channel(db["twitch_channel"])
         role = await bot.guilds[0].fetch_role(Constants.TWITCH_NOTIF_ROLE_ID)
 
@@ -100,12 +104,11 @@ async def get_otter_image():
         user_agent=Constants.REDDIT_USER_AGENT
     )
     sub = await reddit.subreddit("otters")
-    #submissions = sub.top("day", limit=4)
     submission = await sub.random()
-    
+
     while not (submission.url.endswith(".jpg") or submission.url.endswith(".png") or submission.url.endswith(".gif")):
         submission = await sub.random()
-    
+
     return submission.url
 
 
@@ -113,13 +116,14 @@ async def get_otter_image():
 async def generate_otter_of_the_day(bot):
     """
     Generates a new otter image every day to brighten everyone's day
-    --
-    input:
-        bot: interactions.Client
+
+    Parameters
+    ----------
+    bot (interactions.Client)
     """
     if "out_channel" not in db.keys():
         return
-        
+
     out_channel = await bot.fetch_channel(db["out_channel"])
     embed = await embed_messages.get_embed_otter()
     await out_channel.send(embeds=embed)
@@ -129,30 +133,32 @@ async def generate_otter_of_the_day(bot):
 async def shuffle_names(bot):
     """
     Generates a new otter image every day to brighten everyone's day
-    --
-    input:
-        bot: interactions.Client
+
+    Parameters
+    ----------
+    bot (interactions.Client)
     """
     guild = bot.guilds[0]
-    await guild.gateway_chunk() # to load all members
+    await guild.gateway_chunk()  # to load all members
     members = guild.members
     owner = await guild.fetch_owner()
     chaos_members = list(filter(lambda member: Constants.CHAOS_ROLE_ID in member.roles and int(member.id) != owner.id, members))
 
     names = [member.display_name for member in chaos_members]
     shuffle(names)
-    
+
     for nick, member in zip(names, chaos_members):
         await member.edit_nickname(nick)
 
 
 @Task.create(TimeTriggerDT(Constants.BIRTHDAY_CHECK_TIME))
-async def check_birthday(bot:interactions.Client):
+async def check_birthday(bot: interactions.Client):
     """
     Task that checks if it is the birthday of any member of the server
-    --
-    input:
-        bot: interactions.Client
+
+    Parameters
+    ----------
+    bot (interactions.Client)
     """
     print("Checking birthdays")
     birthdays = user_profile.get_all_birthdays()
@@ -160,7 +166,7 @@ async def check_birthday(bot:interactions.Client):
     current_date = datetime.now(tz=Constants.TIMEZONE).date().strftime('%Y-%m-%d')
     to_celebrate = []
     for member_id, member_birthday_date in birthdays.items():
-        #Check the birthday date of each member.
+        # Check the birthday date of each member.
         print(f"Birthday date of {member_id} : {member_birthday_date}")
         if member_birthday_date[5:] == current_date[5:]:
             to_celebrate.append(member_id)
@@ -169,8 +175,8 @@ async def check_birthday(bot:interactions.Client):
         return
 
     current_time = int(time.time())
-    birthday_powerup = powerups.Birthday_Multiplier(0, 100, 86400, current_time)
-    output_message = f"Today is the birthday of "
+    birthday_powerup = powerups.BirthdayMultiplier(0, 100, 86400, current_time)
+    output_message = "Today is the birthday of "
     for i, member_id in enumerate(to_celebrate):
         member_mention = f"<@{member_id}>"
         current_member_profile = user_profile.get_profile(member_id)
@@ -184,13 +190,13 @@ async def check_birthday(bot:interactions.Client):
 
         # Add the powerup to the member via a "fake" buy
         elif birthday_powerup.on_buy(member_id, current_time):
-            current_member_profile["previous_birthday_powerup"] = current_time # The powerup is sucessfully applied to the member.
+            current_member_profile["previous_birthday_powerup"] = current_time  # The powerup is sucessfully applied to the member.
         else:
             print(f"Failed to add birthday powerup to {member_id} when I should have been able to.\nMaybe they already have this powerup?")
 
         # Add the mention of the current member to the global message.
         if i == 0:
-            output_message +=  member_mention
+            output_message += member_mention
         else:
             output_message += f", {member_mention}"
     output_message += " "
@@ -199,13 +205,13 @@ async def check_birthday(bot:interactions.Client):
     for _ in range(3):
         output_message += choice(birthday_emojis)
         title_message += choice(birthday_emojis)
-    output_message += f"!\nWish them an happy birthday!\nThey also got a special powerup, use `/profile` to check it out."
+    output_message += "!\nWish them an happy birthday!\nThey also got a special powerup, use `/profile` to check it out."
     title_message += "!"
-    
+
     embed = embed_messages.Embed(title=title_message, thumbnail=embed_messages.EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL),
             description=output_message,
             color=BrandColors.RED
     )
-    
+
     out_channel = await bot.fetch_channel(db["out_channel"])
-    await out_channel.send(embed = embed)
+    await out_channel.send(embed=embed)

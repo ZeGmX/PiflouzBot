@@ -2,8 +2,11 @@ from constant import Constants
 from my_database import db
 
 
-class Piflouz_source:
-    """Enum to represent the source of generated powerups"""
+class PiflouzSource:
+    """
+    Enum to represent the source of generated powerups
+    """
+
     GET = 1
     EVENT = 2
     PIBOX = 3
@@ -21,15 +24,15 @@ def add_to_stat(qty, source):
     """
     stats = db["piflouz_generated"]
     match source:
-        case Piflouz_source.GET:
+        case PiflouzSource.GET:
             stats["get"] += qty
-        case Piflouz_source.EVENT:
+        case PiflouzSource.EVENT:
             stats["event"] += qty
-        case Piflouz_source.PIBOX:
+        case PiflouzSource.PIBOX:
             stats["pibox"] += qty
-        case Piflouz_source.MINER:
+        case PiflouzSource.MINER:
             stats["miner"] += qty
-        case Piflouz_source.ACHIEVEMENT:
+        case PiflouzSource.ACHIEVEMENT:
             stats["achievement"] += qty
 
 
@@ -57,4 +60,3 @@ def get_stat_str():
     p_tot = p_get + p_event + p_pibox + p_miner
     stats = f"This season, I generated a total of {p_tot} {Constants.PIFLOUZ_EMOJI}:\n- {p_get} from `/get` commands\n- {p_event} from events\n- {p_pibox} from piboxes\n- {p_miner} from miner powerups\n- {p_achievements} from achievements"
     return stats
-        

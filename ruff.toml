@@ -1,0 +1,80 @@
+
+# Support Python 3.12+.
+target-version = "py312"
+
+indent-width = 4
+
+line-length = 150
+
+namespace-packages = [
+    "cogs",
+    "events",
+]
+
+preview = true
+
+# Source folders, used to determine first-party imports.
+src = ["src"]
+
+
+
+[lint]
+# Add the `line-too-long` rule to the enforced rule set. By default, Ruff omits rules that
+# overlap with the use of a formatter, like Black, but we can override this behavior by
+# explicitly adding the rule.
+# extend-select = ["E501"]
+preview = true
+
+select = [
+    "E",    # pycodestyle error
+    "F",    # Pyflakes
+    "W",    # pycodestyle warning
+    "I001", # unsorted-imports
+    "N",    # pep8-naming
+    "D",    # pydocstyle
+]
+
+ignore = [
+    "E266",  # multiple-leading-hashes-for-block-comment
+    "E501",  # line-too-long
+    "E701",  # multiple-statements-on-one-line-colon
+    "E731",  # lambda-assignment
+    "D100",  # undocumented-public-module
+    "D101",  # undocumented-public-class
+    "D102",  # undocumented-public-method (annoying because it asks to redo the docstring in overriden methods)
+    "D104",  # undocumented-public-package
+    "D105",  # undocumented-magic-method
+    "D200",  # fits-on-one-line
+    "D205",  # blank-line-after-summary
+    "D400",  # ends-in-period
+    "D401",  # non-imperative-mood
+]
+
+task-tags = ["TODO"]
+
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"wordle_words.py" = ["E231"]
+
+
+[lint.pydocstyle]
+# Add the `D202` rule to the enforced rule set. By default, Ruff omits rules that overlap
+convention = "numpy"
+
+[lint.isort]
+combine-as-imports = true
+default-section = "standard-library"
+force-single-line = false
+force-sort-within-sections = true  # Don't separate "from X import Y" to "import X"
+lines-after-imports = 2
+lines-between-types = 0
+
+
+[format]
+indent-style = "space"
+# preview = true
+quote-style = "double"
+line-ending = "lf"
+
+

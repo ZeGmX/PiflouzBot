@@ -10,7 +10,6 @@ class Client(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-
     def dispatch(self, event, *args, **kwargs):
         """
         Dispatches an event with the arguments
@@ -19,13 +18,14 @@ class Client(Client):
         if isinstance(event, BaseEvent):
             super().dispatch(event, *args, **kwargs)
         else:
-            super().dispatch(My_Event(event, self), *args, **kwargs)
-    
+            super().dispatch(MyEvent(event, self), *args, **kwargs)
 
-class My_Event(BaseEvent):
+
+class MyEvent(BaseEvent):
     """
     A custom event
     """
+
     def __init__(self, name, bot):
         self.override_name = name
         self.bot = bot

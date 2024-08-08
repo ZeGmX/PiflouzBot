@@ -1,7 +1,6 @@
 import asyncio
 import copy
-from dateutil.relativedelta import relativedelta
-from interactions import Embed, MaterialColors, RoleColors, Color, EmbedAttachment, EmbedField
+from interactions import Color, Embed, EmbedAttachment, EmbedField, MaterialColors, RoleColors
 from math import ceil
 import os
 import random
@@ -12,19 +11,21 @@ from my_database import db
 from piflouz_generated import get_stat_str
 import seasons
 import socials
-import utils
 from user_profile import get_active_profiles
+import utils
 from wordle import Wordle
 
 
 def get_embeds_help_message():
     """
     Returns the embed message with help for every command
-    --
-    output:
-        embeds: List[interactions.Embed] -> the embeds (there is more than 25 fields so we need to paginate)
+
+    Returns
+    -------
+    embeds (List[interactions.Embed]):
+        the embeds (there is more than 25 fields so we need to paginate)
     """
-    embeds =[
+    embeds = [
         Embed(
             title="Need help?",
             color=MaterialColors.RED,
@@ -172,7 +173,7 @@ def get_embeds_help_message():
                 )
             ]
         )
-    ] 
+    ]
 
     return embeds
 
@@ -180,16 +181,17 @@ def get_embeds_help_message():
 def get_embed_piflouz():
     """
     Creates an embed message containing the explanation for the piflouz game and the balance
-    --
-    output:
-        embed: interactions.Embed
+
+    Returns
+    -------
+    embed (interactions.Embed)
     """
     desc = f"This is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}.\n\n\
 You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the `/get` command.\n\
 If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`.\n\n\
 This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
-    embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail = EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
+    embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail=EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
 
     # Rankings
     profiles = get_active_profiles()
@@ -201,7 +203,7 @@ This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is 
         ranking_balance = get_ranking_str(d_piflouz)
         ranking_piflex = get_ranking_str(d_piflex)
         ranking_donations = get_ranking_str(d_donations)
-        
+
         stats = get_stat_str()
         embed.add_field(name="Season statistics", value=stats, inline=False)
 
@@ -215,25 +217,28 @@ This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is 
     return embed
 
 
-def get_ranking_str(L):
+def get_ranking_str(list):
     """
     Returns a string representing the ranking for a given score
-    --
-    input:
-        L: (user_id: str, score: int) list
-    --
-    output:
-        res: str
+
+    Parameters
+    ----------
+    list (List[(str, int)]):
+        (user id, score)
+
+    Returns
+    -------
+    res (str)
     """
     res = ""
     previous_val, previous_index = 0, 0
-    vals = sorted(L, key=lambda key_val: -key_val[1])
-    
+    vals = sorted(list, key=lambda key_val: -key_val[1])
+
     if len(vals) == 0:
         return res
-    
+
     for i, (user_id, val) in enumerate(vals):
-        if i == 10: break # The embed has a limited size so we limit the amount of user in each ranking
+        if i == 10: break  # The embed has a limited size so we limit the amount of user in each ranking
 
         index = i if val != previous_val else previous_index
         previous_val, previous_index = val, index
@@ -244,17 +249,21 @@ def get_ranking_str(L):
 def get_embed_piflex(user):
     """
     Returns an embed message corresponding to the piflex message
-    --
-    input:
-        user: interactions.User/Member -> the user requesting the piflex
-    --
-    output:
-        embed: interactions.Embed
-        index: int -> index of the image/gif
+
+    Parameters
+    ----------
+    user (interactions.User/Member):
+        the user requesting the piflex
+
+    Returns
+    -------
+    embed (interactions.Embed)
+    index (int):
+        index of the image/gif
     """
     index = random.randrange(0, len(Constants.PIFLEX_IMAGES_URL))
     image_url = Constants.PIFLEX_IMAGES_URL[index]
-    
+
     embed = Embed(
         title="PIFLEX",
         description=f"Look how much piflouz {user.mention} has. So much piflouz that they are flexing on you poor peasants! They are so cool and rich that they can just take a bath in piflouz. You mad?",
@@ -262,7 +271,7 @@ def get_embed_piflex(user):
         thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
         images=[EmbedAttachment(url=image_url)]
     )
-    
+
     print(f"Piflex with {image_url}")
     return embed, index
 
@@ -270,27 +279,31 @@ def get_embed_piflex(user):
 def get_embed_store_ui(balance, price_multiplier):
     """
     Returns an embed message corresponding to the store message
-    --
-    input:
-        balance: int -> the current balance of the user
-        price_multiplier -> the current price multiplier
-    --
-    output:
-        embed: interactions.Embed
+
+    Parameters
+    ----------
+    balance (int):
+        the current balance of the user
+    price_multiplier (float):
+        the current price multiplier
+
+    Returns
+    -------
+    embed (interactions.Embed)
     """
     embed = Embed(
         title="Piflouz shop",
         description=f"Here you can buy useful upgrades!\n\n**Your balance: {balance} {Constants.PIFLOUZ_EMOJI}**",
         color=RoleColors.DARK_MAGENTA,
     )
-    
+
     for emoji, powerup in Constants.POWERUPS_STORE.items():
         powerup = copy.copy(powerup)
         powerup.price = ceil(price_multiplier * powerup.price)
         embed.add_field(name=emoji, value=powerup.get_store_str(), inline=True)
-        
+
     embed.add_field(name="\u200b", value="\u200b", inline=False)
-    
+
     embed.add_field(name=Constants.PIFLOUZ_EMOJI, value=f"Flex with a custom rank\nCosts {ceil(Constants.PIFLEXER_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", inline=True)
     embed.add_field(name=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI, value=f"Piflex: when you have too much piflouz\nCosts {ceil(Constants.PIFLEX_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}", inline=True)
 
@@ -300,13 +313,16 @@ def get_embed_store_ui(balance, price_multiplier):
 async def get_embed_otter(title="Otter image of the day!"):
     """
     Returns an embed corresponding to a random otter image
-    --
-    input:
-        title: str -> title of the embed
-    --
-    output:
-        embed: interactions.Embed
-    """ 
+
+    Parameters
+    ----------
+    title (str):
+        title of the embed
+
+    Returns
+    -------
+    embed (interactions.Embed)
+    """
     url = await socials.get_otter_image()
 
     embed = Embed(title=title, color=Color.from_rgb(101, 67, 33), images=[EmbedAttachment(url=url)])  # Brown color
@@ -316,17 +332,19 @@ async def get_embed_otter(title="Otter image of the day!"):
 async def get_embed_end_season(bot):
     """
     Returns an embed announcing the end of a season
-    --
-    input:
-        bot: interactions.Client
-    --
-    output:
-        embed: interactions.Embed
+
+    Parameters
+    ----------
+    bot (interactions.Client)
+
+    Returns
+    -------
+    embed (interactions.Embed)
     """
     channel = await bot.fetch_channel(db["out_channel"])
     msg = await channel.fetch_message(db["piflouz_message_id"])
     url = msg.jump_url
-    
+
     embed = Embed(
         title="The season is over!",
         description=f"The last season has ended! Use the `/profile` to see what you earned. Congratulations to every participant!\nThe final rankings are available [here]({url})",
@@ -340,18 +358,20 @@ async def get_embed_end_season(bot):
 async def get_embed_end_raffle(bot, winner_id, prize):
     """
     Returns an embed announcing the end of a raffle
-    --
-    input:
-        bot: interactions.Client
-        winner_id: str/int
-        prize: int
-    --
-    output:
-        embed: interactions.Embed
+
+    Parameters
+    ----------
+    bot (interactions.Client)
+    winner_id (str/int)
+    prize (int)
+
+    Returns
+    -------
+    embed (interactions.Embed)
     """
-    msg = await events.fetch_event_message(bot, events.Event_type.PASSIVE)
+    msg = await events.fetch_event_message(bot, events.EventType.PASSIVE)
     url = msg.jump_url
-    
+
     embed = Embed(
         title="The raffle is over!",
         description=f"The raffle has ended! Congratulations to <@{winner_id}> for winning the raffle, earning {prize} {Constants.PIFLOUZ_EMOJI}!\nClick [here]({url}) to see the final participation",
@@ -365,12 +385,17 @@ async def get_embed_end_raffle(bot, winner_id, prize):
 async def get_embed_wordle(solution, guesses, header_str, user_id):
     """
     Generates the wordle image, host it on imgur and put it in an embed
-    --
-    input:
-        solution: str -> the solution of the wordle
-        guesses: List[str] -> the guesses
-        header_str: str -> message written on the embed
-        user_id: int -> id of the guesser
+
+    Parameters
+    ----------
+    solution (str):
+        the solution of the wordle
+    guesses (List[str]):
+        the guesses
+    header_str (str):
+        message written on the embed
+    user_id (int):
+        id of the guesser
     """
     wordle = Wordle(solution)
 

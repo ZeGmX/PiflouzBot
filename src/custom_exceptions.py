@@ -1,8 +1,8 @@
-class Custom_Assert_Exception(Exception):
+class CustomAssertError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
-class Custom_Task_Exception(Exception):
+class CustomTaskError(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

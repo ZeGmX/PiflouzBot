@@ -1,9 +1,8 @@
 import asyncio
-from interactions import Extension, OptionType, slash_command, slash_option, auto_defer
+from interactions import Extension, OptionType, auto_defer, slash_command, slash_option
 from io import BytesIO
 from math import sqrt
 import matplotlib.pyplot as plt
-from my_database import db
 import os
 from PIL import Image
 import requests
@@ -12,14 +11,14 @@ from time import time
 from constant import Constants
 from markdown import escape_markdown
 import piflouz_handlers
-import powerups # Used for eval
+import powerups  # Used for eval  # noqa: F401
 from seasons import bonus_ranking, reward_balance, reward_piflex
 import socials
 import user_profile
 import utils
 
 
-class Cog_status_check(Extension):
+class CogStatusCheck(Extension):
     """
     Cog containing all the interactions related to checking information about the user
     --
@@ -27,7 +26,7 @@ class Cog_status_check(Extension):
         /is-live
         /profile
     """
-  
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -38,10 +37,11 @@ class Cog_status_check(Extension):
     async def is_live_cmd(self, ctx, streamer_name):
         """
         Callback for the isLive command
-        --
-        input:
-            ctx: interactions.SlashContext
-            streamer_name: str
+
+        Parameters
+        ----------
+        ctx (interactions.SlashContext)
+        streamer_name (str)
         """
         stream = await socials.get_live_status(streamer_name)
         if stream is not None:
@@ -53,7 +53,6 @@ class Cog_status_check(Extension):
             msg = escape_markdown(f"{streamer_name} is not live yet. Follow https://www.twitch.tv/{streamer_name} to stay tuned ! {Constants.FUEGO_EMOJI}")
             await ctx.send(msg)
 
-
     @slash_command(name="profile", description="Have a look at all your stats", scopes=Constants.GUILD_IDS)
     @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)
     @auto_defer(ephemeral=True)
@@ -61,10 +60,11 @@ class Cog_status_check(Extension):
     async def profile_cmd(self, ctx, user=None):
         """
         Callback for the profile command
-        --
-        input:
-            ctx: interactions.SlashContext
-            user: interactions.Member
+
+        Parameters
+        ----------
+        ctx (interactions.SlashContext)
+        user (interactions.Member)
         """
         member = ctx.author if user is None else user
         path = f"profile_{member.id}.png"
@@ -72,33 +72,33 @@ class Cog_status_check(Extension):
         self.save_profile_image(member, path)
         await ctx.send(file=path, ephemeral=True)
         os.remove(path)
-        
-    
+
     @staticmethod
     def save_profile_image(member, path):
         """
         Generates and saves the profile image of a member
-        --
-        input:
-            member: interactions.Member
-            path: str
+
+        Parameters
+        ----------
+        member (interactions.Member)
+        path (str)
         """
         ### Creating the background
-        background = Image.open("src/cogs/assets/profile.png")    
+        background = Image.open("src/cogs/assets/profile.png")
         fig, ax = plt.subplots()
         plt.axis("off")
         plt.xlim(0, 1600)
         plt.ylim(0, 900)
         ax.invert_yaxis()
         ax.imshow(background)
-        
+
         user_id = str(member.id)
-        
+
         ### Inserting the avatar
         avatar_url = member.display_avatar.url
         response = requests.get(avatar_url)
         img = Image.open(BytesIO(response.content)).convert("RGBA")
-        
+
         # Making the avatar round
         r = img.size[0] // 2
         for x in range(img.size[0]):
@@ -109,13 +109,12 @@ class Cog_status_check(Extension):
                 elif r - sqrt(d) < 6:
                     red, greed, blue, _ = img.getpixel((x, y))
                     alpha = int(255 * (r - sqrt(d)) / 6)
-                    img.putpixel((x, y), (red, greed, blue, alpha))    
-        
+                    img.putpixel((x, y), (red, greed, blue, alpha))
+
         # Inserting the avatar at the correct position
         r_avatar = 99
         avatar_center = (138, 147)
         ax.imshow(img, extent=(avatar_center[0] - r_avatar, avatar_center[0] + r_avatar, avatar_center[1] + r_avatar, avatar_center[1] - r_avatar))
-
 
         ### Adding the username and bday
         name_center_pos = (500, 127)
@@ -123,9 +122,9 @@ class Cog_status_check(Extension):
         max_len = 15
         displayed_name = f"@{user_name}" if len(user_name) <= max_len else f"@{user_name[:max_len - 3]}..."
         ax.text(*name_center_pos, displayed_name, fontsize=12, color="white", fontweight="bold", verticalalignment="center", horizontalalignment="center")
-        
+
         profile = user_profile.get_profile(user_id)
-        
+
         bday_center_pos = (500, 182)
         if profile["birthday_date"] == "0000-00-00":
             bday_txt = "Birthday: N/A"
@@ -149,7 +148,6 @@ class Cog_status_check(Extension):
         ax.text(*msg_piflouz_left_pos, f": {profile["piflouz_balance"]}", fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         ax.text(*msg_turbo_piflouz_left_pos, f": {profile["turbo_piflouz_balance"]}", fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
 
-
         ### Mining
         cooldown = user_profile.get_timer(user_id, time())
         daily_bonus = piflouz_handlers.get_current_daily_bonus(user_id, time())
@@ -164,13 +162,12 @@ class Cog_status_check(Extension):
         ax.text(*combo_left_pos, combo_msg, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         ax.text(*daily_bonus_left_pos, daily_bonus_msg, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
 
-
-        ### Ranking & Roles  
+        ### Ranking & Roles
         d_piflouz = dict(user_profile.get_inverted("piflouz_balance"))
         d_piflex = dict(user_profile.get_inverted("discovered_piflex"))
         d_donations = dict(user_profile.get_inverted("donation_balance"))
-        
-        msg_piflouz = msg_piflex = msg_donations  = ""
+
+        msg_piflouz = msg_piflex = msg_donations = ""
         rank_piflouz = rank_piflex = rank_donations = -1
 
         if user_id in d_piflouz.keys():
@@ -202,22 +199,21 @@ class Cog_status_check(Extension):
                 rank_donations_str = str(rank_donations) if rank_donations <= 10 else "10+"
                 msg_donations += f"Donation ranking: {rank_donations_str}\n"
                 if rank_donations != 1: msg_donations += f"{max(d_donations.values()) - amount_user} below #1"
-        
+
         piflouz_left_pos = (410, 430)
         piflex_left_pos = (785, 430)
         donations_left_pos = (1160, 430)
-        
+
         ax.text(*piflouz_left_pos, msg_piflouz, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         ax.text(*piflex_left_pos, msg_piflex, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         ax.text(*donations_left_pos, msg_donations, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
-        
-        
+
         ### Season
         # Piflex
         piflex_message = f"• {len(profile["discovered_piflex"])} / {len(Constants.PIFLEX_IMAGES_URL)} piflex images discovered"
         piflex_left_pos = (70, 665)
-        ax.text(*piflex_left_pos, piflex_message, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left") 
-        
+        ax.text(*piflex_left_pos, piflex_message, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
+
         # Expected reward this season
         tot_reward = reward_balance(profile["piflouz_balance"]) + reward_piflex(len(profile["discovered_piflex"]))
         if 1 <= rank_piflouz <= len(bonus_ranking): tot_reward += bonus_ranking[rank_piflouz - 1]
@@ -228,7 +224,7 @@ class Cog_status_check(Extension):
         ax.text(*season_reward_left_pos, season_message, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
         turbo_piflouz_emoji_center = (605 + 20 * len(str(tot_reward)), 705)
         ax.imshow(turbo_piflouz_img, extent=(turbo_piflouz_emoji_center[0] - r_piflouz, turbo_piflouz_emoji_center[0] + r_piflouz, turbo_piflouz_emoji_center[1] + r_piflouz, turbo_piflouz_emoji_center[1] - r_piflouz))
-        
+
         # Previous season results
         results = profile["season_results"]
         prev_season_txt = "• Last season results (     ):"
@@ -242,12 +238,12 @@ class Cog_status_check(Extension):
             col1 = ["", "Balance", "Rank"]
             col2 = ["Piflouz", f"{results["Balance"]}", "N/A"]
             if "Balance ranking" in results.keys(): col2[2] = f"{results["Balance ranking"][0]} (#{results["Balance ranking"][1] + 1})"
-            col3 = ["Piflex", f"N/A", "N/A"]
+            col3 = ["Piflex", "N/A", "N/A"]
             if "Discovered piflex" in results.keys(): col3[1] = f"{results["Discovered piflex"]}"
             if "Piflex ranking" in results.keys(): col3[2] = f"{results["Piflex ranking"][0]} (#{results["Piflex ranking"][1] + 1})"
             col4 = ["Donations", "", "N/A"]
             if "Donation ranking" in results.keys(): col4[2] = f"{results["Donation ranking"][0]} (#{results["Donation ranking"][1] + 1})"
-            
+
             initial_left_pos = (70, 820)
             col_offset = 180
             for i, col in enumerate([col1, col2, col3, col4]):
@@ -255,25 +251,20 @@ class Cog_status_check(Extension):
                 pos = (initial_left_pos[0] + i * col_offset, initial_left_pos[1])
                 ax.text(*pos, s, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
 
-
         ### Powerups
         content = ""
         for powerup_str in profile["powerups"]:
             powerup = eval(powerup_str)
             info = powerup.get_info_str()
-            if info != "": 
-                L = info.split("\n")
-                content += f"• {L[0]}\n  {L[1]}\n"
+            if info != "":
+                data = info.split("\n")
+                content += f"• {data[0]}\n  {data[1]}\n"
 
         if len(content) == 0: content = "You don't have any active powerup\nUse /store to buy one!"
         else: content = content[:-1]
-        
+
         content_left_pos = (955, 760)
         ax.text(*content_left_pos, content, fontsize=7, color="white", verticalalignment="center", horizontalalignment="left")
-        
+
         plt.savefig(path, bbox_inches="tight", pad_inches=0, dpi=300)
         plt.close(fig)
-
-
-def setup(bot):
-    Cog_status_check(bot)
