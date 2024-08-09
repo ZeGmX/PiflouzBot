@@ -5,8 +5,8 @@ from random import random, randrange
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
+from database import db
 import events
-from my_database import db
 import powerups  # Used in eval()  # noqa: F401
 import user_profile
 

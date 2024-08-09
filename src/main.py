@@ -8,8 +8,8 @@ from achievement_handler import AchievementHandlerExt
 from constant import Constants
 from custom_client import Client
 from custom_exceptions import CustomAssertError
+from database import db
 import events
-from my_database import db
 from piflouz_generated import PiflouzSource, add_to_stat
 import piflouz_handlers
 import powerups

@@ -8,3 +8,4 @@ matplotlib
 Pillow
 unidecode
 pandas
+PyQt6

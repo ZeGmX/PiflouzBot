@@ -1,7 +1,7 @@
 from interactions import Extension, Modal, ShortText, auto_defer, message_context_menu, modal_callback, slash_command
 
 from constant import Constants
-from my_database import db
+from database import db
 import utils
 
 

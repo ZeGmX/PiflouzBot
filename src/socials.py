@@ -11,9 +11,9 @@ from twitchAPI.twitch import Twitch
 from constant import Constants
 from custom_exceptions import CustomTaskError
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
+from database import db
 import embed_messages
 from markdown import escape_markdown as escape_markdown
-from my_database import db
 import powerups
 import user_profile
 

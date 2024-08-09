@@ -1,21 +1,11 @@
-from interactions import (
-    Button,
-    ButtonStyle,
-    Extension,
-    OptionType,
-    SlashCommandChoice,
-    auto_defer,
-    message_context_menu,
-    slash_command,
-    slash_option,
-)
+from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, message_context_menu, slash_command, slash_option
 from interactions.ext.paginators import Paginator
 from math import ceil
 import random
 
 from constant import Constants
+from database import db
 import embed_messages
-from my_database import db
 import piflouz_handlers
 import user_profile
 import utils

@@ -4,7 +4,7 @@ import time
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
-from my_database import db
+from database import db
 import user_profile
 
 

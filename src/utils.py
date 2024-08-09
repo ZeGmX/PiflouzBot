@@ -9,8 +9,8 @@ import requests
 from constant import Constants
 from custom_exceptions import CustomAssertError
 from custom_task_triggers import TaskCustom as Task, TimeTriggerDT
+from database import db
 import embed_messages
-from my_database import db
 
 
 def get_new_joke():

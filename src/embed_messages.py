@@ -6,8 +6,8 @@ import os
 import random
 
 from constant import Constants
+from database import db
 import events
-from my_database import db
 from piflouz_generated import get_stat_str
 import seasons
 import socials

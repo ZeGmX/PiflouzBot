@@ -1,5 +1,5 @@
 from constant import Constants
-from my_database import db
+from database import db
 
 
 class PiflouzSource:

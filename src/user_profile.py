@@ -2,8 +2,8 @@ from copy import copy
 from itertools import chain
 
 from constant import Constants
+from database import db
 import events
-from my_database import db
 import powerups  # Used in eval()  # noqa: F401
 
 

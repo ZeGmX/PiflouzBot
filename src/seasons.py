@@ -6,10 +6,10 @@ from math import sqrt
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
+from database import db
 import duels
 import embed_messages
 import events
-from my_database import db
 from piflouz_generated import reset_stats
 import piflouz_handlers
 import user_profile

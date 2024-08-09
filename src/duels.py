@@ -1,7 +1,7 @@
 from random import choice
 
+from database import db
 import embed_messages
-from my_database import db
 from wordle import Wordle
 
 

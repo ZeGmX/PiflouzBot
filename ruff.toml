@@ -9,6 +9,7 @@ line-length = 150
 namespace-packages = [
     "cogs",
     "events",
+    "database",
 ]
 
 preview = true

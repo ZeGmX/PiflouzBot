@@ -502,6 +502,9 @@ class MyDatabase(dict):
     def __str__(self) -> str:
         return self.to_element().__str__()
 
+    def _clear(self) -> None:
+        return super().clear()
+
 
 db = MyDatabase()
 db.folder = "my_db"

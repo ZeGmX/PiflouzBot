@@ -9,8 +9,8 @@ import random
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
+from database import db
 import embed_messages
-from my_database import db
 from piflouz_generated import PiflouzSource, add_to_stat
 import piflouz_handlers
 import powerups

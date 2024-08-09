@@ -4,9 +4,9 @@ from interactions import Button, ButtonStyle, Extension, auto_defer, component_c
 from math import ceil
 
 from constant import Constants
+from database import db
 import embed_messages
 from events import EventType, get_event_object
-from my_database import db
 import piflouz_handlers
 import user_profile
 import utils
