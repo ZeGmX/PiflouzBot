@@ -69,7 +69,6 @@ class Constants:
     PIFLEXER_COST = int(os.getenv("PIFLEXER_COST"))
 
     ### Stat config
-    PIBOX_DROP_RATE = eval(os.getenv("PIBOX_DROP_RATE"))
     MAX_PIBOX_AMOUNT = int(os.getenv("MAX_PIBOX_AMOUNT"))
     DONATE_TAX_RATIO = eval(os.getenv("DONATE_TAX_RATIO"))
     DUEL_TAX_RATIO = int(os.getenv("DUEL_TAX_RATIO"))
@@ -97,8 +96,11 @@ class Constants:
     @staticmethod
     def load():
         import events  # noqa: F401
+        import pibox  # noqa: F401
         import powerups  # noqa: F401
+        from random_pool import RandomPoolTable
 
         Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
         Constants.RANDOM_EVENTS_PASSIVE = eval(os.getenv("RANDOM_EVENTS_PASSIVE"))
         Constants.RANDOM_EVENTS_CHALLENGE = eval(os.getenv("RANDOM_EVENTS_CHALLENGE"))
+        Constants.PIBOX_POOL_TABLE = RandomPoolTable.from_dict(eval(os.getenv("PIBOX_POOL_TABLE")))

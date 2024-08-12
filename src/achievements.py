@@ -94,7 +94,7 @@ class AchievementRaffleParticipation20(Achievement):
     reward = 50
 
     async def check(self, user_id, *args, **kwargs):
-        current_raffle = get_event_object(EventType.RAFFLE)
+        current_raffle = get_event_object(EventType.PASSIVE)
         raffle_data = get_event_data(current_raffle)
 
         if raffle_data["participation"][str(user_id)] >= 20:
@@ -108,7 +108,7 @@ class AchievementRaffleParticipation100(Achievement):
     reward = 300
 
     async def check(self, user_id, *args, **kwargs):
-        current_raffle = get_event_object(EventType.RAFFLE)
+        current_raffle = get_event_object(EventType.PASSIVE)
         raffle_data = get_event_data(current_raffle)
 
         if raffle_data["participation"][str(user_id)] >= 100:

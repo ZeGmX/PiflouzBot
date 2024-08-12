@@ -10,13 +10,11 @@ from custom_client import Client
 from custom_exceptions import CustomAssertError
 from database import db
 import events
-from piflouz_generated import PiflouzSource, add_to_stat
-import piflouz_handlers
+import pibox
 import powerups
 import rank_handlers
 import seasons
 import socials
-import user_profile
 import utils
 
 
@@ -115,16 +113,17 @@ async def on_startup():
         AchievementHandlerExt.add_custom_listener_for_achievements(bot, event_name)
 
     events.event_handlers.start(bot)
-    piflouz_handlers.random_gift.start(bot)
+    pibox.pibox_task.start(bot)
     powerups.handle_actions_every_hour.start(bot)
+    rank_handlers.update_ranks.start(bot)
     seasons.season_task.start(bot)
     socials.generate_otter_of_the_day.start(bot)
     socials.task_check_live_status.start(bot)
-    utils.backup_db.start()
-    rank_handlers.update_ranks.start(bot)
     socials.shuffle_names.start(bot)
     socials.check_birthday.start(bot)
+    utils.backup_db.start()
 
+    await pibox.load_all_pibox(bot)
     await events.wait_for_buffer_ready(bot)
     # utils.update_db()
 
@@ -145,51 +144,6 @@ async def on_message_create(message_event):
     if message.content is not None and "$tarpin" in message.content:
         await message.reply("Du quoi ?")
         return
-
-
-@listen()
-async def on_message_reaction_add(reac_event):
-    """
-    Listener function executed when a reaction is added to a message
-
-    Parameters
-    ----------
-    reac_event (interactions.MessageReactionAdd)
-    """
-    message_id = reac_event.message.id
-    piboxes = piflouz_handlers.get_all_pibox()
-    if str(message_id) not in piboxes:
-        return
-
-    message = reac_event.message
-    user = reac_event.author
-    emoji = reac_event.reaction.emoji
-
-    id_required, qty, custom_message, pibox_type = piboxes[str(message_id)]
-
-    if emoji.id is not None and int(emoji.id) == id_required:
-        piflouz_handlers.update_piflouz(user.id, qty, False)
-
-        del piboxes[str(message_id)]
-        new_text_message = f"{user.mention} won {qty} {Constants.PIFLOUZ_EMOJI} from a pibox!"
-        if custom_message is not None:
-            new_text_message += " " + custom_message
-        await message.edit(content=new_text_message)
-
-        # Add to stats
-        if pibox_type in [piflouz_handlers.PiboxType.MAIN, piflouz_handlers.PiboxType.FROM_PIBOX_MASTER]:
-            add_to_stat(qty, PiflouzSource.PIBOX)
-
-        # Check if it was a giveaway
-        elif pibox_type == piflouz_handlers.PiboxType.FROM_GIVEAWAY:
-            id = str(user.id)
-            profile = user_profile.get_profile(id)
-            profile["donation_balance"] -= qty
-
-        await utils.update_piflouz_message(bot)
-        bot.dispatch("pibox_obtained", user.id, qty)
-    else:
-        bot.dispatch("pibox_failed", user.id, qty)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ from database import db
 import duels
 import embed_messages
 import events
+import pibox
 from piflouz_generated import reset_stats
 import piflouz_handlers
 import user_profile
@@ -101,7 +102,7 @@ async def end_current_season(bot):
 
     user_profile.set_all_inactive()
 
-    piflouz_handlers.get_all_pibox().clear()
+    pibox.get_all_pibox().clear()
     duels.get_all_duels().clear()
 
     reset_stats()

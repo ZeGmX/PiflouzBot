@@ -14,6 +14,7 @@ import embed_messages
 from piflouz_generated import PiflouzSource, add_to_stat
 import piflouz_handlers
 import powerups
+from random_pool import RandomPoolTable
 from seasons import get_season_end_date
 import utils
 from wordle import Wordle
@@ -417,6 +418,13 @@ class Event:
         res (Powerup list)
         """
         return []
+
+    def get_pibox_pool_table(self):
+        """
+        Returns the pibox pool for the event
+        This table can be used to update the global pibox pool table
+        """
+        return RandomPoolTable()
 
     def to_str(self):
         """

@@ -6,6 +6,7 @@ import random
 from constant import Constants
 from database import db
 import embed_messages
+import pibox
 import piflouz_handlers
 import user_profile
 import utils
@@ -184,20 +185,14 @@ class CogMisc(Extension):
         amount (int):
             how many piflouz given
         """
-        user_sender = ctx.author
+        box = await pibox.QuickReactGiveawayPibox.new(self.bot, ctx.author.id, amount)
+        pibox.add_box_to_db(box)
 
-        # Trading
-        await utils.custom_assert(piflouz_handlers.update_piflouz(user_sender.id, qty=-amount, check_cooldown=False), "Sender does not have enough money to giveaway", ctx)
-        custom_message = f"This is a gift from the great {user_sender.mention}, be sure to thank them! "
-        await piflouz_handlers.spawn_pibox(self.bot, amount, custom_message=custom_message, pibox_type=piflouz_handlers.PiboxType.FROM_GIVEAWAY)
+        if box is None:
+            await ctx.send("Failed to create the pibox. Do you have enough money?", ephemeral=True)
+            return
+
         await ctx.send("Done!", ephemeral=True)
-
-        id = str(user_sender.id)
-        profile = user_profile.get_profile(id)
-        profile["donation_balance"] += amount
-
-        await utils.update_piflouz_message(self.bot)
-        self.bot.dispatch("giveaway_successful", ctx.author.id)
 
     @slash_command(name="spawn-pibox", description="The pibox master can spawn a pibox", scopes=Constants.GUILD_IDS)
     @auto_defer(ephemeral=True)
@@ -211,9 +206,9 @@ class CogMisc(Extension):
         ctx (interactions.SlashContext)
         """
         await utils.custom_assert(int(ctx.author.id) == Constants.PIBOX_MASTER_ID, "Only the pibox master can use this command", ctx)
-        piflouz_quantity = random.randrange(Constants.MAX_PIBOX_AMOUNT)
-        custom_message = "It was spawned by the pibox master"
-        await piflouz_handlers.spawn_pibox(self.bot, piflouz_quantity, custom_message, piflouz_handlers.PiboxType.FROM_PIBOX_MASTER)
+        box = await pibox.QuickReactPiboxMasterPibox.new(self.bot)
+        pibox.add_box_to_db(box)
+
         await ctx.send("Done!", ephemeral=True)
 
     @slash_command(name="role", description="TBD", sub_cmd_name="get", sub_cmd_description="Get a role", scopes=Constants.GUILD_IDS)

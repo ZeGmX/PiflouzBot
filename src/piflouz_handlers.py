@@ -1,25 +1,9 @@
 from datetime import datetime
-import functools
-from interactions import IntervalTrigger
-from random import random, randrange
 
 from constant import Constants
-from custom_task_triggers import TaskCustom as Task
-from database import db
 import events
 import powerups  # Used in eval()  # noqa: F401
 import user_profile
-
-
-class PiboxType:
-    """
-    Enum for the different types of piboxes
-    """
-
-    MAIN = 0
-    FROM_BOT_MONEY = 1
-    FROM_PIBOX_MASTER = 2
-    FROM_GIVEAWAY = 3
 
 
 def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
@@ -41,8 +25,6 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
         if the update succeded
     qty (int):
         the amount actually sent/received (only returned if check_cooldown = True (corresponding to a /get))
-    current_time (int):
-        the time at which the interaction was created
     """
     user_id = str(user_id)
 
@@ -71,65 +53,6 @@ def update_piflouz(user_id, qty=None, check_cooldown=True, current_time=None):
     if check_cooldown:
         return False, qty
     return False
-
-
-async def spawn_pibox(bot, piflouz_quantity, custom_message=None, pibox_type=PiboxType.MAIN):
-    """
-    Generates a pibox of the amount passed in argument.
-
-    Parameters
-    ----------
-    bot (interactions.Client)
-    amount (int)
-    custom_message (either None)
-    pibox_type (int)
-    """
-    out_channel = await bot.fetch_channel(db["out_channel"])
-
-    index = randrange(len(Constants.EMOJI_IDS_FOR_PIBOX))
-    emoji_id = Constants.EMOJI_IDS_FOR_PIBOX[index]
-    emoji_name = Constants.EMOJI_NAMES_FOR_PIBOX[index]
-    emoji = f"<:{emoji_name}:{emoji_id}>"
-
-    role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
-
-    text_output = f"{role.mention} Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !"
-    if custom_message is not None:
-        text_output += " " + custom_message
-    message = await out_channel.send(text_output)
-
-    get_all_pibox()[str(message.id)] = [emoji_id, piflouz_quantity, custom_message, pibox_type]
-
-
-@Task.create(IntervalTrigger(seconds=30))
-async def random_gift(bot):
-    """
-    Generates piflouz gifts randomly
-
-    Parameters
-    ----------
-    bot (interactions.Client)
-    """
-    drop_rate = Constants.PIBOX_DROP_RATE
-    max_size = Constants.MAX_PIBOX_AMOUNT
-    event = events.get_event_object(events.EventType.PASSIVE)
-
-    # Computing the drop rate based on the current event's powerups
-    if event is not None:
-        powerups_list = event.get_powerups()
-        drop_rate = functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_rate_multiplier_value(), powerups_list, drop_rate)
-        max_size = round(functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_reward_multiplier_value(), powerups_list, max_size))
-
-    if random() < drop_rate:
-        # Main piflouz
-        piflouz_quantity = randrange(max_size)
-        await spawn_pibox(bot, piflouz_quantity, pibox_type=PiboxType.MAIN)
-
-    if random() < drop_rate:
-        # Piflouz with the bot's money
-        piflouz_quantity = randrange(max_size)
-        if update_piflouz(bot.user.id, qty=-piflouz_quantity, check_cooldown=False):
-            await spawn_pibox(bot, piflouz_quantity, custom_message=f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!", pibox_type=PiboxType.FROM_BOT_MONEY)
 
 
 def update_combo(user_id, current_time):
@@ -284,14 +207,3 @@ def get_update_daily_bonus(user_id, current_time):
         profile["daily_bonus"] += 1
         return Constants.DAILY_BONUS_REWARD
     return 0
-
-
-def get_all_pibox():
-    """
-    Returns a dict containing all currently active pibox
-
-    Returns
-    -------
-    res (dict (Element_dict))
-    """
-    return db["random_gifts"]
