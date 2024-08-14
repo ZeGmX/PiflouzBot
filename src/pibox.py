@@ -186,7 +186,7 @@ class QuickReactPibox(Pibox):
         self.emoji_id_solution = emoji_id_solution
 
     @staticmethod
-    async def new(bot, custom_message=None, is_piflouz_generated=False, is_giveaway=False, sender_id=None, piflouz_quantity=None):
+    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, sender_id=None, piflouz_quantity=None):
         # Choose a random emoji
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
@@ -281,7 +281,7 @@ class QuickReactPibox(Pibox):
             add_to_stat(self.amount, PiflouzSource.PIBOX)
 
         # Check if it was a giveaway
-        elif self.is_giveaway:
+        elif self.is_giveaway and str(user_id) != str(bot.user.id):
             id = str(user_id)
             profile = user_profile.get_profile(id)
             profile["donation_balance"] -= self.amount
@@ -291,10 +291,8 @@ class QuickReactPibox(Pibox):
 
         await self._remove_listeners(bot)
 
-        # TODO: remove from database
-
     def to_str(self):
-        return f"QuickReactPibox({self.amount}, custom_message='{self.custom_message}', is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
 
 
 class QuickReactGiveawayPibox(QuickReactPibox):
@@ -308,10 +306,10 @@ class QuickReactGiveawayPibox(QuickReactPibox):
     @staticmethod
     async def new(bot, sender_id, qty):
         custom_message = f"This is a gift from the great <@{sender_id}>, be sure to thank them!"
-        return await QuickReactPibox.new(bot, custom_message, is_giveaway=True, sender_id=sender_id, piflouz_quantity=qty)
+        return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=sender_id, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactGiveawayPibox({self.amount}, custom_message=\"{self.custom_message}\", message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactGiveawayPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
 
 
 class QuickReactPiboxMasterPibox(QuickReactPibox):
@@ -329,7 +327,7 @@ class QuickReactPiboxMasterPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=True, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{self.custom_message}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
 
 
 class QuickReactByPibotPibox(QuickReactPibox):
@@ -343,7 +341,7 @@ class QuickReactByPibotPibox(QuickReactPibox):
     @staticmethod
     async def new(bot):
         custom_message = f"{bot.user.mention} spawned it with its own {Constants.PIFLOUZ_EMOJI}!"
-        return await QuickReactPibox.new(bot, custom_message, is_giveaway=True, sender_id=bot.user.id)
+        return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=bot.user.id)
 
     def to_str(self):
-        f"QuickReactByPibotPibox({self.amount}, custom_message='{self.custom_message}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        f"QuickReactByPibotPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
