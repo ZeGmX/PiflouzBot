@@ -1,6 +1,8 @@
 import functools
-from interactions import IntervalTrigger, listen
-from random import random, randrange
+from interactions import Button, ButtonStyle, IntervalTrigger, auto_defer, component_callback, listen
+from random import random, randrange, shuffle
+import requests
+from unidecode import unidecode
 
 from constant import Constants
 from custom_task_triggers import TaskCustom as Task
@@ -80,6 +82,19 @@ class Pibox:
     """
     Abstract base class for piboxes
     """
+
+    @staticmethod
+    def get_new_id():
+        """
+        Gets a new unique id for a pibox
+
+        Returns
+        -------
+        int
+        """
+        id = db["last_pibox_id"]
+        db["last_pibox_id"] += 1
+        return id
 
     @staticmethod
     async def new(bot):
@@ -177,13 +192,14 @@ class QuickReactPibox(Pibox):
     POSSIBLE_EMOJI_ID_SOLUTIONS = Constants.EMOJI_IDS_FOR_PIBOX
     POSSIBLE_EMOJI_NAME_SOLUTIONS = Constants.EMOJI_NAMES_FOR_PIBOX
 
-    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, message_id=None, emoji_id_solution=None):
+    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, message_id=None, emoji_id_solution=None, id=None):
         self.amount = amount
         self.custom_message = custom_message
         self.is_piflouz_generated = is_piflouz_generated  # Whether the piflouz were generated from scratch (contrary to giveaway for instance)
         self.is_giveaway = is_giveaway
         self.message_id = message_id
         self.emoji_id_solution = emoji_id_solution
+        self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
     async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, sender_id=None, piflouz_quantity=None):
@@ -198,7 +214,6 @@ class QuickReactPibox(Pibox):
             max_size = Constants.MAX_PIBOX_AMOUNT
             event = events.get_event_object(events.EventType.PASSIVE)
 
-            # Computing the drop rate based on the current event's powerups
             if event is not None:
                 powerups_list = event.get_powerups()
                 max_size = round(functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_reward_multiplier_value(), powerups_list, max_size))
@@ -245,7 +260,6 @@ class QuickReactPibox(Pibox):
         emoji = reac_event.reaction.emoji
         user = reac_event.author
         if emoji.id is not None and int(emoji.id) == self.emoji_id_solution:
-
             await self._on_success(bot, user.id)
         else:
             await self._on_fail(bot, user.id)
@@ -292,7 +306,7 @@ class QuickReactPibox(Pibox):
         await self._remove_listeners(bot)
 
     def to_str(self):
-        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
 
 
 class QuickReactGiveawayPibox(QuickReactPibox):
@@ -300,8 +314,8 @@ class QuickReactGiveawayPibox(QuickReactPibox):
     Pibox generated using the `/giveaway` command
     """
 
-    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None):
-        super().__init__(amount, custom_message=custom_message, is_piflouz_generated=False, is_giveaway=True, message_id=message_id, emoji_id_solution=emoji_id_solution)
+    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None, id=None):
+        super().__init__(amount, custom_message=custom_message, is_piflouz_generated=False, is_giveaway=True, message_id=message_id, emoji_id_solution=emoji_id_solution, id=id)
 
     @staticmethod
     async def new(bot, sender_id, qty):
@@ -309,7 +323,7 @@ class QuickReactGiveawayPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=sender_id, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactGiveawayPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactGiveawayPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
 
 
 class QuickReactPiboxMasterPibox(QuickReactPibox):
@@ -317,8 +331,8 @@ class QuickReactPiboxMasterPibox(QuickReactPibox):
     Pibox generated using the `/spawn-pibox` command
     """
 
-    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None):
-        super().__init__(amount, custom_message=custom_message, is_piflouz_generated=True, is_giveaway=False, message_id=message_id, emoji_id_solution=emoji_id_solution)
+    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None, id=None):
+        super().__init__(amount, custom_message=custom_message, is_piflouz_generated=True, is_giveaway=False, message_id=message_id, emoji_id_solution=emoji_id_solution, id=id)
 
     @staticmethod
     async def new(bot):
@@ -327,7 +341,7 @@ class QuickReactPiboxMasterPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=True, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
 
 
 class QuickReactByPibotPibox(QuickReactPibox):
@@ -335,8 +349,8 @@ class QuickReactByPibotPibox(QuickReactPibox):
     Pibox generated uusing the bot's money
     """
 
-    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None):
-        super().__init__(amount, custom_message, is_piflouz_generated=False, is_giveaway=True, message_id=message_id, emoji_id_solution=emoji_id_solution)
+    def __init__(self, amount, custom_message, message_id=None, emoji_id_solution=None, id=None):
+        super().__init__(amount, custom_message, is_piflouz_generated=False, is_giveaway=True, message_id=message_id, emoji_id_solution=emoji_id_solution, id=id)
 
     @staticmethod
     async def new(bot):
@@ -344,4 +358,191 @@ class QuickReactByPibotPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=bot.user.id)
 
     def to_str(self):
-        f"QuickReactByPibotPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution})"
+        f"QuickReactByPibotPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+
+
+class TriviaPibox(Pibox):
+    """
+    Pibox where the user has to answer a trivia question to get the pibox
+    """
+
+    def __init__(self, question, answers, correct_answer, amount, message_id, failed_indices=None, failed_users=None, id=None):
+        self.question = question
+        self.answers = answers
+        self.correct_answer = correct_answer
+        self.amount = amount
+        self.message_id = message_id
+        self.id = id if id is not None else Pibox.get_new_id()
+        self.failed_indices = failed_indices if failed_indices is not None else set()
+        self.failed_users = failed_users if failed_users is not None else []
+
+    @staticmethod
+    def fetch_question():
+        """
+        Gets a new trivia question/answers
+
+        Returns
+        -------
+        str:
+            The question
+        List[str]:
+            The answers
+        str:
+            The correct answer
+        """
+        done = False
+        while not done:
+            r = requests.get(url="https://the-trivia-api.com/v2/questions", params={"regions": ["FR"], "limit": 1}).json()[0]
+            question = r["question"]["text"]
+            answer = r["correctAnswer"]
+            all_answers = r["incorrectAnswers"] + [answer]
+            shuffle(all_answers)
+            done = not any([len(a) > 200 for a in all_answers])
+
+        return question, all_answers, answer
+
+    @staticmethod
+    async def new(bot):
+        question, all_answers, answer = TriviaPibox.fetch_question()
+        pibox_id = Pibox.get_new_id()
+
+        # Computing the maximum amount of piflouz that can be given
+        max_size = Constants.MAX_PIBOX_AMOUNT
+        event = events.get_event_object(events.EventType.PASSIVE)
+        if event is not None:
+            powerups_list = event.get_powerups()
+            max_size = round(functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_reward_multiplier_value(), powerups_list, max_size))
+
+        piflouz_quantity = randrange(max_size)
+
+        components = []
+        emojis = [":one:", ":two:", ":three:", ":four:"]
+        for i, txt in enumerate(all_answers):
+            components.append(Button(style=ButtonStyle.GRAY, label=txt, emoji=emojis[i], custom_id=f"pibox_{pibox_id}_{i}"))
+
+        role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
+        msg = f"{role.mention} Find the correct answer to earn {piflouz_quantity} {Constants.PIFLOUZ_EMOJI}!\n\n{question}"
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        message = await out_channel.send(msg, components=components)
+
+        pibox = TriviaPibox(question, all_answers, answer, piflouz_quantity, message.id, id=pibox_id)
+        await pibox._register_listeners(bot)
+        return pibox
+
+    async def _on_button_click(self, ctx, index, bot):
+        """
+        Callback function executed when a button is clicked on the pibox message
+
+        Parameters
+        ----------
+        ctx (interactions.ComponentContext)
+        index (int)
+            Which button was clicked
+        bot (interactions.Client)
+        """
+        if str(ctx.author.id) in self.failed_users:
+            await ctx.send("You already failed this pibox", ephemeral=True)
+            return
+
+        if self.answers[index] == self.correct_answer:
+            await self._on_success(bot, ctx, ctx.author.id, index)
+        else:
+            await self._on_fail(bot, ctx, ctx.author.id, index)
+
+    async def _register_listeners(self, bot):
+        for i in range(4):
+            await self._register_one_listener(bot, i)  # For some reason, if we declare the function inside the loop, they all use i = 3
+
+    async def _register_one_listener(self, bot, i):
+        @component_callback(f"pibox_{self.id}_{i}")
+        @auto_defer(ephemeral=True)
+        async def callback(ctx):
+            await self._on_button_click(ctx, i, bot)
+
+        bot.add_component_callback(callback)
+
+    async def _remove_listeners(self, bot):
+        for i in range(4):
+            del bot._component_callbacks[f"pibox_{self.id}_{i}"]
+
+    async def _on_fail(self, bot, ctx, user_id, index):
+        self.failed_indices.add(index)
+        self.failed_users.append(str(user_id))
+        bot.dispatch("pibox_failed", user_id, self.amount)
+        await self._update_message(bot)
+        await ctx.send("Wrong answer!\nThanks to you, this answer has been eliminated, but the reward was reduced by 25%", ephemeral=True)
+
+    async def _on_success(self, bot, ctx, user_id, index):
+        reward = round(self.amount * (1 - len(self.failed_indices) / 4))
+        piflouz_handlers.update_piflouz(user_id, reward, False)
+        bot.dispatch("pibox_obtained", user_id, reward)
+
+        del get_all_pibox()[str(self.message_id)]
+        add_to_stat(reward, PiflouzSource.PIBOX)
+
+        await ctx.send(f"Correct answer! You won {reward} {Constants.PIFLOUZ_EMOJI}!", ephemeral=True)
+
+        components = ctx.message.components[0].components
+        for i, component in enumerate(components):
+            if i == index:
+                component.style = ButtonStyle.GREEN
+            else:
+                component.style = ButtonStyle.RED
+            component.disabled = True
+
+        content = f"<@{user_id}> won {reward} {Constants.PIFLOUZ_EMOJI} ({len(self.failed_indices)} failed attempts) solving the following question:\n\n{self.question}"
+
+        await ctx.message.edit(content=content, components=components)
+        await utils.update_piflouz_message(bot)
+        await self._remove_listeners(bot)
+
+    async def _get_message(self, bot):
+        """
+        Returns the string to be sent in the message (when it's being updated)
+
+        Parameters
+        ----------
+        bot (interactions.Client)
+
+        Returns
+        -------
+        str
+        """
+        role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
+        amount = round(self.amount * (1 - len(self.failed_indices) / 4))
+
+        return f"{role.mention} Find the correct answer to earn {amount} {Constants.PIFLOUZ_EMOJI}, but you only have one chance!\nEach failed atempt will eliminate the answer and reduce the reward by 25% of the initial value\n\n{self.question}"
+
+    async def _update_message(self, bot):
+        """
+        Updates the message with the new reward and the failed answers
+
+        Parameters
+        ----------
+        bot : interactions.Client
+        """
+        content = await self._get_message(bot)
+
+        components = []
+        emojis = [":one:", ":two:", ":three:", ":four:"]
+        for i, txt in enumerate(self.answers):
+            color = ButtonStyle.GRAY if i not in self.failed_indices else ButtonStyle.RED
+            disabled = i in self.failed_indices
+            components.append(Button(style=color, label=txt, emoji=emojis[i], custom_id=f"pibox_{self.id}_{i}", disabled=disabled))
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        message = await out_channel.fetch_message(self.message_id)
+        await message.edit(content=content, components=components)
+
+    def sanityze_str(self, s):
+        res = unidecode(s).replace("'", r"\'").replace('"', r'\"')
+        while r"\\" in res:
+            res = res.replace(r"\\", "\\")
+        return res
+
+    def to_str(self):
+        new_question = self.sanityze_str(self.question)
+        new_answers = "[" + ",".join([f"'{self.sanityze_str(a)}'" for a in self.answers]) + "]"
+        new_correct_answer = self.sanityze_str(self.correct_answer)
+        return rf"TriviaPibox(question='{new_question}', answers={new_answers}, correct_answer='{new_correct_answer}', amount={self.amount}, message_id={self.message_id}, failed_indices={self.failed_indices}, failed_users={self.failed_users}, id={self.id})"
