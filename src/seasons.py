@@ -2,6 +2,7 @@ import asyncio
 import datetime
 from dateutil.relativedelta import relativedelta
 from interactions import IntervalTrigger
+import logging
 from math import sqrt
 
 from constant import Constants
@@ -16,6 +17,10 @@ import piflouz_handlers
 import user_profile
 import utils
 
+
+logger = logging.getLogger("custom_log")
+
+waiting_for_season = asyncio.Lock()  # To avoid multiple seasons starting at the same time
 
 reward_balance = lambda balance: int(sqrt(balance))
 reward_piflex = lambda count: int(0.5771 * count ** 3 - 9.8453 * count ** 2 + 80.152 * count)
@@ -123,21 +128,32 @@ async def season_task(bot):
     ----------
     bot (interactions.Client)
     """
+    global waiting_for_season
+
+    if waiting_for_season.locked(): return
+
+    await waiting_for_season.acquire()
     next_begin = get_season_end_datetime()
     await asyncio.sleep((next_begin - datetime.datetime.now(tz=next_begin.tzinfo)).total_seconds())
 
     if "current_season_message_id" in db.keys() and "out_channel" in db.keys():
+        logger.info("Ending current season")
         await end_current_season(bot)
         channel = await bot.fetch_channel(db["out_channel"])
         old_message = await channel.fetch_message(db["current_season_message_id"])
         await old_message.unpin()
+        logger.info("Season ended")
 
+    logger.info("Starting new season")
     db["last_begin_time"] = int(next_begin.timestamp())
     msg = await start_new_season(bot)
     await msg.pin()
     db["current_season_message_id"] = int(msg.id)
     db["piflouz_message_id"] = int(msg.id)
     await utils.update_piflouz_message(bot)
+
+    waiting_for_season.release()
+    logger.info("Season started")
 
 
 def reward_turbo_piflouz_based_on_ranking(scores, rewards, reward_type):
