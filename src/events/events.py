@@ -82,7 +82,7 @@ async def update_events(bot):
     now = datetime.datetime.now(Constants.TIMEZONE)
 
     # Overrides the buffered event
-    if now.date == get_season_end_date():
+    if now.date() == get_season_end_date():
         channel = await bot.fetch_channel(db["out_channel"])
         await channel.send("The season will end today, so the next event will be tomorrow!")
         return

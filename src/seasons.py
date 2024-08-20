@@ -236,4 +236,4 @@ def get_season_end_date():
     res (datetime.date)
     """
     next_begin = get_season_end_datetime()
-    return next_begin.date
+    return next_begin.date()
