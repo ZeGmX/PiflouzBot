@@ -11,11 +11,11 @@ class RandomPool:
         ----------
         name : str
             Name of the pool (used as an identifier)
-        pool : dict, optional
-            A dictionary (keys = items, values = weights), by default None (empty pool)
+        pool : list, optional
+            A list of tuples (item, weights), by default None (empty pool)
         """
         self.name = name
-        self.pool = pool or dict()
+        self.pool = pool or []
 
     def to_dict(self):
         """
@@ -47,19 +47,41 @@ class RandomPool:
         pool = data["pool"]
         return RandomPool(name, pool)
 
+    @staticmethod
+    def represents_pool(val):
+        """
+        Checks wether the value represents a pool
+
+        Parameters
+        ----------
+        val : Any
+            Value to check
+        """
+        return isinstance(val, RandomPool) or (isinstance(val, dict) and "name" in val and "pool" in val)
+
     def get_random(self):
         """
         Selects a random item from the pool based on the weights of the items
+
+        Returns
+        -------
+        Any
+            Random item from the pool. If the item is also a pool, it will return one of its items
         """
-        weights = list(self.pool.values())
-        items = list(self.pool.keys())
+        items = [val[0] for val in self.pool]
+        weights = [val[1] for val in self.pool]
 
         if len(weights) == 0: return None
-        return random.choices(items, weights)[0]
+        item = random.choices(items, weights)[0]
+
+        while RandomPool.represents_pool(item):
+            item = RandomPool.from_dict(item).get_random()
+
+        return item
 
     def update(self, other_pool):
         """
-        Updates the pool with the items from another pool and returns the new pool
+        Returns an updated pool with the items from another pool
 
         Parameters
         ----------

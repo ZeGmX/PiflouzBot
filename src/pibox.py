@@ -103,7 +103,7 @@ class Pibox:
 
         Parameters
         ----------
-        bot(interactions.Client)
+        bot (interactions.Client)
 
         Returns
         -------
@@ -118,7 +118,7 @@ class Pibox:
 
         Parameters
         ----------
-        bot(interactions.Client)
+        bot (interactions.Client)
         """
         pass
 
@@ -128,7 +128,7 @@ class Pibox:
 
         Parameters
         ----------
-        bot(interactions.Client)
+        bot (interactions.Client)
         """
         pass
 
@@ -138,8 +138,8 @@ class Pibox:
 
         Parameters
         ----------
-        bot(interactions.Client)
-        user_id(int/str)
+        bot (interactions.Client)
+        user_id (int/str)
         """
         pass
 

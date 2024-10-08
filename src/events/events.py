@@ -155,8 +155,8 @@ async def prepare_events(bot):
     logger.info("Event preparation started")
 
     prepare_free.clear()
-    new_event_passive = random.choice(Constants.RANDOM_EVENTS_PASSIVE)
-    new_event_challenge = random.choice(Constants.RANDOM_EVENTS_CHALLENGE)
+    new_event_passive = Constants.RANDOM_EVENTS_PASSIVE.get_random()
+    new_event_challenge = Constants.RANDOM_EVENTS_CHALLENGE.get_random()
 
     await new_event_passive.prepare(bot)
     db["events"]["passive"]["buffered_event"] = new_event_passive.to_str()

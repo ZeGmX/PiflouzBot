@@ -83,6 +83,8 @@ class Constants:
     GUILD_IDS = eval(os.getenv("GUILD_IDS"))
     POWERUPS_STORE = None  # Set in load()
     RANDOM_EVENTS_PASSIVE = None  # Set in load()
+    RANDOM_EVENTS_CHALLENGE = None  # Set in load()
+    PIBOX_POOL_TABLE = None  # Set in load()
     GREETINGS = [
         "Greetings {}! Nice to meet you!",
                   "Hello there {}, how are you doing today?",
@@ -98,9 +100,9 @@ class Constants:
         import events  # noqa: F401
         import pibox  # noqa: F401
         import powerups  # noqa: F401
-        from random_pool import RandomPoolTable
+        from random_pool import RandomPool, RandomPoolTable
 
         Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
-        Constants.RANDOM_EVENTS_PASSIVE = eval(os.getenv("RANDOM_EVENTS_PASSIVE"))
-        Constants.RANDOM_EVENTS_CHALLENGE = eval(os.getenv("RANDOM_EVENTS_CHALLENGE"))
+        Constants.RANDOM_EVENTS_PASSIVE = RandomPool.from_dict(eval(os.getenv("RANDOM_EVENTS_PASSIVE")))
+        Constants.RANDOM_EVENTS_CHALLENGE = RandomPool.from_dict(eval(os.getenv("RANDOM_EVENTS_CHALLENGE")))
         Constants.PIBOX_POOL_TABLE = RandomPoolTable.from_dict(eval(os.getenv("PIBOX_POOL_TABLE")))
