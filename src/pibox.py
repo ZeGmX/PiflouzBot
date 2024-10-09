@@ -397,7 +397,7 @@ class TriviaPibox(Pibox):
             answer = r["correctAnswer"]
             all_answers = r["incorrectAnswers"] + [answer]
             shuffle(all_answers)
-            done = not any([len(a) > 200 for a in all_answers])
+            done = not any([len(a) > 80 for a in all_answers])  # Button labels can't be too long
 
         return question, all_answers, answer
 
