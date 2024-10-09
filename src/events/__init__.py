@@ -7,6 +7,7 @@ from .events import (
     Event,
     EventFromPowerups,
     EventType,
+    HalloweenEvent,
     IncreasedPiboxDropRateEvent,
     IncreasedPiflouzAndCooldownEvent,
     IncreasedPiflouzEvent,

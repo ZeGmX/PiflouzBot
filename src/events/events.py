@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from interactions import BrandColors, Button, ButtonStyle, Color, Embed, EmbedAttachment, EmbedField, IntervalTrigger
+from interactions import BrandColors, Button, ButtonStyle, Color, Embed, EmbedAttachment, EmbedField, FlatUIColors, IntervalTrigger
 from interactions.client.utils.misc_utils import disable_components
 import logging
 from math import floor
@@ -14,7 +14,7 @@ import embed_messages
 from piflouz_generated import PiflouzSource, add_to_stat
 import piflouz_handlers
 import powerups
-from random_pool import RandomPoolTable
+from random_pool import RandomPool, RandomPoolTable
 from seasons import get_season_end_date
 import utils
 from wordle import Wordle
@@ -96,6 +96,8 @@ async def update_events(bot):
     elif now.month == 4 and now.day == 2:
         # The current event is still the birthday event, so get_event_data will return the birthday data
         new_event_passive = BirthdayRaffleEvent(get_event_data(EventType.PASSIVE)["baked_cakes"]["total"] * BirthdayEvent.REWARD_PER_CAKE)
+    elif now.month == 10 and now.day == 31:
+        new_event_passive = HalloweenEvent()
     else:
         new_event_passive = eval(db["events"]["passive"]["buffered_event"])
 
@@ -1182,3 +1184,30 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
 
     def to_str(self):
         return f"{SubseqChallengeEvent.__name__}({self.reward_default}, {self.reward_bonus1}, {self.reward_bonus2}, {self.reward_bonus3}, {self.reward_uniqueness}, {self.max_rewardable_words}, {self.reward_per_word})"
+
+
+class HalloweenEvent(PassiveEvent):
+    """
+    An event where pibox drop rate is increased, but pibox are haunter
+    """
+
+    def __init__(self, drop_rate_value=200):
+        self.drop_rate_value = drop_rate_value
+        self.powerups = [powerups.PiboxDropRateMultiplier(self.drop_rate_value)]
+
+    def get_powerups(self):
+        return self.powerups
+
+    async def get_embed(self, bot):
+        embed = Embed(title="It's spooky time! 🦇 🎃 👻", thumbnail=EmbedAttachment(url=Constants.HALLOWEEN_PIFLOUZ_URL),
+            description=f"Today's pibox are haunted! Will you be brave enough to get them?\nTo compensate, the following powerup is active:\n{self.powerups[0].get_event_str()}",
+            color=FlatUIColors.PUMPKIN
+        )
+        return embed
+
+    def get_pibox_pool_table(self):
+        pool = RandomPool("pibox", [("QuickReactPibox", 0), ("TriviaPibox", 0), ("HauntedPibox", 1)])
+        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])
+
+    def to_str(self):
+        return f"{HalloweenEvent.__name__}({self.drop_rate_value})"

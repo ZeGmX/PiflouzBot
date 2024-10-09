@@ -192,17 +192,18 @@ class QuickReactPibox(Pibox):
     POSSIBLE_EMOJI_ID_SOLUTIONS = Constants.EMOJI_IDS_FOR_PIBOX
     POSSIBLE_EMOJI_NAME_SOLUTIONS = Constants.EMOJI_NAMES_FOR_PIBOX
 
-    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, message_id=None, emoji_id_solution=None, id=None):
+    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, steal_reward=False, message_id=None, emoji_id_solution=None, id=None):
         self.amount = amount
         self.custom_message = custom_message
         self.is_piflouz_generated = is_piflouz_generated  # Whether the piflouz were generated from scratch (contrary to giveaway for instance)
         self.is_giveaway = is_giveaway
+        self.steal_reward = steal_reward
         self.message_id = message_id
         self.emoji_id_solution = emoji_id_solution
         self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
-    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, sender_id=None, piflouz_quantity=None):
+    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, sender_id=None, piflouz_quantity=None):
         # Choose a random emoji
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
@@ -233,14 +234,14 @@ class QuickReactPibox(Pibox):
 
         role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
 
-        text_output = f"{role.mention} Be Fast ! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI} !"
+        text_output = f"{role.mention} Be Fast! First to react with {emoji} will get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI}!"
         if custom_message is not None:
             text_output += " " + custom_message
 
         out_channel = await bot.fetch_channel(db["out_channel"])
         message = await out_channel.send(text_output)
 
-        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, message_id=message.id, emoji_id_solution=emoji_id)
+        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, steal_reward=steal_reward, message_id=message.id, emoji_id_solution=emoji_id)
         if res is not None: await res._register_listeners(bot)
 
         return res
@@ -278,35 +279,57 @@ class QuickReactPibox(Pibox):
     async def _on_fail(self, bot, user_id):
         bot.dispatch("pibox_failed", user_id, self.amount)
 
+    def _get_final_message(self, id_winner, bot):
+        """
+        Generates the string to be displayed when the pibox is won
+
+        Parameters
+        ----------
+        id_winner : str/int
+            user id of the winner
+        bot : interactions.Client
+        """
+        res = f"<@{id_winner}> won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
+        if self.custom_message is not None:
+            res += " " + self.custom_message
+        return res
+
     async def _on_success(self, bot, user_id):
-        piflouz_handlers.update_piflouz(user_id, self.amount, False)
+        # Update the piflouz balance
+        if self.steal_reward:
+            piflouz_handlers.update_piflouz(bot.user.id, self.amount, False)
+            profile = user_profile.get_profile(user_id)
+            taken = min(profile["piflouz_balance"], self.amount)
+            piflouz_handlers.update_piflouz(user_id, -taken, False)
+        else:
+            piflouz_handlers.update_piflouz(user_id, self.amount, False)
+
+        # Remove the pibox from the database
         del get_all_pibox()[str(self.message_id)]
 
-        new_text_message = f"<@{user_id}> won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
-        if self.custom_message is not None:
-            new_text_message += " " + self.custom_message
-
+        # Edit the message to show the winner
+        new_text_message = self._get_final_message(user_id, bot)
         out_channel = await bot.fetch_channel(db["out_channel"])
         message = await out_channel.fetch_message(self.message_id)
         await message.edit(content=new_text_message)
 
         # Add to stats
-        if self.is_piflouz_generated:
+        if self.is_piflouz_generated and not self.steal_reward:
             add_to_stat(self.amount, PiflouzSource.PIBOX)
 
         # Check if it was a giveaway
-        elif self.is_giveaway and str(user_id) != str(bot.user.id):
+        elif self.is_giveaway and str(user_id) != str(bot.user.id) and not self.steal_reward:
             id = str(user_id)
             profile = user_profile.get_profile(id)
             profile["donation_balance"] -= self.amount
 
         await utils.update_piflouz_message(bot)
-        bot.dispatch("pibox_obtained", user_id, self.amount)
+        if not self.steal_reward: bot.dispatch("pibox_obtained", user_id, self.amount)
 
         await self._remove_listeners(bot)
 
     def to_str(self):
-        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
 
 
 class QuickReactGiveawayPibox(QuickReactPibox):
@@ -546,3 +569,52 @@ class TriviaPibox(Pibox):
         new_answers = "[" + ",".join([f"'{self.sanityze_str(a)}'" for a in self.answers]) + "]"
         new_correct_answer = self.sanityze_str(self.correct_answer)
         return rf"TriviaPibox(question='{new_question}', answers={new_answers}, correct_answer='{new_correct_answer}', amount={self.amount}, message_id={self.message_id}, failed_indices={self.failed_indices}, failed_users={self.failed_users}, id={self.id})"
+
+
+class HauntedPibox(QuickReactPibox):
+    """
+    A normal pibox, except that it has a chance to take piflouz from the user
+    """
+
+    def __init__(self, amount, steal_reward, message_id=None, emoji_id=None, id=None):
+        super().__init__(amount, is_piflouz_generated=True, is_giveaway=False, steal_reward=steal_reward, message_id=message_id, emoji_id_solution=emoji_id, id=id)
+
+    @staticmethod
+    async def new(bot):
+        # Choose a random emoji
+        index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
+        emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
+        emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
+        emoji = f"<:{emoji_name}:{emoji_id}>"
+
+        # Compute the maximum amount of piflouz that can be given
+        max_size = Constants.MAX_PIBOX_AMOUNT
+        event = events.get_event_object(events.EventType.PASSIVE)
+        if event is not None:
+            powerups_list = event.get_powerups()
+            max_size = round(functools.reduce(lambda accu, powerup: accu * powerup.get_pibox_reward_multiplier_value(), powerups_list, max_size))
+        piflouz_quantity = randrange(max_size)
+
+        role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
+        text_output = f"{role.mention} Be Fast! First to react with {emoji} may get {piflouz_quantity} {Constants.PIFLOUZ_EMOJI}!"
+        text_output += "\nTrick or treat! 🎃 This pibox may or may not be haunted 👻 Will you risk it for the biscuit? 🪦🧟"
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        message = await out_channel.send(text_output)
+
+        steal_reward = random() < 0.5
+
+        res = HauntedPibox(piflouz_quantity, steal_reward=steal_reward, message_id=message.id, emoji_id=emoji_id)
+        if res is not None: await res._register_listeners(bot)
+
+        return res
+
+    def _get_final_message(self, id_winner, bot):
+        if self.steal_reward:
+            res = f"Trick! 🧛🕸️🔮{bot.user.mention} stole {self.amount} {Constants.PIFLOUZ_EMOJI} from <@{id_winner}>!"
+        else:
+            res = f"Treat! 🍬🍭🎃<@{id_winner}> won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
+        return res
+
+    def to_str(self):
+        return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id={self.emoji_id_solution}, id={self.id})"

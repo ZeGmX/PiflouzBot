@@ -51,6 +51,7 @@ class Constants:
     PIFLEX_IMAGES_URL = eval(os.getenv("PIFLEX_IMAGES_URL"))
     TURBO_PIFLOUZ_ANIMATED_URL = os.getenv("TURBO_PIFLOUZ_ANIMATED_URL")
     PIBOU4BIRTHDAY_URL = os.getenv("PIBOU4BIRTHDAY_URL")
+    HALLOWEEN_PIFLOUZ_URL = os.getenv("HALLOWEEN_PIFLOUZ_URL")
 
     ### Dates and durations
     REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))  # How many seconds between each react to earn piflouz

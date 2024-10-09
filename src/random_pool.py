@@ -93,8 +93,22 @@ class RandomPool:
         RandomPool
             Updated pool
         """
-        new_pool = self.pool.copy()
-        new_pool.update(other_pool.pool)
+        new_pool = []
+
+        for item, weight in self.pool:
+            for other_item, other_weight in other_pool.pool:
+                if RandomPool.represents_pool(item) and RandomPool.represents_pool(other_item):
+                    if item["name"] == other_item["name"]:
+                        new_pool.append(RandomPool.from_dict(item).update(RandomPool.from_dict(other_item)), other_weight)
+                if item == other_item:
+                    new_pool.append((item, other_weight))
+            if item not in [val[0] for val in new_pool]:
+                new_pool.append((item, weight))
+
+        for other_item, other_weight in other_pool.pool:
+            if other_item not in [val[0] for val in new_pool]:
+                new_pool.append((other_item, other_weight))
+
         return RandomPool(self.name, new_pool)
 
 
