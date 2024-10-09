@@ -487,9 +487,19 @@ class RaffleEvent(PassiveEvent):
     Raffle event, people can buy tickets and the person with the winning ticket wins all the money (minus taxes)
     """
 
-    def __init__(self, ticket_price, tax_ratio):
+    def __init__(self, ticket_price, tax_ratio, max_base_prize=300):
         self.ticket_price = ticket_price
         self.tax_ratio = tax_ratio
+        self.max_base_prize = max_base_prize
+
+    async def prepare(self, bot):
+        get_buffer_event_data(self)["base_prize"] = random.randint(self.max_base_prize // 2, self.max_base_prize)
+
+    async def on_begin(self, bot):
+        data = get_event_data(self)
+        data["base_prize"] = get_buffer_event_data(self)["base_prize"]
+        data["tickets_from_pibox"] = 0
+        return await super().on_begin(bot)
 
     async def on_end(self, bot, msg_id, thread_id=None):
         await super().on_end(bot, msg_id, thread_id)
@@ -516,6 +526,7 @@ class RaffleEvent(PassiveEvent):
             # Giving the tax to the bot
             tax_value = total_tickets * self.ticket_price - prize
             piflouz_handlers.update_piflouz(bot.user.id, qty=tax_value, check_cooldown=False)
+            add_to_stat(data["base_prize"] + data["tickets_from_pibox"] * self.ticket_price, PiflouzSource.EVENT)
 
             piflouz_handlers.update_piflouz(id, prize, check_cooldown=False)
             embed = await embed_messages.get_embed_end_raffle(bot, id, prize)
@@ -525,7 +536,7 @@ class RaffleEvent(PassiveEvent):
             bot.dispatch("raffle_won", id)
 
     def to_str(self):
-        return f"{type(self).__name__}({self.ticket_price}, {self.tax_ratio})"
+        return f"{type(self).__name__}({self.ticket_price}, {self.tax_ratio}, {self.max_base_prize})"
 
     async def update_raffle_message(self, bot):
         """
@@ -540,9 +551,10 @@ class RaffleEvent(PassiveEvent):
         await raffle_message.edit(embed=embed)
 
     async def get_embed(self, bot):
+        data = get_event_data(self)
         desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
-    The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone!"
+    The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!"
 
         fields = []
 
@@ -574,9 +586,14 @@ class RaffleEvent(PassiveEvent):
         -------
         prize (int)
         """
-        nb_tickets = sum(get_event_data(self)["participation"].values())
-        prize = floor(nb_tickets * self.ticket_price * (100 - self.tax_ratio) / 100)
+        data = get_event_data(self)
+        nb_tickets = sum(data["participation"].values())
+        prize = floor(nb_tickets * self.ticket_price * (100 - self.tax_ratio) / 100) + data["base_prize"]
         return prize
+
+    def get_pibox_pool_table(self):
+        pool = RandomPool("pibox_raffle", [("RafflePibox", 1)])
+        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])
 
 
 class EventFromPowerups(PassiveEvent):

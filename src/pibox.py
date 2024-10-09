@@ -576,6 +576,8 @@ class HauntedPibox(QuickReactPibox):
     A normal pibox, except that it has a chance to take piflouz from the user
     """
 
+    STEAL_PROBA = Constants.HAUNTED_PIBOX_STEAL_PROBA
+
     def __init__(self, amount, steal_reward, message_id=None, emoji_id=None, id=None):
         super().__init__(amount, is_piflouz_generated=True, is_giveaway=False, steal_reward=steal_reward, message_id=message_id, emoji_id_solution=emoji_id, id=id)
 
@@ -602,7 +604,7 @@ class HauntedPibox(QuickReactPibox):
         out_channel = await bot.fetch_channel(db["out_channel"])
         message = await out_channel.send(text_output)
 
-        steal_reward = random() < 0.5
+        steal_reward = random() < HauntedPibox.STEAL_PROBA
 
         res = HauntedPibox(piflouz_quantity, steal_reward=steal_reward, message_id=message.id, emoji_id=emoji_id)
         if res is not None: await res._register_listeners(bot)
@@ -618,3 +620,98 @@ class HauntedPibox(QuickReactPibox):
 
     def to_str(self):
         return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id={self.emoji_id_solution}, id={self.id})"
+
+
+class RafflePibox(QuickReactPibox):
+    """
+    A pibox that drops raffle tickets
+    """
+
+    MAX_AMOUNT = Constants.MAX_RAFFLE_PIBOX_AMOUNT
+
+    def __init__(self, amount, message_id=None, emoji_id_solution=None, id=None):
+        self.amount = amount
+        self.message_id = message_id
+        self.emoji_id_solution = emoji_id_solution
+        self.id = id if id is not None else Pibox.get_new_id()
+
+    @staticmethod
+    async def new(bot):
+        # Choose a random emoji
+        index = randrange(len(RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
+        emoji_id = RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
+        emoji_name = RafflePibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
+        emoji = f"<:{emoji_name}:{emoji_id}>"
+
+        # Compute the maximum amount of piflouz that can be given
+        amount = randrange(1, RafflePibox.MAX_AMOUNT + 1)
+
+        role = await bot.guilds[0].fetch_role(Constants.PIBOX_NOTIF_ROLE_ID)
+        text_output = f"{role.mention} Be Fast! First to react with {emoji} will get {amount} 🎟️!"
+
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        message = await out_channel.send(text_output)
+
+        res = RafflePibox(amount, message_id=message.id, emoji_id_solution=emoji_id)
+        if res is not None: await res._register_listeners(bot)
+
+        return res
+
+    async def _deactivate(self, bot):
+        """
+        If no raffle is running, the pibox is deactivated
+
+        Parameters
+        ----------
+        bot : interactions.Client
+        """
+        channel = await bot.fetch_channel(db["out_channel"])
+        message = await channel.fetch_message(self.message_id)
+        await message.edit(content="This pibox was for a previous raffle event, it is now closed")
+        await self._remove_listeners(bot)
+
+        # Remove the pibox from the database
+        del get_all_pibox()[str(self.message_id)]
+
+    async def _on_success(self, bot, user_id):
+        current_event = events.get_event_object(events.EventType.PASSIVE)
+
+        # Check if there is a raffle event running
+        if not isinstance(current_event, events.RaffleEvent):
+            await self._deactivate(bot)
+            return
+
+        # Update the raffle balance
+        event_data = events.get_event_data(events.EventType.PASSIVE)
+        event_data["tickets_from_pibox"] += self.amount
+        user_id = str(user_id)
+        if user_id not in event_data["participation"].keys():
+            event_data["participation"][user_id] = 0
+        event_data["participation"][user_id] += self.amount
+
+        # Remove the pibox from the database
+        del get_all_pibox()[str(self.message_id)]
+
+        # Edit the message to show the winner
+        new_text_message = f"<@{user_id}> won {self.amount} 🎟️ from a pibox!"
+        out_channel = await bot.fetch_channel(db["out_channel"])
+        message = await out_channel.fetch_message(self.message_id)
+        await message.edit(content=new_text_message)
+
+        await current_event.update_raffle_message(bot)
+        bot.dispatch("pibox_obtained", user_id, self.amount)
+
+        await self._remove_listeners(bot)
+
+    async def _on_fail(self, bot, user_id):
+        current_event = events.get_event_object(events.EventType.PASSIVE)
+
+        # Check if there is a raffle event running
+        if not isinstance(current_event, events.RaffleEvent):
+            await self._deactivate(bot)
+            return
+
+        await super()._on_fail(bot, user_id)
+
+    def to_str(self):
+        return f"RafflePibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
