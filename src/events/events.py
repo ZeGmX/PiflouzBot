@@ -646,6 +646,12 @@ class StoreDiscountEvent(EventFromPowerups):
         super().__init__(p1)
 
 
+class PiboxRewardIncreasedEvent(EventFromPowerups):
+    def __init__(self, value):
+        p1 = powerups.PiboxSizeMultiplier(value)
+        super().__init__(p1)
+
+
 class ChallengeEvent(Event):
     async def get_embed(self, bot):
         """

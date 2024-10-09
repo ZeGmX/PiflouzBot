@@ -13,6 +13,7 @@ from .events import (
     MoveMatchEvent,
     PassiveEvent,
     PiboxDropRateAndRewardEvent,
+    PiboxRewardIncreasedEvent,
     RaffleEvent,
     StoreDiscountEvent,
     SubseqChallengeEvent,

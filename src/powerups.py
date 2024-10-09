@@ -433,7 +433,7 @@ class PiboxSizeMultiplier(PowerupsPermanent):
 
     def get_info_str(self):
         sign = "+" if self.value > 0 else ""
-        return f"Pibox reward • {sign}{self.value}%"
+        return f"Pibox max reward • {sign}{self.value}%"
 
     def to_str(self):
         return f"{__name__}.{type(self).__name__}({self.value})"
