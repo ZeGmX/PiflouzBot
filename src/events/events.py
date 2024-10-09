@@ -1110,14 +1110,36 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
                 if w not in found_solutions_nb:
                     found_solutions_nb[w] = 0
                 found_solutions_nb[w] += 1
+
+            # We still need to set this up to avoid errors accessing the dict afterwards
+            # Note: extra words will be displayed but not counted towards the unicity rewards
+            for w in user_sol["guesses"][self.max_rewardable_words:]:
+                if w not in found_solutions_nb:
+                    found_solutions_nb[w] = 0
         found_solutions_unclean = SubseqChallenge.get_unclean_equivalent(*found_solutions)
 
         # Bold unique solutions
         for i, w in enumerate(found_solutions):
             if found_solutions_nb[w] == 1:
                 found_solutions_unclean[i] = f"**{found_solutions_unclean[i]}**"
+            elif found_solutions_nb[w] == 0:
+                found_solutions_unclean[i] = f"[{found_solutions_unclean[i]}]"
 
-        found_solutions_str = f"||{", ".join(sorted(found_solutions_unclean))}||"
+        # Separate solutions by level
+        found_solutions_levels = [[], [], [], []]
+        s = SubseqChallenge(subseq=data["subseq"])
+        for w in found_solutions_unclean:
+            lvl2 = s.check_projection(w)
+            lvl3 = s.check_with_intermediate(w)
+            if lvl2 and lvl3: found_solutions_levels[3].append(w)
+            elif lvl3: found_solutions_levels[2].append(w)
+            elif lvl2: found_solutions_levels[1].append(w)
+            else: found_solutions_levels[0].append(w)
+
+        # Generate the string to display
+        str_lines = ["||" + ", ".join(sorted(lvl)) + "||" if len(lvl) > 0 else "None" for lvl in found_solutions_levels]
+        str_lines_prefix = ["1️⃣: ", "2️⃣: ", "3️⃣: ", "4️⃣: "]
+        found_solutions_str = "\n".join(f"{prefix}{line}" for prefix, line in zip(str_lines_prefix, str_lines))
 
         # Find users who found a unique solution
         user_unique_sol = []
@@ -1134,7 +1156,7 @@ You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
 
         # All solutions found
         if len(found_solutions_unclean) > 0:
-            res_str += f"Here are all the solutions you found (bold ones are unique): {found_solutions_str}\n\n"
+            res_str += f"Here are all the solutions you found (unique words are bolded, and extra words are between brackets):\n{found_solutions_str}\n\n"
         else:
             res_str += "Unfortunately, no one found any solution this time :(\n\n"
 
