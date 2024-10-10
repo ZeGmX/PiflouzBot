@@ -104,16 +104,18 @@ class Wordle:
 
             # Check the yellow letters are indeed in the word.
             for yellow_letter, tested_positions in yellow_letters.items():
-                letter_current_position = word.find(yellow_letter)
-                if letter_current_position == -1:
+                letter_current_positions = [i for i in range(Wordle.WORD_SIZE) if word[i] == yellow_letter]
+
+                if len(letter_current_positions) == 0:
                     # Note: this is handled more precisely by the count check, but we check it now to avoid errors.
                     if self.debug:
                         print(f"Letter {yellow_letter} should have been in {word}.")
                     return False
-                elif letter_current_position in tested_positions:
-                    if self.debug:
-                        print(f"Guess {word}: Letter {yellow_letter} has already been tested at position {letter_current_position}.")
-                    return False
+                for letter_current_position in letter_current_positions:
+                    if letter_current_position in tested_positions:
+                        if self.debug:
+                            print(f"Guess {word}: Letter {yellow_letter} has already been tested at position {letter_current_position}.")
+                        return False
 
             current_correct_letters_count = {letter: 0 for letter in word}
 
@@ -270,8 +272,10 @@ if __name__ == "__main__":
     assert not is_hard_solution_wrapped(["floor", "stomp", "photo"])  # the 2nd o from floor is yellow -> there is a o in "stomp" but it corresponds to an already green o
     assert is_hard_solution_wrapped(["allow", "onset", "fjord"])  # the o is yellow and changes position
     assert is_hard_solution_wrapped(["allow", "oxids", "mound", "fjord"])  # the o and d change position
+    test_wordle.solution = "react"
+    assert not is_hard_solution_wrapped(["barge", "erase", "react"])  # two e's are in erase, with one at the yellow position
 
-    # Constraint 4: if a yellow letter appears yellow/green, it must appear again at least as many times
+    # Constraint 4: if a letter appears yellow/green, it must appear again at least as many times
     test_wordle.solution = "ozone"
     assert not is_hard_solution_wrapped(["bosom", "olive", "ozone"])  # the o should appear at least twice
     assert is_hard_solution_wrapped(["bosom", "outgo", "ozone"])  # the o always appears 2 times
