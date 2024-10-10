@@ -64,6 +64,7 @@ class Constants:
     BIRTHDAY_CHECK_TIME = eval(os.getenv("BIRTHDAY_CHECK_TIME"))
     EVERY_HOUR_TRIGGER = OrTrigger(*[TimeTrigger(hour=i) for i in range(24)])
     TIMEZONE = timezone(os.getenv("TIMEZONE"))
+    BOT_BIRTHDAY = os.getenv("BOT_BIRTHDAY")
 
     ### Costs
     PIFLEX_COST = int(os.getenv("PIFLEX_COST"))

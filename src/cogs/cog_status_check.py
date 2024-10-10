@@ -66,15 +66,14 @@ class CogStatusCheck(Extension):
         ctx (interactions.SlashContext)
         user (interactions.Member)
         """
-        member = ctx.author if user is None else user
+        member = user or ctx.author
         path = f"profile_{member.id}.png"
-        await asyncio.to_thread(self.save_profile_image, member, path)
-        self.save_profile_image(member, path)
+        await asyncio.to_thread(self.save_profile_image, member, path, self.bot.user.id)
         await ctx.send(file=path, ephemeral=True)
         os.remove(path)
 
     @staticmethod
-    def save_profile_image(member, path):
+    def save_profile_image(member, path, bot_id):
         """
         Generates and saves the profile image of a member
 
@@ -82,6 +81,7 @@ class CogStatusCheck(Extension):
         ----------
         member (interactions.Member)
         path (str)
+        bot_id (str/int)
         """
         ### Creating the background
         background = Image.open("src/cogs/assets/profile.png")
@@ -126,10 +126,13 @@ class CogStatusCheck(Extension):
         profile = user_profile.get_profile(user_id)
 
         bday_center_pos = (500, 182)
-        if profile["birthday_date"] == "0000-00-00":
-            bday_txt = "Birthday: N/A"
+        if profile["birthday_date"] == "0000-00-00" and str(member.id) != str(bot_id):
+            if str(member.id) == str(bot_id): bday_txt = "Birthday: " + Constants.BOT_BIRTHDAY
+            else: bday_txt = "Birthday: N/A"
         else:
-            bday = profile["birthday_date"].split("-")  # Format: YYYY-MM-DD
+            if str(member.id) == str(bot_id): bday = Constants.BOT_BIRTHDAY
+            else: bday = profile["birthday_date"]
+            bday = bday.split("-")  # Format: YYYY-MM-DD
             bday_txt = f"Birthday: {bday[2].zfill(2)} / {bday[1].zfill(2)} / {bday[0]}"
         ax.text(*bday_center_pos, bday_txt, fontsize=7, color="white", verticalalignment="center", horizontalalignment="center")
 
