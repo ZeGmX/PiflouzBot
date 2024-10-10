@@ -124,6 +124,7 @@ async def on_startup():
     utils.backup_db.start()
 
     await pibox.load_all_pibox(bot)
+    await events.register_listeners(bot)
     await events.wait_for_buffer_ready(bot)
     # utils.update_db()
 

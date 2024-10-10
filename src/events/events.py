@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from interactions import BrandColors, Button, ButtonStyle, Color, Embed, EmbedAttachment, EmbedField, FlatUIColors, IntervalTrigger
+from interactions import BrandColors, Button, ButtonStyle, Color, Embed, EmbedAttachment, EmbedField, FlatUIColors, IntervalTrigger, listen
 from interactions.client.utils.misc_utils import disable_components
 import logging
 from math import floor
@@ -11,6 +11,7 @@ from constant import Constants
 from custom_task_triggers import TaskCustom as Task
 from database import db
 import embed_messages
+import pibox
 from piflouz_generated import PiflouzSource, add_to_stat
 import piflouz_handlers
 import powerups
@@ -77,6 +78,7 @@ async def update_events(bot):
     # End the current event
     await end_event(bot, EventType.PASSIVE)
     await end_event(bot, EventType.CHALLENGE)
+    bot.dispatch("event_ended")
 
     # Chose the new event of the day
     now = datetime.datetime.now(Constants.TIMEZONE)
@@ -362,6 +364,20 @@ async def fetch_event_thread(bot, event_type):
         case EventType.CHALLENGE: return await bot.fetch_channel(db["events"]["challenge"]["current_thread_id"])
 
 
+async def register_listeners(bot):
+    """
+    Registers the required listeners for the events
+
+    Parameters
+    ----------
+    bot : interactions.Client
+    """
+    for event in [EventType.PASSIVE, EventType.CHALLENGE]:
+        current_event = get_event_object(event)
+        if current_event is not None:
+            await current_event.register_listeners(bot)
+
+
 class EventType:
     PASSIVE = 0
     CHALLENGE = 1
@@ -448,6 +464,16 @@ class Event:
         """
         pass
 
+    async def register_listeners(self, bot):
+        """
+        Registers the required listeners for the event
+
+        Parameters
+        ----------
+        bot : interactions.Client
+        """
+        pass
+
 
 class PassiveEvent(Event):
     async def get_embed(self, bot):
@@ -472,6 +498,7 @@ class PassiveEvent(Event):
         embed = await self.get_embed(bot)
         message = await out_channel.send(embed=embed)
         await message.pin()
+        await self.register_listeners(bot)
         return int(message.id)
 
     async def on_end(self, bot, msg_id, thread_id=None):
@@ -703,6 +730,7 @@ class ChallengeEvent(Event):
         await message.pin()
         now = datetime.date.today()
         thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
+        await self.register_listeners(bot)
         return int(message.id), int(thread.id)
 
     async def on_end(self, bot, msg_id, thread_id):
@@ -1216,7 +1244,7 @@ class HalloweenEvent(PassiveEvent):
         return self.powerups
 
     async def get_embed(self, bot):
-        embed = Embed(title="It's spooky time! 🦇 🎃 👻", thumbnail=EmbedAttachment(url=Constants.HALLOWEEN_PIFLOUZ_URL),
+        embed = Embed(title="Passive event of the day: it's spooky time! 🦇 🎃 👻", thumbnail=EmbedAttachment(url=Constants.HALLOWEEN_PIFLOUZ_URL),
             description=f"Today's pibox are haunted! Will you be brave enough to get them?\nTo compensate, the following powerup is active:\n{self.powerups[0].get_event_str()}",
             color=FlatUIColors.PUMPKIN
         )
@@ -1228,3 +1256,45 @@ class HalloweenEvent(PassiveEvent):
 
     def to_str(self):
         return f"{HalloweenEvent.__name__}({self.drop_rate_value})"
+
+
+class PiboxFromGetEvent(PassiveEvent):
+    """
+    Event where there is a chance to drop a pibox after using the /get command
+    """
+
+    def __init__(self, proba_spawn=.1):
+        self.proba_spawn = proba_spawn
+
+    async def get_embed(self, bot):
+        embed = Embed(title="Pibox event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
+            description=f"Today, there is a {int(self.proba_spawn * 100)}% chance to drop a pibox when using the `/get` command!\nGood luck!",
+            color=Color.random()
+        )
+        return embed
+
+    def to_str(self):
+        return f"{PiboxFromGetEvent.__name__}({self.proba_spawn})"
+
+    async def _on_get(self, bot, user_id):
+        if random.random() < self.proba_spawn:
+            box = await pibox.QuickReactPibox.new(bot, custom_message=f"<@{user_id}> found this pibox while using the `/get` command! 🎁")
+            if box is not None:
+                pibox.add_box_to_db(box)
+
+    async def _remove_listeners(self, bot):
+        bot.listeners["combo_updated"].remove(self._listener_get)
+        bot.listeners["event_ended"].remove(self._listener_end)
+
+    async def register_listeners(self, bot):
+        @listen("combo_updated")
+        async def custom_get_listener(event, user_id):
+            await self._on_get(bot, user_id)
+        bot.add_listener(custom_get_listener)
+        self._listener_get = custom_get_listener
+
+        @listen("event_ended")
+        async def custom_event_end_listener(event):
+            await self._remove_listeners(bot)
+        bot.add_listener(custom_event_end_listener)
+        self._listener_end = custom_event_end_listener
