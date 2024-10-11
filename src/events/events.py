@@ -581,7 +581,8 @@ class RaffleEvent(PassiveEvent):
         data = get_event_data(self)
         desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
     They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
-    The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!"
+    The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!\n\
+    Also, some special raffle pibox may appear during the day, giving you free tickets!"
 
         fields = []
 
@@ -1245,14 +1246,16 @@ class HalloweenEvent(PassiveEvent):
 
     async def get_embed(self, bot):
         embed = Embed(title="Passive event of the day: it's spooky time! 🦇 🎃 👻", thumbnail=EmbedAttachment(url=Constants.HALLOWEEN_PIFLOUZ_URL),
-            description=f"Today's pibox are haunted! Will you be brave enough to get them?\nTo compensate, the following powerup is active:\n{self.powerups[0].get_event_str()}",
+            description=f"Today, only haunted pibox will appear! Will you be brave enough to get them?\nTo compensate, the following powerup is active:\n{self.powerups[0].get_event_str()}",
             color=FlatUIColors.PUMPKIN
         )
         return embed
 
     def get_pibox_pool_table(self):
-        pool = RandomPool("pibox", [("QuickReactPibox", 0), ("TriviaPibox", 0), ("HauntedPibox", 1)])
-        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])
+        new_pool = [(elmt, 0) for elmt, weight in Constants.PIBOX_POOL_TABLE.pools[0][0].pool]  # Deactivate current pibox
+        new_pool += [("HauntedPibox", 1)]  # Add the haunted pibox
+        pool = RandomPool("pibox", new_pool)
+        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])  # Keep the drop rate the same
 
     def to_str(self):
         return f"{HalloweenEvent.__name__}({self.drop_rate_value})"
@@ -1267,8 +1270,8 @@ class PiboxFromGetEvent(PassiveEvent):
         self.proba_spawn = proba_spawn
 
     async def get_embed(self, bot):
-        embed = Embed(title="Pibox event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
-            description=f"Today, there is a {int(self.proba_spawn * 100)}% chance to drop a pibox when using the `/get` command!\nGood luck!",
+        embed = Embed(title="Passive event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
+            description=f"Today, there is a {int(self.proba_spawn * 100)}% chance to drop an emoji pibox when using the `/get` command!\nGood luck!",
             color=Color.random()
         )
         return embed
@@ -1298,3 +1301,24 @@ class PiboxFromGetEvent(PassiveEvent):
             await self._remove_listeners(bot)
         bot.add_listener(custom_event_end_listener)
         self._listener_end = custom_event_end_listener
+
+
+class OppositeDayPiboxEvent(PassiveEvent):
+    """
+    An event during which users have to react with the wrong emoji to get a pibox
+    """
+
+    async def get_embed(self, bot):
+        embed = Embed(title="Opposite day event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
+            description="Today is opposite day! To get an emoji pibox, you have to react with the wrong emoji!",
+            color=Color.random()
+        )
+        return embed
+
+    def get_pibox_pool_table(self):
+        new_pool = [("QuickReactPibox", 0), ("OppositeQuickReactPibox", 1)]  # Add the opposite day pibox
+        pool = RandomPool("pibox", new_pool)
+        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])  # Keep the drop rate the same
+
+    def to_str(self):
+        return f"{OppositeDayPiboxEvent.__name__}()"

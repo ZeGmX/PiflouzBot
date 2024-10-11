@@ -192,18 +192,19 @@ class QuickReactPibox(Pibox):
     POSSIBLE_EMOJI_ID_SOLUTIONS = Constants.EMOJI_IDS_FOR_PIBOX
     POSSIBLE_EMOJI_NAME_SOLUTIONS = Constants.EMOJI_NAMES_FOR_PIBOX
 
-    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, steal_reward=False, message_id=None, emoji_id_solution=None, id=None):
+    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, steal_reward=False, is_opposite=False, message_id=None, emoji_id_solution=None, id=None):
         self.amount = amount
         self.custom_message = custom_message
         self.is_piflouz_generated = is_piflouz_generated  # Whether the piflouz were generated from scratch (contrary to giveaway for instance)
         self.is_giveaway = is_giveaway
         self.steal_reward = steal_reward
+        self.is_opposite = is_opposite
         self.message_id = message_id
         self.emoji_id_solution = emoji_id_solution
         self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
-    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, sender_id=None, piflouz_quantity=None):
+    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, sender_id=None, piflouz_quantity=None):
         # Choose a random emoji
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
@@ -241,7 +242,7 @@ class QuickReactPibox(Pibox):
         out_channel = await bot.fetch_channel(db["out_channel"])
         message = await out_channel.send(text_output)
 
-        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, steal_reward=steal_reward, message_id=message.id, emoji_id_solution=emoji_id)
+        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, steal_reward=steal_reward, is_opposite=is_opposite, message_id=message.id, emoji_id_solution=emoji_id)
         if res is not None: await res._register_listeners(bot)
 
         return res
@@ -260,7 +261,7 @@ class QuickReactPibox(Pibox):
 
         emoji = reac_event.reaction.emoji
         user = reac_event.author
-        if emoji.id is not None and int(emoji.id) == self.emoji_id_solution:
+        if (emoji.id is not None and int(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
             await self._on_success(bot, user.id)
         else:
             await self._on_fail(bot, user.id)
@@ -630,10 +631,7 @@ class RafflePibox(QuickReactPibox):
     MAX_AMOUNT = Constants.MAX_RAFFLE_PIBOX_AMOUNT
 
     def __init__(self, amount, message_id=None, emoji_id_solution=None, id=None):
-        self.amount = amount
-        self.message_id = message_id
-        self.emoji_id_solution = emoji_id_solution
-        self.id = id if id is not None else Pibox.get_new_id()
+        super().__init__(amount, message_id=message_id, emoji_id_solution=emoji_id_solution, id=id)
 
     @staticmethod
     async def new(bot):
@@ -715,3 +713,19 @@ class RafflePibox(QuickReactPibox):
 
     def to_str(self):
         return f"RafflePibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+
+
+class OppositeQuickReactPibox(QuickReactPibox):
+    """
+    A pibox where the user has to react with the wrong emoji to get the pibox
+    """
+
+    def __init__(self, amount, message_id=None, emoji_id=None, id=None):
+        super().__init__(amount, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=True, message_id=message_id, emoji_id_solution=emoji_id, id=id)
+
+    @staticmethod
+    async def new(bot):
+        return await QuickReactPibox.new(bot, is_piflouz_generated=True, is_opposite=True)
+
+    def to_str(self):
+        return f"OppositeQuickReactPibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
