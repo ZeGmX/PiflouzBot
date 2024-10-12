@@ -82,6 +82,7 @@ class Constants:
     DAILY_BONUS_MAX_STREAK = int(os.getenv("DAILY_BONUS_MAX_STREAK"))
     HAUNTED_PIBOX_STEAL_PROBA = eval(os.getenv("HAUNTED_PIBOX_STEAL_PROBA"))
     MAX_RAFFLE_PIBOX_AMOUNT = int(os.getenv("MAX_RAFFLE_PIBOX_AMOUNT"))
+    MULTI_CLAIM_PIBOX_NB_REWARD = int(os.getenv("MULTI_CLAIM_PIBOX_NB_REWARD"))
 
     ### Misc
     GUILD_IDS = eval(os.getenv("GUILD_IDS"))

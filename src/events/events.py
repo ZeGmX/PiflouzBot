@@ -1309,7 +1309,7 @@ class OppositeDayPiboxEvent(PassiveEvent):
     """
 
     async def get_embed(self, bot):
-        embed = Embed(title="Opposite day event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
+        embed = Embed(title="Passive event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
             description="Today is opposite day! To get an emoji pibox, you have to react with the wrong emoji!",
             color=Color.random()
         )
@@ -1322,3 +1322,24 @@ class OppositeDayPiboxEvent(PassiveEvent):
 
     def to_str(self):
         return f"{OppositeDayPiboxEvent.__name__}()"
+
+
+class MultiRewardPiboxEvent(PassiveEvent):
+    """
+    An event where emoji pibox can contain multiple rewards
+    """
+
+    async def get_embed(self, bot):
+        embed = Embed(title="Passive event of the day", thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL),
+            description=f"Today, emoji pibox can be claimed by {Constants.MULTI_CLAIM_PIBOX_NB_REWARD} different users! 🎁",
+            color=Color.random()
+        )
+        return embed
+
+    def get_pibox_pool_table(self):
+        new_pool = [("QuickReactPibox", 0), ("MultiClaimQuickReactPibox", 1)]  # Add the multi claim pibox
+        pool = RandomPool("pibox", new_pool)
+        return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])  # Keep the drop rate the same
+
+    def to_str(self):
+        return f"{MultiRewardPiboxEvent.__name__}()"

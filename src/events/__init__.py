@@ -12,6 +12,7 @@ from .events import (
     IncreasedPiflouzAndCooldownEvent,
     IncreasedPiflouzEvent,
     MoveMatchEvent,
+    MultiRewardPiboxEvent,
     OppositeDayPiboxEvent,
     PassiveEvent,
     PiboxDropRateAndRewardEvent,

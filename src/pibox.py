@@ -192,19 +192,22 @@ class QuickReactPibox(Pibox):
     POSSIBLE_EMOJI_ID_SOLUTIONS = Constants.EMOJI_IDS_FOR_PIBOX
     POSSIBLE_EMOJI_NAME_SOLUTIONS = Constants.EMOJI_NAMES_FOR_PIBOX
 
-    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, steal_reward=False, is_opposite=False, message_id=None, emoji_id_solution=None, id=None):
+    def __init__(self, amount, custom_message=None, is_piflouz_generated=False, is_giveaway=False, steal_reward=False,
+                 is_opposite=False, nb_reward=1, already_claimed=None, message_id=None, emoji_id_solution=None, id=None):
         self.amount = amount
-        self.custom_message = custom_message
-        self.is_piflouz_generated = is_piflouz_generated  # Whether the piflouz were generated from scratch (contrary to giveaway for instance)
-        self.is_giveaway = is_giveaway
-        self.steal_reward = steal_reward
-        self.is_opposite = is_opposite
+        self.custom_message = custom_message                # Custom message to display at the end of the pibox message
+        self.is_piflouz_generated = is_piflouz_generated    # Whether the piflouz were generated from scratch (contrary to giveaway for instance)
+        self.is_giveaway = is_giveaway                      # Whether the pibox comes from a /giveaway command
+        self.steal_reward = steal_reward                    # Whether the bot steals the reward from the user
+        self.is_opposite = is_opposite                      # Whether the user has to react with the wrong emoji to get the pibox
+        self.nb_reward = nb_reward                          # How many users can claim the pibox
+        self.already_claimed = already_claimed or []        # List of users who already claimed the pibox
         self.message_id = message_id
         self.emoji_id_solution = emoji_id_solution
         self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
-    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, sender_id=None, piflouz_quantity=None):
+    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, nb_reward=1, sender_id=None, piflouz_quantity=None):
         # Choose a random emoji
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
@@ -223,7 +226,7 @@ class QuickReactPibox(Pibox):
             piflouz_quantity = randrange(max_size)
 
         if is_giveaway:
-            if not piflouz_handlers.update_piflouz(sender_id, qty=-piflouz_quantity, check_cooldown=False):
+            if not piflouz_handlers.update_piflouz(sender_id, qty=-piflouz_quantity * nb_reward, check_cooldown=False):
                 return None  # Not enough piflouz to give
 
             if str(sender_id) != str(bot.user.id):
@@ -242,7 +245,7 @@ class QuickReactPibox(Pibox):
         out_channel = await bot.fetch_channel(db["out_channel"])
         message = await out_channel.send(text_output)
 
-        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, steal_reward=steal_reward, is_opposite=is_opposite, message_id=message.id, emoji_id_solution=emoji_id)
+        res = QuickReactPibox(piflouz_quantity, custom_message, is_piflouz_generated=is_piflouz_generated, is_giveaway=is_giveaway, steal_reward=steal_reward, is_opposite=is_opposite, nb_reward=nb_reward, message_id=message.id, emoji_id_solution=emoji_id)
         if res is not None: await res._register_listeners(bot)
 
         return res
@@ -261,6 +264,9 @@ class QuickReactPibox(Pibox):
 
         emoji = reac_event.reaction.emoji
         user = reac_event.author
+
+        if str(user.id) in self.already_claimed: return  # User already claimed the pibox
+
         if (emoji.id is not None and int(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
             await self._on_success(bot, user.id)
         else:
@@ -290,23 +296,43 @@ class QuickReactPibox(Pibox):
             user id of the winner
         bot : interactions.Client
         """
-        res = f"<@{id_winner}> won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
-        if self.custom_message is not None:
-            res += " " + self.custom_message
+        res = ""
+
+        users = [f"<@{id}>" for id in self.already_claimed]
+        if len(users) > 1: users[-1] = f"and {users[-1]}"
+        users = ", ".join(users)
+
+        # All rewards have been claimed
+        if len(self.already_claimed) == self.nb_reward:
+            res = f"{users} all won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
+            if self.custom_message is not None: res += " " + self.custom_message
+
+        else:
+            emoji_id_index = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS.index(self.emoji_id_solution)
+            emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[emoji_id_index]
+            emoji = f"<:{emoji_name}:{self.emoji_id_solution}>"
+
+            res = f"<@&{Constants.PIBOX_NOTIF_ROLE_ID}> Be Fast! First to react with {emoji} will get {self.amount} {Constants.PIFLOUZ_EMOJI}!"
+            if self.custom_message is not None: res += " " + self.custom_message
+
+            nb_claim_left = self.nb_reward - len(self.already_claimed)
+            res += f"\n{users} already claimed the pibox, but it can be claimed {nb_claim_left} more time{"s" if nb_claim_left > 1 else ""}!"
+
         return res
 
     async def _on_success(self, bot, user_id):
+        self.already_claimed.append(str(user_id))
+
         # Update the piflouz balance
         if self.steal_reward:
             piflouz_handlers.update_piflouz(bot.user.id, self.amount, False)
+
+            # `update_piflouz` can't go below 0, so we have to remove at most the amount of piflouz the user has
             profile = user_profile.get_profile(user_id)
             taken = min(profile["piflouz_balance"], self.amount)
             piflouz_handlers.update_piflouz(user_id, -taken, False)
         else:
             piflouz_handlers.update_piflouz(user_id, self.amount, False)
-
-        # Remove the pibox from the database
-        del get_all_pibox()[str(self.message_id)]
 
         # Edit the message to show the winner
         new_text_message = self._get_final_message(user_id, bot)
@@ -327,10 +353,15 @@ class QuickReactPibox(Pibox):
         await utils.update_piflouz_message(bot)
         if not self.steal_reward: bot.dispatch("pibox_obtained", user_id, self.amount)
 
-        await self._remove_listeners(bot)
+        # Remove the pibox from the database
+        if len(self.already_claimed) == self.nb_reward:
+            del get_all_pibox()[str(self.message_id)]
+            await self._remove_listeners(bot)
+        else:
+            get_all_pibox()[str(self.message_id)] = self.to_str()  # Update the pibox in the database
 
     def to_str(self):
-        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, nb_reward={self.nb_reward}, already_claimed={self.already_claimed}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
 
 
 class QuickReactGiveawayPibox(QuickReactPibox):
@@ -494,6 +525,10 @@ class TriviaPibox(Pibox):
         self.failed_indices.add(index)
         self.failed_users.append(str(user_id))
         bot.dispatch("pibox_failed", user_id, self.amount)
+
+        # update in the database
+        get_all_pibox()[str(self.message_id)] = self.to_str()
+
         await self._update_message(bot)
         await ctx.send("Wrong answer!\nThanks to you, this answer has been eliminated, but the reward was reduced by 25%", ephemeral=True)
 
@@ -729,3 +764,21 @@ class OppositeQuickReactPibox(QuickReactPibox):
 
     def to_str(self):
         return f"OppositeQuickReactPibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+
+
+class MultiClaimQuickReactPibox(QuickReactPibox):
+    """
+    A pibox where multiple users can claim the pibox
+    """
+
+    NB_REWARD = Constants.MULTI_CLAIM_PIBOX_NB_REWARD
+
+    def __init__(self, amount, nb_reward, message_id=None, emoji_id=None, id=None):
+        super().__init__(amount, is_piflouz_generated=True, nb_reward=nb_reward, message_id=message_id, emoji_id_solution=emoji_id, id=id)
+
+    @staticmethod
+    async def new(bot):
+        return await QuickReactPibox.new(bot, is_piflouz_generated=True, nb_reward=MultiClaimQuickReactPibox.NB_REWARD)
+
+    def to_str(self):
+        return f"MultiClaimQuickReactPibox({self.amount}, nb_reward={self.nb_reward}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
