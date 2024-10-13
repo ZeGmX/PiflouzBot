@@ -9,3 +9,8 @@ Pillow
 unidecode
 pandas
 PyQt6
+wget
+zstandard
+cairosvg
+chess
+imageio

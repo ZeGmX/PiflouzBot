@@ -48,6 +48,15 @@ Current features:
 2. To build and run, use `build_dev.cmd`
 3. To stop the container, either use `/reboot` on Discord, stop the container in the `Docker Desktop` app (`Containers` page), or run `docker stop devtest`
 
+### To install the chess database 
+This may require a bit of RAM to do the actual splitting.
+This once step must be done before running the bot, it's a pre-processing step.
+```
+cd chess_database; python download_chess_database.py; cd ..
+```
+
 ### Acknowledgements:
 This project uses [data](https://github.com/ZeGmX/PiflouzBot/blob/master/src/events/assets/) from Boris New & Christophe Pallierthe's [`Lexique`](http://www.lexique.org/) database (which can be queried at [http://www.lexique.org/shiny/openlexicon/](http://www.lexique.org/shiny/openlexicon/)) and [Gutemberg french word list](https://github.com/chrplr/openlexicon/blob/master/datasets-info/Liste-de-mots-francais-Gutenberg/README-liste-francais-Gutenberg.md).
 The authors of the databases are not responsible for the content of this project.
+
+The chess database is the lichess open database, that can be found at https://database.lichess.org/#puzzles
