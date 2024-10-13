@@ -1375,7 +1375,7 @@ class ChessPuzzleEvent(ChallengeEvent):
         puzzle = data["puzzle"]
         nb_moves = len(puzzle["moves"].split()) // 2
         rating = puzzle["rating"]
-        desc = f"Use `/chess guess [move]` to try to find the answer and earn {self.reward} {Constants.PIFLOUZ_EMOJI}\n\nYou need to find a sequence of {nb_moves} moves\nThe puzzle is rated {rating}"
+        desc = f"Use `/chess guess [move]` to try to find the answer and earn {self.reward} {Constants.PIFLOUZ_EMOJI}\n\nYou need to find a sequence of {nb_moves} moves\nThe puzzle is rated {rating}\n\nYour move should be written in UCI notation ([initial position][destination], e.g. 'e2e4' for moving the pawn from e2 to e4). For a promotion, add the piece you want to promote to (eg. e7e8q for promoting to a queen)"
         embed = Embed(title="Challenge event of the day: find the solution to this chess puzzle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
         return embed
 
