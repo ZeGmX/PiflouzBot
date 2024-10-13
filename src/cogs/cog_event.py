@@ -464,6 +464,15 @@ class CogEvent(Extension):
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def chess_guess_cmd(self, ctx, guess):
+        """
+        Callback for the /chess guess command
+
+        Parameters
+        ----------
+        ctx : interactions.SlashContext
+        guess : str
+            UCI-formatted move
+        """
         current_puzzle, data = await self.check_event(EventType.CHALLENGE, ChessPuzzleEvent, ctx)
         guess = guess.lower()
 
@@ -508,3 +517,28 @@ class CogEvent(Extension):
             await thread.send(output_message)
 
             await utils.update_piflouz_message(self.bot)
+
+    @slash_command(name="chess", description="TBD", sub_cmd_name="status", sub_cmd_description="See your current progress on today's chess event", scopes=Constants.GUILD_IDS)
+    @auto_defer(ephemeral=True)
+    @utils.check_message_to_be_processed
+    async def chess_status_cmd(self, ctx):
+        """
+        Callback for the /chess status command
+
+        Parameters
+        ----------
+        ctx : interactions.SlashContext
+        """
+        _, data = await self.check_event(EventType.CHALLENGE, ChessPuzzleEvent, ctx)
+        user_id = str(ctx.author.id)
+        puzzle = ChessProblem.from_dict(data["puzzle"])
+
+        if user_id not in data["progress"].keys():
+            data["progress"][user_id] = [puzzle.moves_list[0]]  # other player's move
+        progress = data["progress"][user_id]
+
+        if len(progress) == len(puzzle.moves_list):
+            await ctx.send("You already solved the puzzle!\n Here was the solution:", ephemeral=True, file="src/events/chess_puzzle_solution.gif")
+            return
+        img = f"src/events/board{len(progress) - 1}.png"
+        await ctx.send("Here is the current state of the board:", ephemeral=True, file=img)

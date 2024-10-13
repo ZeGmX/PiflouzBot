@@ -160,8 +160,13 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/chess guess [word]`",
+                    name="`/chess guess [move]`",
                     value="Try to solve today's chess challenge ⚠️ Only works during chess events",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/chess status`",
+                    value="Check how your chess problem solving is going ⚠️ Only works during chess events",
                     inline=False
                 ),
                 EmbedField(
