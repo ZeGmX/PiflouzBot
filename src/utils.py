@@ -212,7 +212,7 @@ def update_db():
         base = "".join(base_elmts)
         return "(".join([base] + s.split("(")[1:])
 
-    db["events"]["passive"]["current_event"] = update_case(db["events"]["passive"]["current_event"])
+    db["events"]["passive"]["current_event"] = "events.PiboxDropRateAndRewardEvent(val_drop_rate=900, val_reward=-90)"
     db["events"]["challenge"]["current_event"] = update_case(db["events"]["challenge"]["current_event"])
 
     from itertools import chain
