@@ -196,3 +196,28 @@ def update_db():
     db["events"]["challenge"]["buffered_event"] = ""
     db["events"]["passive"]["buffered_data"] = dict()
     db["events"]["challenge"]["buffered_data"] = dict()
+
+    db["pibox"] = dict()
+    del db["random_gifts"]
+
+    db["last_pibox_id"] = 0
+    db["events"]["challenge"]["chess_puzzle"] = {"puzzle": dict(), "progress": dict()}
+
+    def update_case(s):
+        base = s.split("(")[0]
+
+        base_elmts = base.split("_")
+        for i in range(1, len(base_elmts)):
+            base_elmts[i] = base_elmts[i].capitalize()
+        base = "".join(base_elmts)
+        return "(".join([base] + s.split("(")[1:])
+
+    db["events"]["passive"]["current_event"] = update_case(db["events"]["passive"]["current_event"])
+    db["events"]["challenge"]["current_event"] = update_case(db["events"]["challenge"]["current_event"])
+
+    from itertools import chain
+    for _, profile in chain(db["profiles"]["active"].items(), db["profiles"]["inactive"].items()):
+        for i in range(len(profile["achievements"])):
+            profile["achievements"][i] = update_case(profile["achievements"][i])
+        for i in range(len(profile["powerups"])):
+            profile["powerups"][i] = update_case(profile["powerups"][i])

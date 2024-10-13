@@ -56,6 +56,7 @@ async def on_startup():
     """
     print(f"I have logged in as {bot.user.display_name} - id: {bot.user.id}")
     logger.info("Bot startup")
+    # utils.update_db()
 
     # Setting the base parameters in the database
     for key in [
@@ -126,7 +127,6 @@ async def on_startup():
     await pibox.load_all_pibox(bot)
     await events.register_listeners(bot)
     await events.wait_for_buffer_ready(bot)
-    # utils.update_db()
 
 
 @listen()

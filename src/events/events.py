@@ -241,7 +241,7 @@ def get_default_db_data(event_type):
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
                 "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()},
-                "chess_puzzle": {"puzzle": dict(), "progress": dict()}  # TODO
+                "chess_puzzle": {"puzzle": dict(), "progress": dict()}
             }
 
 
