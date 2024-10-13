@@ -14,8 +14,8 @@ class ChessProblem:
         self.fen = fen
         self.moves = moves
         self.moves_list = self.moves.split(' ')
-        self.rating = rating
-        self.rating_deviation = rating_deviation
+        self.rating = int(rating)
+        self.rating_deviation = int(rating_deviation)
 
     @staticmethod
     def new_problem(rating):
@@ -31,7 +31,7 @@ class ChessProblem:
         -------
         res (ChessProblem)
         """
-        problem = lookup_problem(Constants.CHESS_DATABASE_MAPPING)
+        problem = lookup_problem(Constants.CHESS_DATABASE_MAPPING, rating)
         return ChessProblem(
             fen=problem["FEN"],
             moves=problem["Moves"],
@@ -58,4 +58,33 @@ class ChessProblem:
             cairosvg.svg2png(bytestring=svg_board, write_to=image_location)
             board_images.append(imageio.imread(image_location))
 
-        imageio.mimsave(os.path.join(folder, "chess_puzzle_solution.gif"), board_images, duration=2000)
+        imageio.mimsave(os.path.join(folder, "chess_puzzle_solution.gif"), board_images, duration=2000, loop=0)
+
+    def to_dict(self):
+        return {
+            "fen": self.fen,
+            "moves": self.moves,
+            "rating": self.rating,
+            "rating_deviation": self.rating_deviation
+        }
+
+    @staticmethod
+    def from_dict(data):
+        return ChessProblem(**data)
+
+    def check_moves(self, moves):
+        """
+        Check if the given moves are correct
+
+        Parameters
+        ----------
+        moves (List[str]):
+            List of moves to check
+
+        Returns
+        -------
+        res (bool):
+            True if the moves correspond to the solution the start of the solution
+        """
+        moves_str = ' '.join(moves)
+        return self.moves.startswith(moves_str)

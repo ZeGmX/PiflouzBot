@@ -2,6 +2,7 @@ from .events import (
     BirthdayEvent,
     BirthdayRaffleEvent,
     ChallengeEvent,
+    ChessProblem,
     ChessPuzzleEvent,
     ComboEvent,
     CooldownReductionEvent,

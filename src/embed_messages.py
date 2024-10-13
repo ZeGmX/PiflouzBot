@@ -160,6 +160,11 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
+                    name="`/chess guess [word]`",
+                    value="Try to solve today's chess challenge ⚠️ Only works during chess events",
+                    inline=False
+                ),
+                EmbedField(
                     name="Things I do in the background",
                     value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\

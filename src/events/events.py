@@ -241,7 +241,7 @@ def get_default_db_data(event_type):
                 "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
                 "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()},
-                "chess_puzzle": {}  # TODO
+                "chess_puzzle": {"puzzle": dict(), "progress": dict()}  # TODO
             }
 
 
@@ -719,9 +719,12 @@ class ChallengeEvent(Event):
 
     async def on_begin(self, bot):
         """
-        output:
-            int -> id of the message announcing the event
-            int -> id of the thread created for the event
+        Returns
+        -------
+            (int):
+                id of the message announcing the event
+            (int):
+                id of the thread created for the event
         """
         if "out_channel" not in db.keys():
             return
@@ -1350,8 +1353,10 @@ class MultiRewardPiboxEvent(PassiveEvent):
 
 class ChessPuzzleEvent(ChallengeEvent):
 
-    def __init__(self, reward) -> None:
+    def __init__(self, reward, rating_min=1000, rating_max=2000) -> None:
         self.reward = reward
+        self.rating_min = rating_min
+        self.rating_max = rating_max
 
     async def get_embed(self, img_url):
         """
@@ -1366,22 +1371,40 @@ class ChessPuzzleEvent(ChallengeEvent):
         -------
             embed (interactions.Embed)
         """
-        desc = "Use `/puzzle guess [move]` to try to find the answer."
+        data = get_event_data(self)
+        puzzle = data["puzzle"]
+        nb_moves = len(puzzle["moves"].split()) // 2
+        rating = puzzle["rating"]
+        desc = f"Use `/chess guess [move]` to try to find the answer and earn {self.reward} {Constants.PIFLOUZ_EMOJI}\n\nYou need to find a sequence of {nb_moves} moves\nThe puzzle is rated {rating}"
         embed = Embed(title="Challenge event of the day: find the solution to this chess puzzle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
         return embed
 
-    # TODO: use `prepare` to generate a new problem
+    async def prepare(self, bot):
+        data = get_buffer_event_data(self)
+
+        rating = random.randint(self.rating_min, self.rating_max)
+        puzzle = ChessProblem.new_problem(rating=rating)
+        puzzle.save_all("src/events/buffered_files")
+        url_starting_position = utils.upload_image_to_imgur("src/events/buffered_files/board0.png")
+
+        data["url_start"] = url_starting_position
+        data["puzzle"] = puzzle.to_dict()
 
     async def on_begin(self, bot):
         if "out_channel" not in db.keys(): return
         out_channel = await bot.fetch_channel(db["out_channel"])
 
-        event = ChessProblem.new_problem(rating=1500)  # TODO - use a random rating, also used to determine the reward?
-        event.save_all("src/events/")
+        data_buffer = get_buffer_event_data(self)
+        data = get_event_data(self)
 
-        url_starting_position = utils.upload_image_to_imgur("src/events/board0.png")
+        data["puzzle"] = data_buffer["puzzle"]
+        data["progress"] = dict()
 
-        embed = await self.get_embed(url_starting_position)
+        # Move the files to the right folder
+        for filename in os.listdir("src/events/buffered_files"):
+            os.replace(f"src/events/buffered_files/{filename}", f"src/events/{filename}")
+
+        embed = await self.get_embed(data_buffer["url_start"])
 
         message = await out_channel.send(embed=embed)
         await message.pin()
@@ -1389,16 +1412,21 @@ class ChessPuzzleEvent(ChallengeEvent):
         thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
         return int(message.id), int(thread.id)
 
-    async def on_end(self, bot):
+    async def on_end(self, bot, msg_id, thread_id=None):
+        thread = await bot.fetch_channel(thread_id)
+        msg = "Today's chess puzzle is over! The solution was:"
+        await thread.send(msg, file="src/events/chess_puzzle_solution.gif")
+
+        await super().on_end(bot, msg_id, thread_id)
 
         path = "src/events"
         for filename in os.listdir(path):
             base, extension = os.path.splitext(filename)
-            if extension == ".png" and "board" in base:
+            if (extension == ".png" and "board" in base) or (extension == ".gif" and "solution" in base):
                 try:
                     os.remove(os.path.join("src/events", filename))
                 except Exception:
                     print(f"Could not remove chess event file {filename}")
 
     def to_str(self):
-        return f"{ChessPuzzleEvent.__name__}({self.reward})"
+        return f"{ChessPuzzleEvent.__name__}({self.reward}, {self.rating_min}, {self.rating_max})"

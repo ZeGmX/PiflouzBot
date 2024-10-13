@@ -1,17 +1,13 @@
-from interactions import (
-    Extension,
-    OptionType,
-    auto_defer,
-    component_callback,
-    slash_command,
-    slash_option,
-)
+import chess
+from interactions import Extension, OptionType, auto_defer, component_callback, slash_command, slash_option
 
 from constant import Constants
 from embed_messages import get_embed_wordle
 from events import (
     BirthdayEvent,
     BirthdayRaffleEvent,
+    ChessProblem,
+    ChessPuzzleEvent,
     EventType,
     MatchesExpression,
     MoveMatchEvent,
@@ -44,6 +40,7 @@ class CogEvent(Extension):
         /birthday
         /match guess
         /subseq guess
+        /chess guess
     Components
         events.Birthday_raffle_event.BUTTON_ID
     """
@@ -461,3 +458,53 @@ class CogEvent(Extension):
         data = get_event_data(current_event)
 
         return current_event, data
+
+    @slash_command(name="chess", description="TBD", sub_cmd_name="guess", sub_cmd_description="Take a guess on the chess event of the day", scopes=Constants.GUILD_IDS)
+    @slash_option(name="guess", description="Your guessed move (using UCI)", opt_type=OptionType.STRING, required=True)
+    @auto_defer(ephemeral=True)
+    @utils.check_message_to_be_processed
+    async def chess_guess_cmd(self, ctx, guess):
+        current_puzzle, data = await self.check_event(EventType.CHALLENGE, ChessPuzzleEvent, ctx)
+        guess = guess.lower()
+
+        # Check whether the move is valid
+        try:
+            _ = chess.Move.from_uci(guess)
+        except chess.InvalidMoveError:
+            await ctx.send("This is not a valid move format", ephemeral=True)
+            return
+
+        user_id = str(ctx.author.id)
+        puzzle = ChessProblem.from_dict(data["puzzle"])
+
+        if user_id not in data["progress"].keys():
+            data["progress"][user_id] = [puzzle.moves_list[0]]  # other player's move
+        progress = data["progress"][user_id]
+
+        # Check whether th user has already solved the puzzle
+        await utils.custom_assert(len(progress) < len(puzzle.moves_list), "You already solved this puzzle", ctx)
+
+        # Check whether the move is correct
+        await utils.custom_assert(puzzle.check_moves(progress + [guess]), "This move is incorrect", ctx)
+
+        # Update the user's data
+        progress.append(guess)
+
+        if len(progress) < len(puzzle.moves_list):
+            other_move = puzzle.moves_list[len(progress)]
+            progress.append(other_move)
+
+            image_path = f"src/events/board{len(progress) - 1}.png"
+            await ctx.send(f"Correct! Keep going!\nThe other player played {other_move}", ephemeral=True, file=image_path)
+        else:  # The user has solved the puzzle
+            reward = current_puzzle.reward
+            piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
+            add_to_stat(reward, PiflouzSource.EVENT)
+
+            await ctx.send(f"Congratulations! You solved the puzzle! You earned {reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
+
+            thread = await fetch_event_thread(self.bot, EventType.CHALLENGE)
+            output_message = f"{ctx.author.mention} solved today's chess puzzle"
+            await thread.send(output_message)
+
+            await utils.update_piflouz_message(self.bot)
