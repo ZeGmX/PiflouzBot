@@ -30,6 +30,7 @@ class Constants:
     PIFLEX_MASTER_ROLE_ID = int(os.getenv("PIFLEX_MASTER_ROLE_ID"))
     PIBOX_NOTIF_ROLE_ID = int(os.getenv("PIBOX_NOTIF_ROLE_ID"))
     BIRTHDAY_NOTIF_ROLE_ID = int(os.getenv("BIRTHDAY_NOTIF_ROLE_ID"))
+    CHESS_EVENT_NOTIF_ROLE_ID = int(os.getenv("CHESS_EVENT_NOTIF_ROLE_ID"))
 
     ### Emojis
     PIFLOUZ_EMOJI_ID = int(os.getenv("PIFLOUZ_EMOJI_ID"))

@@ -1406,7 +1406,7 @@ class ChessPuzzleEvent(ChallengeEvent):
 
         embed = await self.get_embed(data_buffer["url_start"])
 
-        message = await out_channel.send(embed=embed)
+        message = await out_channel.send(f"<@&{Constants.CHESS_EVENT_NOTIF_ROLE_ID}>", embed=embed)
         await message.pin()
         now = datetime.date.today()
         thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
