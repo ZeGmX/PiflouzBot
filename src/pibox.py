@@ -323,6 +323,13 @@ class QuickReactPibox(Pibox):
     async def _on_success(self, bot, user_id):
         self.already_claimed.append(str(user_id))
 
+        # Remove the pibox from the database, or update it if there are still rewards to claim
+        if len(self.already_claimed) >= self.nb_reward:
+            del get_all_pibox()[str(self.message_id)]
+            await self._remove_listeners(bot)
+        else:
+            get_all_pibox()[str(self.message_id)] = self.to_str()  # Update the pibox in the database
+
         # Update the piflouz balance
         if self.steal_reward:
             piflouz_handlers.update_piflouz(bot.user.id, self.amount, False)
@@ -352,13 +359,6 @@ class QuickReactPibox(Pibox):
 
         await utils.update_piflouz_message(bot)
         if not self.steal_reward: bot.dispatch("pibox_obtained", user_id, self.amount)
-
-        # Remove the pibox from the database
-        if len(self.already_claimed) == self.nb_reward:
-            del get_all_pibox()[str(self.message_id)]
-            await self._remove_listeners(bot)
-        else:
-            get_all_pibox()[str(self.message_id)] = self.to_str()  # Update the pibox in the database
 
     def to_str(self):
         return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, nb_reward={self.nb_reward}, already_claimed={self.already_claimed}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
