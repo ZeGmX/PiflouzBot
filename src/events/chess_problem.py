@@ -102,3 +102,4 @@ class ChessProblem:
             except Exception as e:
                 print(f"Error: did not catch an exception we should have {e}!")
                 return False, "Uncaught error, please create an issue, but the move did not work."
+        return False, "This is not the expected move in this position."
