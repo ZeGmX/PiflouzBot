@@ -494,7 +494,8 @@ class CogEvent(Extension):
         await utils.custom_assert(len(progress) < len(puzzle.moves_list), "You already solved this puzzle", ctx)
 
         # Check whether the move is correct
-        await utils.custom_assert(puzzle.check_moves(progress + [guess]), "This move is incorrect", ctx)
+        is_move_correct, move_context = puzzle.check_moves(progress + [guess])
+        await utils.custom_assert(is_move_correct, move_context, ctx)
 
         # Update the user's data
         progress.append(guess)
