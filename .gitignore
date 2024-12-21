@@ -28,3 +28,4 @@ chess_database/*.json
 chess_database/*.zst
 *.tmp
 **.gif
+.mypy*
