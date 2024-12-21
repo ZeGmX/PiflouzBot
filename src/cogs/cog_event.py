@@ -1,4 +1,3 @@
-import chess
 from interactions import Extension, OptionType, auto_defer, component_callback, slash_command, slash_option
 
 from constant import Constants
@@ -475,13 +474,6 @@ class CogEvent(Extension):
         """
         current_puzzle, data = await self.check_event(EventType.CHALLENGE, ChessPuzzleEvent, ctx)
         guess = guess.lower()
-
-        # Check whether the move is valid
-        try:
-            _ = chess.Move.from_uci(guess)
-        except chess.InvalidMoveError:
-            await ctx.send("This is not a valid move format", ephemeral=True)
-            return
 
         user_id = str(ctx.author.id)
         puzzle = ChessProblem.from_dict(data["puzzle"])

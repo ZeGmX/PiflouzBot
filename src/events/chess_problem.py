@@ -90,16 +90,17 @@ class ChessProblem:
         """
         moves_str = ' '.join(moves)
         if self.moves.startswith(moves_str):
-            return True,"This move is correct."
+            return True, "This move is correct"
         board = chess.Board(fen=self.fen)
         for move in moves:
-            try :
+            try:
+                move = chess.Move.from_uci(move)
+                if not board.is_legal(move):
+                    return False, "This is an illegal move in this position"
                 board.push(move)
-            except chess.IllegalMoveError:
-                return False, "This is an illegal move in this position."
             except chess.InvalidMoveError:
-                return False, "This is a malformated move."
+                return False, "This is a malformated move"
             except Exception as e:
-                print(f"Error: did not catch an exception we should have {e}!")
-                return False, "Uncaught error, please create an issue, but the move did not work."
-        return False, "This is not the expected move in this position."
+                print(f"Error: did not catch an exception we should have: {e}, {type(e)}")
+                return False, "Uncaught error, please create an issue, but the move did not work"
+        return False, "This is not the expected move in this position"
