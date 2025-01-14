@@ -104,10 +104,9 @@ async def get_otter_image():
         user_agent=Constants.REDDIT_USER_AGENT
     )
     sub = await reddit.subreddit("otters")
-    submission = await sub.random()
-
-    while not (submission.url.endswith(".jpg") or submission.url.endswith(".png") or submission.url.endswith(".gif")):
-        submission = await sub.random()
+    async for submission in sub.random_rising():
+        if submission.url.endswith(".jpg") or submission.url.endswith(".jpeg") or submission.url.endswith(".png") or submission.url.endswith(".gif"):
+            break
 
     return submission.url
 
