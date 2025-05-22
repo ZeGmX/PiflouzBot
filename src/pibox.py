@@ -300,11 +300,11 @@ class QuickReactPibox(Pibox):
 
         users = [f"<@{id}>" for id in self.already_claimed]
         if len(users) > 1: users[-1] = f"and {users[-1]}"
-        users = ", ".join(users)
+        users_str = ", ".join(users)
 
         # All rewards have been claimed
         if len(self.already_claimed) == self.nb_reward:
-            res = f"{users} all won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
+            res = f"{users_str}{" all" if len(users) > 1 else ""} won {self.amount} {Constants.PIFLOUZ_EMOJI} from a pibox!"
             if self.custom_message is not None: res += " " + self.custom_message
 
         else:
@@ -316,7 +316,7 @@ class QuickReactPibox(Pibox):
             if self.custom_message is not None: res += " " + self.custom_message
 
             nb_claim_left = self.nb_reward - len(self.already_claimed)
-            res += f"\n{users} already claimed the pibox, but it can be claimed {nb_claim_left} more time{"s" if nb_claim_left > 1 else ""}!"
+            res += f"\n{users_str} already claimed the pibox, but it can be claimed {nb_claim_left} more time{"s" if nb_claim_left > 1 else ""}!"
 
         return res
 
