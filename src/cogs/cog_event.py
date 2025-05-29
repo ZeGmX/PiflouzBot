@@ -134,7 +134,7 @@ class CogEvent(Extension):
             piflouz_handlers.update_piflouz(user_id, reward, check_cooldown=False)
 
             thread = await fetch_event_thread(self.bot, EventType.CHALLENGE)
-            await thread.send(announcement_msg)
+            await thread.send(announcement_msg, silent=True)
 
             add_to_stat(reward, PiflouzSource.EVENT)
             await utils.update_piflouz_message(self.bot)
@@ -331,7 +331,7 @@ class CogEvent(Extension):
         await ctx.send(f"Congratulations, this is correct! You earned {current_match.reward} {Constants.PIFLOUZ_EMOJI}", ephemeral=True)
 
         thread = await fetch_event_thread(self.bot, EventType.CHALLENGE)
-        await thread.send(f"{ctx.author.mention} solved today's match event!")
+        await thread.send(f"{ctx.author.mention} solved today's match event!", silent=True)
 
         add_to_stat(current_match.reward, PiflouzSource.EVENT)
         await utils.update_piflouz_message(self.bot)
@@ -409,7 +409,7 @@ class CogEvent(Extension):
         output_message += ", ".join(solved) + "!"
 
         if len(proposed_words) == 0:
-            msg = await thread.send(output_message)
+            msg = await thread.send(output_message, silent=True)
             data["msg_id"][user_id] = int(msg.id)
         else:
             msg = await thread.fetch_message(data["msg_id"][user_id])
@@ -507,7 +507,7 @@ class CogEvent(Extension):
 
             thread = await fetch_event_thread(self.bot, EventType.CHALLENGE)
             output_message = f"{ctx.author.mention} solved today's chess puzzle"
-            await thread.send(output_message)
+            await thread.send(output_message, silent=True)
 
             await utils.update_piflouz_message(self.bot)
 
