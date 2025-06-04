@@ -205,10 +205,7 @@ class QuickReactPibox(Pibox):
         self.nb_reward = nb_reward                          # How many users can claim the pibox
         self.already_claimed = already_claimed or []        # List of users who already claimed the pibox
         self.message_id = message_id
-        if isinstance(emoji_id_solution,str) and emoji_id_solution.isdigit():
-            self.emoji_id_solution = int(emoji_id_solution)
-        else: 
-            self.emoji_id_solution = emoji_id_solution
+        self.emoji_id_solution = str(emoji_id_solution)     # Forcefully cast for retro-compatibility (was int)
         self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
@@ -261,7 +258,7 @@ class QuickReactPibox(Pibox):
         return res
 
     def _check_success(self,emoji):
-        if (emoji.id is not None and int(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
+        if (emoji.id is not None and str(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
             return True
         elif (emoji.id is None and emoji.name == self.emoji_id_solution) == (not self.is_opposite):
             return True
