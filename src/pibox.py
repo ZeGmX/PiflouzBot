@@ -214,7 +214,14 @@ class QuickReactPibox(Pibox):
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
         emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        
+        if "DEFAULT:" in emoji_name:
+            emoji_name = emoji_name[len("DEFAULT:")::]
+            emoji = f":{emoji_name}:"
+            emoji_id = f"'{emoji_id}'"
+        
+        else:
+            emoji = f"<:{emoji_name}:{emoji_id}>"
 
         if piflouz_quantity is None:
             # Compute the maximum amount of piflouz that can be given
@@ -270,6 +277,8 @@ class QuickReactPibox(Pibox):
         if str(user.id) in self.already_claimed: return  # User already claimed the pibox
 
         if (emoji.id is not None and int(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
+            await self._on_success(bot, user.id)
+        elif (emoji.id is None and emoji.name == self.emoji_id_solution) == (not self.is_opposite):
             await self._on_success(bot, user.id)
         else:
             await self._on_fail(bot, user.id)
