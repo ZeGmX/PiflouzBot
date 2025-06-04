@@ -670,7 +670,7 @@ class HauntedPibox(QuickReactPibox):
         return res
 
     def to_str(self):
-        return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id={self.emoji_id_solution}, id={self.id})"
+        return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id='{self.emoji_id_solution}', id={self.id})"
 
 
 class RafflePibox(QuickReactPibox):
