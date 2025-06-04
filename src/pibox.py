@@ -92,6 +92,8 @@ class Pibox:
         -------
         int
         """
+        if "last_pibox_id" not in db:
+            db["last_pibox_id"] = 0
         id = db["last_pibox_id"]
         db["last_pibox_id"] += 1
         return id
