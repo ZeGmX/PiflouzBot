@@ -209,8 +209,7 @@ class QuickReactPibox(Pibox):
         self.id = id if id is not None else Pibox.get_new_id()
 
     @staticmethod
-    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, nb_reward=1, sender_id=None, piflouz_quantity=None):
-        # Choose a random emoji
+    def _select_emoji():
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
         emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
@@ -220,6 +219,12 @@ class QuickReactPibox(Pibox):
             emoji = f":{emoji_name}:"
         else:
             emoji = f"<:{emoji_name}:{emoji_id}>"
+        return emoji_id, emoji
+
+    @staticmethod
+    async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, nb_reward=1, sender_id=None, piflouz_quantity=None):
+        # Choose a random emoji
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         if piflouz_quantity is None:
             # Compute the maximum amount of piflouz that can be given
@@ -635,10 +640,7 @@ class HauntedPibox(QuickReactPibox):
     @staticmethod
     async def new(bot):
         # Choose a random emoji
-        index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
-        emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
-        emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         # Compute the maximum amount of piflouz that can be given
         max_size = Constants.MAX_PIBOX_AMOUNT
@@ -686,10 +688,7 @@ class RafflePibox(QuickReactPibox):
     @staticmethod
     async def new(bot):
         # Choose a random emoji
-        index = randrange(len(RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
-        emoji_id = RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
-        emoji_name = RafflePibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         # Compute the maximum amount of piflouz that can be given
         amount = randrange(1, RafflePibox.MAX_AMOUNT + 1)
