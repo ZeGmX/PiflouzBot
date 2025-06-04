@@ -68,6 +68,7 @@ class Constants:
     EVERY_HOUR_TRIGGER = OrTrigger(*[TimeTrigger(hour=i) for i in range(24)])
     TIMEZONE = timezone(os.getenv("TIMEZONE"))
     BOT_BIRTHDAY = os.getenv("BOT_BIRTHDAY")
+    PROFILE_PICTURE_UPDATE_TIME = eval(os.getenv("PROFILE_PICTURE_UPDATE_TIME"))
 
     ### Costs
     PIFLEX_COST = int(os.getenv("PIFLEX_COST"))
@@ -103,6 +104,8 @@ class Constants:
     ]
     STREAMERS = eval(os.getenv("STREAMERS"))
     CHESS_DATABASE_MAPPING = load_chess_database("chess_database/")
+    DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE")
+    PROFILE_PICTURE_UPDATE = eval(os.getenv("PROFILE_PICTURE_UPDATE"))
 
     @staticmethod
     def load():

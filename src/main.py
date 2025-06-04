@@ -122,6 +122,7 @@ async def on_startup():
     socials.task_check_live_status.start(bot)
     socials.shuffle_names.start(bot)
     socials.check_birthday.start(bot)
+    socials.check_profile_picture_update.start(bot)
     utils.backup_db.start()
 
     await pibox.load_all_pibox(bot)

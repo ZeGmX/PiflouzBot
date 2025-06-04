@@ -20,6 +20,16 @@ class Client(Client):
         else:
             super().dispatch(MyEvent(event, self), *args, **kwargs)
 
+    async def set_profile_picture(self, path):
+        """
+        Sets the profile picture of the bot
+
+        Parameters
+        ----------
+        path (str): The path to the image file
+        """
+        await self.user.edit(avatar=path)
+
 
 class MyEvent(BaseEvent):
     """

@@ -3,6 +3,7 @@ import asyncpraw
 from datetime import datetime
 import interactions
 from interactions import BrandColors, IntervalTrigger
+import logging
 from random import choice, shuffle
 import time
 from twitchAPI.helper import first
@@ -16,6 +17,9 @@ import embed_messages
 from markdown import escape_markdown as escape_markdown
 import powerups
 import user_profile
+
+
+logger = logging.getLogger("custom_log")
 
 
 async def get_live_status(user_name=None, helix=None):
@@ -214,3 +218,21 @@ async def check_birthday(bot: interactions.Client):
 
     out_channel = await bot.fetch_channel(db["out_channel"])
     await out_channel.send(embed=embed)
+
+
+@Task.create(TimeTriggerDT(Constants.PROFILE_PICTURE_UPDATE_TIME))
+async def check_profile_picture_update(bot):
+    """
+    Checks if the bot's profile picture needs to be updated
+    """
+    today = datetime.now(tz=Constants.TIMEZONE).date()
+
+    for d1, m1, d2, m2, img_path in Constants.PROFILE_PICTURE_UPDATE:
+        if today.month == m1 and today.day == d1:
+            await bot.set_profile_picture(img_path)
+            logger.info(f"Profile picture updated to {img_path}")
+            return
+        elif today.month == m2 and today.day == d2:
+            await bot.set_profile_picture(Constants.DEFAULT_PROFILE_PICTURE)
+            logger.info(f"Profile picture updated to {Constants.DEFAULT_PROFILE_PICTURE}")
+            return
