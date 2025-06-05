@@ -92,6 +92,8 @@ class Pibox:
         -------
         int
         """
+        if "last_pibox_id" not in db:
+            db["last_pibox_id"] = 0
         id = db["last_pibox_id"]
         db["last_pibox_id"] += 1
         return id
@@ -203,16 +205,52 @@ class QuickReactPibox(Pibox):
         self.nb_reward = nb_reward                          # How many users can claim the pibox
         self.already_claimed = already_claimed or []        # List of users who already claimed the pibox
         self.message_id = message_id
-        self.emoji_id_solution = emoji_id_solution
+        self.emoji_id_solution = str(emoji_id_solution)     # Forcefully cast for retro-compatibility (was int)
         self.id = id if id is not None else Pibox.get_new_id()
+
+    @staticmethod
+    def _select_emoji():
+        """
+        Selects a random emoji from the list of possible emojis
+
+        Returns
+        -------
+        emoji_id (str)
+        emoji (str)
+        """
+        index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
+        emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
+        emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
+
+        return emoji_id, QuickReactPibox._clean_emoji(emoji_name, emoji_id)
+
+    @staticmethod
+    def _clean_emoji(emoji_name, emoji_id):
+        """
+        Cleans the emoji name and id to be used in the pibox
+
+        Parameters
+        ----------
+        emoji_name (str)
+            The name of the emoji
+        emoji_id (str)
+            The id of the emoji
+
+        Returns
+        -------
+        str:
+            The cleaned emoji string
+        """
+        if "DEFAULT:" in emoji_name:
+            emoji_name = emoji_name[len("DEFAULT:"):]
+            return f":{emoji_name}:"
+        else:
+            return f"<:{emoji_name}:{emoji_id}>"
 
     @staticmethod
     async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, nb_reward=1, sender_id=None, piflouz_quantity=None):
         # Choose a random emoji
-        index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
-        emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
-        emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         if piflouz_quantity is None:
             # Compute the maximum amount of piflouz that can be given
@@ -250,6 +288,14 @@ class QuickReactPibox(Pibox):
 
         return res
 
+    def _check_success(self, emoji):
+        if (emoji.id is not None and str(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
+            return True
+        elif (emoji.id is None and emoji.name == self.emoji_id_solution) == (not self.is_opposite):
+            return True
+        else:
+            return False
+
     async def _on_message_reaction_add(self, reac_event, bot):
         """
         Listener function executed when a reaction is added to a message
@@ -267,7 +313,7 @@ class QuickReactPibox(Pibox):
 
         if str(user.id) in self.already_claimed: return  # User already claimed the pibox
 
-        if (emoji.id is not None and int(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
+        if self._check_success(emoji):
             await self._on_success(bot, user.id)
         else:
             await self._on_fail(bot, user.id)
@@ -310,7 +356,7 @@ class QuickReactPibox(Pibox):
         else:
             emoji_id_index = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS.index(self.emoji_id_solution)
             emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[emoji_id_index]
-            emoji = f"<:{emoji_name}:{self.emoji_id_solution}>"
+            emoji = QuickReactPibox._clean_emoji(emoji_name, self.emoji_id_solution)  # Clean the emoji name
 
             res = f"<@&{Constants.PIBOX_NOTIF_ROLE_ID}> Be Fast! First to react with {emoji} will get {self.amount} {Constants.PIFLOUZ_EMOJI}!"
             if self.custom_message is not None: res += " " + self.custom_message
@@ -361,7 +407,7 @@ class QuickReactPibox(Pibox):
         if not self.steal_reward: bot.dispatch("pibox_obtained", user_id, self.amount)
 
     def to_str(self):
-        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, nb_reward={self.nb_reward}, already_claimed={self.already_claimed}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, is_piflouz_generated={self.is_piflouz_generated}, is_giveaway={self.is_giveaway}, steal_reward={self.steal_reward}, nb_reward={self.nb_reward}, already_claimed={self.already_claimed}, message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class QuickReactGiveawayPibox(QuickReactPibox):
@@ -378,7 +424,7 @@ class QuickReactGiveawayPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=sender_id, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactGiveawayPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactGiveawayPibox({self.amount}, custom_message={f"'{self.custom_message}'" if self.custom_message is not None else None}, message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class QuickReactPiboxMasterPibox(QuickReactPibox):
@@ -396,7 +442,7 @@ class QuickReactPiboxMasterPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=True, piflouz_quantity=qty)
 
     def to_str(self):
-        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactPiboxMasterPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class QuickReactByPibotPibox(QuickReactPibox):
@@ -413,7 +459,7 @@ class QuickReactByPibotPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, custom_message, is_piflouz_generated=False, is_giveaway=True, sender_id=bot.user.id)
 
     def to_str(self):
-        f"QuickReactByPibotPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"QuickReactByPibotPibox({self.amount}, custom_message='{f"'{self.custom_message}'" if self.custom_message is not None else None}', message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class TriviaPibox(Pibox):
@@ -620,10 +666,7 @@ class HauntedPibox(QuickReactPibox):
     @staticmethod
     async def new(bot):
         # Choose a random emoji
-        index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
-        emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
-        emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         # Compute the maximum amount of piflouz that can be given
         max_size = Constants.MAX_PIBOX_AMOUNT
@@ -655,7 +698,7 @@ class HauntedPibox(QuickReactPibox):
         return res
 
     def to_str(self):
-        return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id={self.emoji_id_solution}, id={self.id})"
+        return f"HauntedPibox({self.amount}, steal_reward={self.steal_reward}, message_id={self.message_id}, emoji_id='{self.emoji_id_solution}', id={self.id})"
 
 
 class RafflePibox(QuickReactPibox):
@@ -671,10 +714,7 @@ class RafflePibox(QuickReactPibox):
     @staticmethod
     async def new(bot):
         # Choose a random emoji
-        index = randrange(len(RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
-        emoji_id = RafflePibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
-        emoji_name = RafflePibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        emoji = f"<:{emoji_name}:{emoji_id}>"
+        emoji_id, emoji = QuickReactPibox._select_emoji()
 
         # Compute the maximum amount of piflouz that can be given
         amount = randrange(1, RafflePibox.MAX_AMOUNT + 1)
@@ -747,7 +787,7 @@ class RafflePibox(QuickReactPibox):
         await super()._on_fail(bot, user_id)
 
     def to_str(self):
-        return f"RafflePibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"RafflePibox({self.amount}, message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class OppositeQuickReactPibox(QuickReactPibox):
@@ -763,7 +803,7 @@ class OppositeQuickReactPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, is_piflouz_generated=True, is_opposite=True)
 
     def to_str(self):
-        return f"OppositeQuickReactPibox({self.amount}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"OppositeQuickReactPibox({self.amount}, message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"
 
 
 class MultiClaimQuickReactPibox(QuickReactPibox):
@@ -781,4 +821,4 @@ class MultiClaimQuickReactPibox(QuickReactPibox):
         return await QuickReactPibox.new(bot, is_piflouz_generated=True, nb_reward=MultiClaimQuickReactPibox.NB_REWARD)
 
     def to_str(self):
-        return f"MultiClaimQuickReactPibox({self.amount}, nb_reward={self.nb_reward}, message_id={self.message_id}, emoji_id_solution={self.emoji_id_solution}, id={self.id})"
+        return f"MultiClaimQuickReactPibox({self.amount}, nb_reward={self.nb_reward}, message_id={self.message_id}, emoji_id_solution='{self.emoji_id_solution}', id={self.id})"

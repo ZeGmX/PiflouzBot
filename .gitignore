@@ -29,3 +29,6 @@ chess_database/*.zst
 *.tmp
 **.gif
 .mypy*
+
+
+!src/assets/profile_pictures/piflouz_animated.gif
