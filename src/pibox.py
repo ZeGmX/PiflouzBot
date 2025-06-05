@@ -210,16 +210,42 @@ class QuickReactPibox(Pibox):
 
     @staticmethod
     def _select_emoji():
+        """
+        Selects a random emoji from the list of possible emojis
+
+        Returns
+        -------
+        emoji_id (str)
+        emoji (str)
+        """
         index = randrange(len(QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS))
         emoji_id = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS[index]
         emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[index]
-        
+
+        return emoji_id, QuickReactPibox._clean_emoji(emoji_name, emoji_id)
+
+    @staticmethod
+    def _clean_emoji(emoji_name, emoji_id):
+        """
+        Cleans the emoji name and id to be used in the pibox
+
+        Parameters
+        ----------
+        emoji_name (str)
+            The name of the emoji
+        emoji_id (str)
+            The id of the emoji
+
+        Returns
+        -------
+        str:
+            The cleaned emoji string
+        """
         if "DEFAULT:" in emoji_name:
-            emoji_name = emoji_name[len("DEFAULT:")::]
-            emoji = f":{emoji_name}:"
+            emoji_name = emoji_name[len("DEFAULT:"):]
+            return f":{emoji_name}:"
         else:
-            emoji = f"<:{emoji_name}:{emoji_id}>"
-        return emoji_id, emoji
+            return f"<:{emoji_name}:{emoji_id}>"
 
     @staticmethod
     async def new(bot, custom_message=None, is_piflouz_generated=True, is_giveaway=False, steal_reward=False, is_opposite=False, nb_reward=1, sender_id=None, piflouz_quantity=None):
@@ -262,7 +288,7 @@ class QuickReactPibox(Pibox):
 
         return res
 
-    def _check_success(self,emoji):
+    def _check_success(self, emoji):
         if (emoji.id is not None and str(emoji.id) == self.emoji_id_solution) == (not self.is_opposite):
             return True
         elif (emoji.id is None and emoji.name == self.emoji_id_solution) == (not self.is_opposite):
@@ -330,7 +356,7 @@ class QuickReactPibox(Pibox):
         else:
             emoji_id_index = QuickReactPibox.POSSIBLE_EMOJI_ID_SOLUTIONS.index(self.emoji_id_solution)
             emoji_name = QuickReactPibox.POSSIBLE_EMOJI_NAME_SOLUTIONS[emoji_id_index]
-            emoji = f"<:{emoji_name}:{self.emoji_id_solution}>"
+            emoji = QuickReactPibox._clean_emoji(emoji_name, self.emoji_id_solution)  # Clean the emoji name
 
             res = f"<@&{Constants.PIBOX_NOTIF_ROLE_ID}> Be Fast! First to react with {emoji} will get {self.amount} {Constants.PIFLOUZ_EMOJI}!"
             if self.custom_message is not None: res += " " + self.custom_message
