@@ -210,8 +210,12 @@ def get_season_end_datetime():
     -------
     res (datetime.datetime)
     """
-    last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"])
-    next_begin = (last_begin_time + relativedelta(months=3)).astimezone(Constants.TIMEZONE)
+    last_begin_time = datetime.datetime.fromtimestamp(db["last_begin_time"], tz=Constants.TIMEZONE)
+    next_begin = (last_begin_time + relativedelta(months=3))
+
+    # We need to account for winter/summer time changes
+    # We can't localize an already localized datetime, so we first go back to UTC and then localize it again
+    next_begin = Constants.TIMEZONE.localize(next_begin.replace(tzinfo=None))
     return next_begin
 
 
