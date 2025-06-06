@@ -106,6 +106,7 @@ class CogEvent(Extension):
         await utils.custom_assert(len(guesses) < wordle.NB_ATTEMPTS, "The maximum amount of attempts has been reached!", ctx)
         await utils.custom_assert(wordle.is_valid(word), "This is not a valid word!", ctx)
         await utils.custom_assert(len(guesses) == 0 or wordle.solution != guesses[-1], "You already won!", ctx)
+        await utils.custom_assert(word not in guesses, "You already guessed this word!", ctx)
 
         guesses.append(word)  # automatically updates the db
 

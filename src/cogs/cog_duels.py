@@ -1,14 +1,4 @@
-from interactions import (
-    Button,
-    ButtonStyle,
-    Extension,
-    OptionType,
-    SlashCommandChoice,
-    auto_defer,
-    component_callback,
-    slash_command,
-    slash_option,
-)
+from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, component_callback, slash_command, slash_option
 from interactions.client.utils.misc_utils import disable_components
 from interactions.ext.paginators import Paginator
 from math import ceil
@@ -355,7 +345,7 @@ class CogDuels(Extension):
         """
         # Processing the move
         duel, duel_index = await self.checks_before_play(ctx, duel_type)
-        check, error_msg = duel.check_entry(value)
+        check, error_msg = duel.check_entry(value, ctx.author.id)
         await utils.custom_assert(check, error_msg, ctx)
 
         res = await duel.play(ctx.author.id, value)

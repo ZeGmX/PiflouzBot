@@ -238,13 +238,14 @@ class Duel:
         """
         return ""
 
-    def check_entry(self, action):
+    def check_entry(self, action, user_id):
         """
         Verifies that the given action is valid
 
         Parameters
         ----------
         action (any)
+        user_id (int/str)
 
         Returns
         -------
@@ -338,9 +339,13 @@ class WordleDuel(Duel):
                 res += f"Here is your progress: {self.dict[f"last_image_url{user}"]}\n"
             return res
 
-    def check_entry(self, guess):
+    def check_entry(self, guess, user_id):
         wordle = Wordle(self.dict["word"])
         if not wordle.is_valid(guess.lower()): return False, "This is not a valid word!"
+        else:
+            user = 1 if user_id == self.dict["user_id1"] else 2
+            guesses = self.dict[f"attempts{user}"]
+            if guess.lower() in guesses: return False, "You already guessed this word!"
         return True, ""
 
     async def play(self, user_id, guess):
