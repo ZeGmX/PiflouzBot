@@ -221,3 +221,16 @@ def update_db():
             profile["achievements"][i] = update_case(profile["achievements"][i])
         for i in range(len(profile["powerups"])):
             profile["powerups"][i] = update_case(profile["powerups"][i])
+
+
+async def async_chain(*async_iterables):
+    """
+    Equivalent to `itertools.chain` for async iterables.
+
+    Yields
+    ------
+    Any
+    """
+    for async_iterable in async_iterables:
+        async for item in async_iterable:
+            yield item

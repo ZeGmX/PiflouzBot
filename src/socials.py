@@ -17,6 +17,7 @@ import embed_messages
 from markdown import escape_markdown as escape_markdown
 import powerups
 import user_profile
+from utils import async_chain
 
 
 logger = logging.getLogger("custom_log")
@@ -108,11 +109,21 @@ async def get_otter_image():
         user_agent=Constants.REDDIT_USER_AGENT
     )
     sub = await reddit.subreddit("otters")
-    async for submission in sub.random_rising():
-        if submission.url.endswith(".jpg") or submission.url.endswith(".jpeg") or submission.url.endswith(".png") or submission.url.endswith(".gif"):
-            break
 
-    return submission.url
+    posts = []
+    n = 50
+    # We use all these sources to get a good variety of images
+    # Note: the sub is not very active, so we can't filter by day
+    async for post in async_chain(sub.top(time_filter="year", limit=n), sub.new(limit=n), sub.rising(limit=n // 2)):
+        posts.append(post)
+
+    accepted_posts = [post for post in posts if post.url.endswith((".jpg", ".jpeg", ".png", ".gif"))]
+
+    if not accepted_posts:
+        return "https://tenor.com/view/otters-otter-amazed-surprised-wow-gif-808060009493688550"
+    else:
+        submission = choice(accepted_posts)
+        return submission.url
 
 
 @Task.create(TimeTriggerDT(Constants.OTTER_IMAGE_TIME))
