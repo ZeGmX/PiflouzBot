@@ -1,6 +1,6 @@
 import copy
 import functools
-from interactions import Button, ButtonStyle, Extension, auto_defer, component_callback, slash_command, spread_to_rows
+from interactions import Extension, auto_defer, component_callback, slash_command
 from math import ceil
 
 from constant import Constants
@@ -132,15 +132,13 @@ class CogBuy(Extension):
         balance = user_profile.get_profile(str(ctx.author.id))["piflouz_balance"]
 
         price_multiplier = self.get_store_discount_multiplier()
-        embed = embed_messages.get_embed_store_ui(balance, price_multiplier)
+        container = embed_messages.get_embed_store_ui(balance, price_multiplier)
 
-        buttons = self.get_all_store_components()
-
-        await ctx.send(embed=embed, components=spread_to_rows(*buttons), ephemeral=True)
+        await ctx.send(components=container, ephemeral=True)
 
     async def store_button_callback(self, ctx, emoji):
         """
-        callback for the store button with the given emoji
+        Callback for the store button with the given emoji
 
         Parameters
         ----------
@@ -194,17 +192,8 @@ class CogBuy(Extension):
         balance (int)
         """
         price_multiplier = self.get_store_discount_multiplier()
-        embed = embed_messages.get_embed_store_ui(balance, price_multiplier)
-        await ctx.edit(ctx.message, embed=embed, components=spread_to_rows(*self.get_all_store_components()))
-
-    def get_all_store_components(self):
-        """
-        Returns all the components of the store
-        """
-        buttons = [Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji) for emoji in Constants.POWERUPS_STORE.keys()]\
-                + [Button(style=ButtonStyle.GRAY, label="", custom_id="buy_rank_piflex", emoji=Constants.PIFLOUZ_EMOJI),
-                   Button(style=ButtonStyle.GRAY, label="", custom_id="piflex", emoji=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI)]
-        return buttons
+        container = embed_messages.get_embed_store_ui(balance, price_multiplier)
+        await ctx.edit(ctx.message, components=container)
 
     def get_store_discount_multiplier(self):
         """

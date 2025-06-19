@@ -1,6 +1,20 @@
 import asyncio
 import copy
-from interactions import Color, Embed, EmbedAttachment, EmbedField, MaterialColors, RoleColors
+from interactions import (
+    Button,
+    ButtonStyle,
+    Color,
+    ContainerComponent,
+    Embed,
+    EmbedAttachment,
+    EmbedField,
+    MaterialColors,
+    RoleColors,
+    SectionComponent,
+    SeparatorComponent,
+    SeparatorSpacingSize,
+    TextDisplayComponent,
+)
 from math import ceil
 import os
 import random
@@ -299,25 +313,58 @@ def get_embed_store_ui(balance, price_multiplier):
 
     Returns
     -------
-    embed (interactions.Embed)
+    interactions.ContainerComponent
     """
-    embed = Embed(
-        title="Piflouz shop",
-        description=f"Here you can buy useful upgrades!\n\n**Your balance: {balance} {Constants.PIFLOUZ_EMOJI}**",
-        color=RoleColors.DARK_MAGENTA,
-    )
+    # Initialize with header
+    components = [
+        TextDisplayComponent("## Piflouz shop"),
+        TextDisplayComponent(f"Here you can buy useful upgrades!\n\n**Your balance: {balance} {Constants.PIFLOUZ_EMOJI}**"),
+        SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE),
+    ]
 
+    # Add powerups
     for emoji, powerup in Constants.POWERUPS_STORE.items():
         powerup = copy.copy(powerup)
         powerup.price = ceil(price_multiplier * powerup.price)
-        embed.add_field(name=emoji, value=powerup.get_store_str(), inline=True)
 
-    embed.add_field(name="\u200b", value="\u200b", inline=False)
+        components.append(get_store_section(powerup.get_store_str(), emoji))
+        components.append(SeparatorComponent(divider=False))
 
-    embed.add_field(name=Constants.PIFLOUZ_EMOJI, value=f"Flex with a custom rank\nCosts {ceil(Constants.PIFLEXER_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", inline=True)
-    embed.add_field(name=Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI, value=f"Piflex: when you have too much piflouz\nCosts {ceil(Constants.PIFLEX_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}", inline=True)
+    # Add ranks/flex
+    components[-1] = SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE)  # Replace the last separator with a divider
+    components.append(get_store_section(f"Flex with a custom rank\nCosts {ceil(Constants.PIFLEXER_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", Constants.PIFLOUZ_EMOJI))
+    components.append(SeparatorComponent(divider=False))
+    components.append(get_store_section(f"Piflex: when you have too much piflouz\nCosts {ceil(Constants.PIFLEX_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}", Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI))
+    components.append(SeparatorComponent(divider=False))
 
-    return embed
+    # Put everything in a container
+    return ContainerComponent(
+        *components,
+        accent_color=RoleColors.DARK_MAGENTA.value
+    )
+
+
+def get_store_section(text, emoji):
+    """
+    Returns a section component for the store with the given text and emoji
+
+    Parameters
+    ----------
+    text (str):
+        the text to display in the section
+    emoji (str):
+        the emoji to display as an accessory button (and its custom id)
+
+    Returns
+    -------
+    section (interactions.SectionComponent)
+    """
+    return SectionComponent(
+        components=[
+            TextDisplayComponent(text),
+        ],
+        accessory=Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji)
+    )
 
 
 async def get_embed_otter(title="Otter image of the day!"):

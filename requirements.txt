@@ -1,4 +1,4 @@
-interactions.py==5.13.1
+interactions.py==5.15.0
 python-dotenv==1.0.0
 python-dateutil
 asyncpraw
