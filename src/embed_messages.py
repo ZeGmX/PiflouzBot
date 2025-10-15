@@ -225,7 +225,7 @@ def get_container_piflouz():
     components = [
         SectionComponent(
             components=[title_txt_component],
-            accessory=ThumbnailComponent(media=UnfurledMediaItem(Constants.PIFLOUZ_URL))
+            accessory=ThumbnailComponent(media=UnfurledMediaItem(f"attachment://{Constants.PIFLOUZ_ANIMATED_PATH.split('/')[-1]}"))
         ),
         SectionComponent(
             components=[TextDisplayComponent(desc3 + "\n\n" + desc4)],

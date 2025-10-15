@@ -1,4 +1,4 @@
-from interactions import Extension, OptionType, SlashCommandChoice, auto_defer, message_context_menu, slash_command, slash_option
+from interactions import Extension, File, OptionType, SlashCommandChoice, auto_defer, message_context_menu, slash_command, slash_option
 from interactions.ext.paginators import Paginator
 from math import ceil
 import random
@@ -88,7 +88,7 @@ class CogMisc(Extension):
         container = embed_messages.get_container_piflouz()
 
         # Piflouz mining message
-        message = await channel.send(components=container)
+        message = await channel.send(components=container, files=[File(Constants.PIFLOUZ_ANIMATED_PATH)])
         db["piflouz_message_id"] = int(message.id)
         db["current_season_message_id"] = int(message.id)
         await message.pin()

@@ -32,3 +32,4 @@ chess_database/*.zst
 
 
 !src/assets/profile_pictures/piflouz_animated.gif
+!src/assets/attachments/piflouz_animated.gif

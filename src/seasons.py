@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from dateutil.relativedelta import relativedelta
-from interactions import IntervalTrigger
+from interactions import File, IntervalTrigger
 import logging
 from math import sqrt
 
@@ -43,7 +43,7 @@ async def start_new_season(bot):
     if "out_channel" in db.keys():
         channel = await bot.fetch_channel(db["out_channel"])
 
-        msg = await channel.send(components=embed_messages.get_container_piflouz())
+        msg = await channel.send(components=embed_messages.get_container_piflouz(), files=[File(Constants.PIFLOUZ_ANIMATED_PATH)])
         return msg
 
 

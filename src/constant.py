@@ -56,6 +56,9 @@ class Constants:
     PIBOU4BIRTHDAY_URL = os.getenv("PIBOU4BIRTHDAY_URL")
     HALLOWEEN_PIFLOUZ_URL = os.getenv("HALLOWEEN_PIFLOUZ_URL")
 
+    ### Image paths
+    PIFLOUZ_ANIMATED_PATH = os.getenv("PIFLOUZ_ANIMATED_PATH")
+
     ### Dates and durations
     REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))  # How many seconds between each react to earn piflouz
     TWITCH_ANNOUNCEMENT_DELAY = int(os.getenv("TWITCH_ANNOUNCEMENT_DELAY"))  # Time between announcement of streams, to avoid spam if the stream crashes.
