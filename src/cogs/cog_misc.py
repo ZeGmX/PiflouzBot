@@ -1,4 +1,4 @@
-from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, message_context_menu, slash_command, slash_option
+from interactions import Extension, OptionType, SlashCommandChoice, auto_defer, message_context_menu, slash_command, slash_option
 from interactions.ext.paginators import Paginator
 from math import ceil
 import random
@@ -77,7 +77,6 @@ class CogMisc(Extension):
         ----------
         ctx (interactions.SlashContext)
         """
-        from cogs import CogPiflouzMining
         await ctx.send("Done!", ephemeral=True)
 
         # Saving the channel in the database in order not to need to do /setupChannel when rebooting
@@ -86,12 +85,10 @@ class CogMisc(Extension):
         channel = ctx.channel
         await channel.send("This channel is now my default channel")
 
-        piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=CogPiflouzMining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
-
-        embed = embed_messages.get_embed_piflouz()
+        container = embed_messages.get_container_piflouz()
 
         # Piflouz mining message
-        message = await channel.send(embed=embed, components=piflouz_button)
+        message = await channel.send(components=container)
         db["piflouz_message_id"] = int(message.id)
         db["current_season_message_id"] = int(message.id)
         await message.pin()

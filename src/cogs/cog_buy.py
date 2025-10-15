@@ -18,7 +18,8 @@ class CogBuy(Extension):
     ---
     fields:
         bot: interactions.Client
-        store_button_name: str
+        piflex_button_name: str
+        piflex_rank_button_name: str
     --
     Slash commands:
         /store
@@ -28,7 +29,8 @@ class CogBuy(Extension):
         buy_rank_piflex
     """
 
-    store_button_name = "store_button"
+    piflex_button_name = "piflex"
+    piflex_rank_button_name = "buy_rank_piflex"
 
     def __init__(self, bot):
         self.bot = bot
@@ -36,7 +38,7 @@ class CogBuy(Extension):
         for emoji in Constants.POWERUPS_STORE.keys():
             self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
-    @component_callback("piflex")
+    @component_callback(piflex_button_name)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def piflex_component(self, ctx):
@@ -81,7 +83,7 @@ class CogBuy(Extension):
             balance = profile["piflouz_balance"]
             await ctx.send(f"You need {price - balance} more {Constants.PIFLOUZ_EMOJI} to piflex!", ephemeral=True)
 
-    @component_callback("buy_rank_piflex")
+    @component_callback(piflex_rank_button_name)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
     async def buy_rank_piflex_component(self, ctx):
@@ -132,7 +134,7 @@ class CogBuy(Extension):
         balance = user_profile.get_profile(str(ctx.author.id))["piflouz_balance"]
 
         price_multiplier = self.get_store_discount_multiplier()
-        container = embed_messages.get_embed_store_ui(balance, price_multiplier)
+        container = embed_messages.get_container_store_ui(balance, price_multiplier)
 
         await ctx.send(components=container, ephemeral=True)
 
@@ -192,7 +194,7 @@ class CogBuy(Extension):
         balance (int)
         """
         price_multiplier = self.get_store_discount_multiplier()
-        container = embed_messages.get_embed_store_ui(balance, price_multiplier)
+        container = embed_messages.get_container_store_ui(balance, price_multiplier)
         await ctx.edit(ctx.message, components=container)
 
     def get_store_discount_multiplier(self):

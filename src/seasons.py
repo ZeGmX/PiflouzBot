@@ -43,7 +43,7 @@ async def start_new_season(bot):
     if "out_channel" in db.keys():
         channel = await bot.fetch_channel(db["out_channel"])
 
-        msg = await channel.send(embed=embed_messages.get_embed_piflouz())
+        msg = await channel.send(components=embed_messages.get_container_piflouz())
         return msg
 
 

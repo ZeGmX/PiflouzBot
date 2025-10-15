@@ -14,6 +14,8 @@ from interactions import (
     SeparatorComponent,
     SeparatorSpacingSize,
     TextDisplayComponent,
+    ThumbnailComponent,
+    UnfurledMediaItem,
 )
 from math import ceil
 import os
@@ -202,22 +204,37 @@ def get_embeds_help_message():
     return embeds
 
 
-def get_embed_piflouz():
+def get_container_piflouz():
     """
     Creates an embed message containing the explanation for the piflouz game and the balance
 
     Returns
     -------
-    embed (interactions.Embed)
+    interactions.ContainerComponent
     """
-    desc = f"This is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}.\n\n\
-You just need to click on the {Constants.PIFLOUZ_EMOJI} button below or use the `/get` command.\n\
-If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`.\n\n\
-This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
+    from cogs.cog_piflouz_mining import CogPiflouzMining
 
-    embed = Embed(title=f"Come get some {Constants.PIFLOUZ_EMOJI}!", description=desc, thumbnail=EmbedAttachment(url=Constants.PIFLOUZ_URL), color=MaterialColors.AMBER)
+    title = f"## Come get some {Constants.PIFLOUZ_EMOJI}!"
+    desc = f"This is the piflouz mining message, click every {Constants.REACT_TIME_INTERVAL} seconds to gain more {Constants.PIFLOUZ_EMOJI}."
+    desc2 = f"You just need to click on the {Constants.PIFLOUZ_EMOJI} button on the right, or use the `/get` command."
+    desc3 = f"If you waited long enough ({utils.seconds_to_formatted_string(Constants.REACT_TIME_INTERVAL)}), you will earn some {Constants.PIFLOUZ_EMOJI}! The amount depends on the current event, your powerups, your mining combo and your accuracy to use `/get`."
+    desc4 = f"This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is to earn, donate and flex with as much piflouz as possible. You will earn rewards based on the amount of piflouz you earn and your different rankings."
 
-    # Rankings
+    title_txt_component = TextDisplayComponent(title + "\n\n" + desc + "\n\n" + desc2)
+
+    components = [
+        SectionComponent(
+            components=[title_txt_component],
+            accessory=ThumbnailComponent(media=UnfurledMediaItem(Constants.PIFLOUZ_URL))
+        ),
+        SectionComponent(
+            components=[TextDisplayComponent(desc3 + "\n\n" + desc4)],
+            accessory=Button(style=ButtonStyle.GRAY, label="", custom_id=CogPiflouzMining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
+        ),
+        SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE),
+    ]
+
+    # Rankings & stats
     profiles = get_active_profiles()
     if len(profiles) > 0:
         d_piflouz = [(user_id, profile["piflouz_balance"]) for user_id, profile in profiles.items() if profile["piflouz_balance"] > 0]
@@ -229,16 +246,22 @@ This season will end on <t:{seasons.get_season_end_timestamp()}>.\nYour goal is 
         ranking_donations = get_ranking_str(d_donations)
 
         stats = get_stat_str()
-        embed.add_field(name="Season statistics", value=stats, inline=False)
+        components.append(TextDisplayComponent("## Season statistics\n\n" + stats))
+        components.append(SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE))
 
         if ranking_balance != "":
-            embed.add_field(name="Balance", value=ranking_balance, inline=True)
+            components.append(TextDisplayComponent("## Balance\n\n" + ranking_balance))
         if ranking_piflex != "":
-            embed.add_field(name="Piflex Discovery", value=ranking_piflex, inline=True)
+            components.append(TextDisplayComponent("## Piflex Discovery\n\n" + ranking_piflex))
         if ranking_donations != "":
-            embed.add_field(name="Donations", value=ranking_donations, inline=False)
+            components.append(TextDisplayComponent("## Donations\n\n" + ranking_donations))
+    else:
+        components.remove(components[-1])  # Remove the last separator if there is no ranking (single section)
 
-    return embed
+    return ContainerComponent(
+        *components,
+        accent_color=MaterialColors.AMBER.value
+    )
 
 
 def get_ranking_str(list):
@@ -300,9 +323,9 @@ def get_embed_piflex(user):
     return embed, index
 
 
-def get_embed_store_ui(balance, price_multiplier):
+def get_container_store_ui(balance, price_multiplier):
     """
-    Returns an embed message corresponding to the store message
+    Returns an container component corresponding to the store message
 
     Parameters
     ----------
@@ -315,6 +338,8 @@ def get_embed_store_ui(balance, price_multiplier):
     -------
     interactions.ContainerComponent
     """
+    from cogs.cog_buy import CogBuy
+
     # Initialize with header
     components = [
         TextDisplayComponent("## Piflouz shop"),
@@ -332,9 +357,9 @@ def get_embed_store_ui(balance, price_multiplier):
 
     # Add ranks/flex
     components[-1] = SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE)  # Replace the last separator with a divider
-    components.append(get_store_section(f"Flex with a custom rank\nCosts {ceil(Constants.PIFLEXER_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", Constants.PIFLOUZ_EMOJI))
+    components.append(get_store_section(f"Flex with a custom rank\nCosts {ceil(Constants.PIFLEXER_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}, lasts for {utils.seconds_to_formatted_string(Constants.PIFLEX_ROLE_DURATION)}", Constants.PIFLOUZ_EMOJI, CogBuy.piflex_rank_button_name))
     components.append(SeparatorComponent(divider=False))
-    components.append(get_store_section(f"Piflex: when you have too much piflouz\nCosts {ceil(Constants.PIFLEX_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}", Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI))
+    components.append(get_store_section(f"Piflex: when you have too much piflouz\nCosts {ceil(Constants.PIFLEX_COST * price_multiplier)} {Constants.PIFLOUZ_EMOJI}", Constants.TURBO_PIFLOUZ_ANIMATED_EMOJI, CogBuy.piflex_button_name))
     components.append(SeparatorComponent(divider=False))
 
     # Put everything in a container
@@ -344,7 +369,7 @@ def get_embed_store_ui(balance, price_multiplier):
     )
 
 
-def get_store_section(text, emoji):
+def get_store_section(text, emoji, custom_id=None):
     """
     Returns a section component for the store with the given text and emoji
 
@@ -354,16 +379,21 @@ def get_store_section(text, emoji):
         the text to display in the section
     emoji (str):
         the emoji to display as an accessory button (and its custom id)
+    custom_id (str):
+        the custom id of the button (if None, use the emoji as a custom id)
 
     Returns
     -------
     section (interactions.SectionComponent)
     """
+    if custom_id is None:
+        custom_id = emoji
+
     return SectionComponent(
         components=[
             TextDisplayComponent(text),
         ],
-        accessory=Button(style=ButtonStyle.GRAY, label="", custom_id=emoji, emoji=emoji)
+        accessory=Button(style=ButtonStyle.GRAY, label="", custom_id=custom_id, emoji=emoji)
     )
 
 

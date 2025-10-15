@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 from functools import wraps
-from interactions import Button, ButtonStyle
 import pickle
 from pyimgur import Imgur
 import requests
@@ -38,14 +37,10 @@ async def update_piflouz_message(bot):
     ----------
     bot (interactions.Client)
     """
-    from cogs import CogPiflouzMining
-
     channel = await bot.fetch_channel(db["out_channel"])
-    embed = embed_messages.get_embed_piflouz()
+    container = embed_messages.get_container_piflouz()
     piflouz_message = await channel.fetch_message(db["piflouz_message_id"])
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id="piflouz_mining_button", emoji=Constants.PIFLOUZ_EMOJI)
-    piflouz_button = Button(style=ButtonStyle.SECONDARY, label="", custom_id=CogPiflouzMining.BUTTON_NAME, emoji=Constants.PIFLOUZ_EMOJI)
-    await piflouz_message.edit(embeds=embed, components=piflouz_button)
+    await piflouz_message.edit(components=container)
 
 
 async def wait_until(then):
