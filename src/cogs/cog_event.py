@@ -1,4 +1,4 @@
-from interactions import Extension, OptionType, auto_defer, component_callback, slash_command, slash_option
+from interactions import Extension, Modal, OptionType, ShortText, auto_defer, component_callback, modal_callback, slash_command, slash_option
 
 from constant import Constants
 from embed_messages import get_embed_wordle
@@ -31,9 +31,9 @@ class CogEvent(Extension):
     --
     fields:
         bot: interactions.Client
+        RAFFLE_MODAL_ID: str
     --
     Slash commands:
-        /raffle
         /wordle guess
         /wordle status
         /birthday
@@ -41,8 +41,12 @@ class CogEvent(Extension):
         /subseq guess
         /chess guess
     Components
-        events.Birthday_raffle_event.BUTTON_ID
+        events.Birthday_raffle_event.BUTTON_ID (Button)
+        events.Raffle_event.BUTTON_ID (Button)
+        RAFFLE_MODAL_ID (Modal)
     """
+
+    RAFFLE_MODAL_ID = "raffle_buy_tickets_modal"
 
     def __init__(self, bot):
         self.bot = bot
@@ -51,20 +55,39 @@ class CogEvent(Extension):
         for emoji in BirthdayEvent.INGREDIENTS:
             self.bot.add_component_callback(self.callback_from_emoji(emoji))
 
-    @slash_command(name="raffle", description="Buy raffle 🎟️ to test your luck ⚠️ Costs piflouz", scopes=Constants.GUILD_IDS)
-    @slash_option(name="nb_tickets", description="How many tickets?", opt_type=OptionType.INTEGER, required=True, min_value=1)
+    @component_callback(RaffleEvent.BUTTON_ID)
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
-    async def raffle_cmd(self, ctx, nb_tickets):
+    async def on_raffle_buy_button(self, ctx):
         """
-        Callback for the /raffle command
+        Callback for the raffle buy button -> populates and shows the modal
 
         Parameters
         ----------
         ctx (interactions.SlashContext)
-        nb_tickets (int)
+        """
+        current_raffle, _ = await self.check_event(EventType.PASSIVE, RaffleEvent, ctx)
+        modal = Modal(
+            ShortText(label="Number of tickets", placeholder=f"Costs {current_raffle.ticket_price} piflouz each", required=True, custom_id="nb_tickets"),
+            title="Buy raffle tickets",
+            custom_id=CogEvent.RAFFLE_MODAL_ID,
+        )
+        await ctx.send_modal(modal)
+
+    @modal_callback(RAFFLE_MODAL_ID)
+    async def raffle_buy_tickets(self, ctx, nb_tickets):
+        """
+        Callback for the raffle buy modal
+
+        Parameters
+        ----------
+        ctx (interactions.ModalContext)
+        nb_tickets (str)
         """
         current_raffle, data = await self.check_event(EventType.PASSIVE, RaffleEvent, ctx)
+        await utils.custom_assert(utils.str_convertable_int(nb_tickets), "The number of tickets must be an integer", ctx)
+        nb_tickets = int(nb_tickets)
+        await utils.custom_assert(nb_tickets > 0, "You must buy at least one ticket", ctx)
 
         price = nb_tickets * current_raffle.ticket_price
         user_id = str(ctx.author.id)
@@ -193,7 +216,7 @@ class CogEvent(Extension):
 
     async def birthday_ingredient_button_callback(self, ctx, emoji):
         """
-        callback for the birthday event buttons with the given emoji
+        Callback for the birthday event buttons with the given emoji
 
         Parameters
         ----------

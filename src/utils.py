@@ -229,3 +229,22 @@ async def async_chain(*async_iterables):
     for async_iterable in async_iterables:
         async for item in async_iterable:
             yield item
+
+
+def str_convertable_int(s):
+    """
+    Checks if a string can be converted to an integer
+
+    Parameters
+    ----------
+    s (str)
+
+    Returns
+    -------
+    res (bool)
+    """
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False

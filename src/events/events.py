@@ -1,6 +1,25 @@
 import asyncio
 import datetime
-from interactions import BrandColors, Button, ButtonStyle, Color, Embed, EmbedAttachment, EmbedField, FlatUIColors, IntervalTrigger, listen
+from interactions import (
+    BrandColors,
+    Button,
+    ButtonStyle,
+    Color,
+    ContainerComponent,
+    Embed,
+    EmbedAttachment,
+    EmbedField,
+    File,
+    FlatUIColors,
+    IntervalTrigger,
+    SectionComponent,
+    SeparatorComponent,
+    SeparatorSpacingSize,
+    TextDisplayComponent,
+    ThumbnailComponent,
+    UnfurledMediaItem,
+    listen,
+)
 from interactions.client.utils.misc_utils import disable_components
 import logging
 from math import floor
@@ -477,6 +496,16 @@ class Event:
         """
         pass
 
+    def get_files(self):
+        """
+        Returns the list of files to attach to the event message
+
+        Returns
+        -------
+        res (File list)
+        """
+        return []
+
 
 class PassiveEvent(Event):
     async def get_embed(self, bot):
@@ -489,7 +518,7 @@ class PassiveEvent(Event):
 
         Returns
         -------
-        embed (interactions.Embed)
+        embed (interactions.Embed | interactions.ContainerComponent)
         """
         return None
 
@@ -499,7 +528,14 @@ class PassiveEvent(Event):
 
         # Starting new event
         embed = await self.get_embed(bot)
-        message = await out_channel.send(embed=embed)
+
+        if isinstance(embed, Embed):
+            message = await out_channel.send(embed=embed, files=self.get_files())
+        elif isinstance(embed, ContainerComponent):
+            message = await out_channel.send(components=embed, files=self.get_files())
+        else:
+            raise ValueError("get_embed returned unexpected type: " + str(type(embed)))
+
         await message.pin()
         await self.register_listeners(bot)
         return int(message.id)
@@ -517,6 +553,9 @@ class RaffleEvent(PassiveEvent):
     Raffle event, people can buy tickets and the person with the winning ticket wins all the money (minus taxes)
     """
 
+    BUTTON_EMOJI = "🎟️"
+    BUTTON_ID = "raffle_btn"
+
     def __init__(self, ticket_price, tax_ratio, max_base_prize=300):
         self.ticket_price = ticket_price
         self.tax_ratio = tax_ratio
@@ -532,6 +571,7 @@ class RaffleEvent(PassiveEvent):
         return await super().on_begin(bot)
 
     async def on_end(self, bot, msg_id, thread_id=None):
+        await self.update_raffle_message(bot, disable_buy_button=True)
         await super().on_end(bot, msg_id, thread_id)
 
         out_channel = await bot.fetch_channel(db["out_channel"])
@@ -568,26 +608,37 @@ class RaffleEvent(PassiveEvent):
     def to_str(self):
         return f"{type(self).__name__}({self.ticket_price}, {self.tax_ratio}, {self.max_base_prize})"
 
-    async def update_raffle_message(self, bot):
+    async def update_raffle_message(self, bot, disable_buy_button=False):
         """
         Updates the raffle message with amount of tickets bought by everyone
 
         Parameters
         ----------
         bot (interactions.Client)
+        disable_buy_button (bool)
         """
-        embed = await self.get_embed(bot)
+        container = await self.get_embed(bot, disable_buy_button=disable_buy_button)
         raffle_message = await fetch_event_message(bot, EventType.PASSIVE)
-        await raffle_message.edit(embed=embed)
+        await raffle_message.edit(components=container)
 
-    async def get_embed(self, bot):
+    async def get_embed(self, bot, disable_buy_button=False):
         data = get_event_data(self)
-        desc = f"Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
-    They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
-    The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!\n\
-    Also, some special raffle pibox may appear during the day, giving you free tickets!"
+        txt1 = f"## Passive event of the day: new Raffle!\n\n\
+Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
+They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
+The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!\n"
+        txt2 = "Also, some special raffle pibox may appear during the day, giving you free tickets!"
 
-        fields = []
+        components = [
+            SectionComponent(
+                components=[TextDisplayComponent(txt1)],
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{Constants.PIBOU4STONKS_PATH.split('/')[-1]}"))
+            ),
+            SectionComponent(
+                components=[TextDisplayComponent(txt2)],
+                accessory=Button(style=ButtonStyle.PRIMARY, label="Buy 🎟️", custom_id=RaffleEvent.BUTTON_ID, disabled=disable_buy_button)
+            ),
+        ]
 
         participation = get_event_data(self)["participation"]
         if len(participation) > 0:
@@ -601,12 +652,12 @@ class RaffleEvent(PassiveEvent):
 
             total_prize = self.get_raffle_total_prize()
 
-            fields.append(EmbedField(name="Current 🎟️ bought", value=val, inline=False))
-            fields.append(EmbedField(name="Total prize", value=f"The winner will earn {total_prize} {Constants.PIFLOUZ_EMOJI}!", inline=False))
+            components.append(SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE))
+            components.append(TextDisplayComponent("### Current 🎟️ bought\n\n" + val))
+            components.append(SeparatorComponent(divider=False, spacing=SeparatorSpacingSize.SMALL))
+            components.append(TextDisplayComponent(f"### Total prize\n\nThe winner will earn {total_prize} {Constants.PIFLOUZ_EMOJI}"))
 
-        embed = Embed(title="Passive event of the day: new Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=fields)
-
-        return embed
+        return ContainerComponent(*components, accent_color=Color.random().value)
 
     def get_raffle_total_prize(self):
         """
@@ -625,6 +676,9 @@ class RaffleEvent(PassiveEvent):
     def get_pibox_pool_table(self):
         pool = RandomPool("pibox_raffle", [("RafflePibox", 1)])
         return RandomPoolTable([(pool, Constants.PIBOX_POOL_TABLE.pools[0][1])])
+
+    def get_files(self):
+        return [File(Constants.PIBOU4STONKS_PATH)]
 
 
 class EventFromPowerups(PassiveEvent):
