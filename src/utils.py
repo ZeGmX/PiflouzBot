@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from functools import wraps
+from interactions import Button, SectionComponent
 import pickle
 from pyimgur import Imgur
 import requests
@@ -248,3 +249,23 @@ def str_convertable_int(s):
         return True
     except ValueError:
         return False
+
+
+def disabled_buttons_on_container(container):
+    """
+    Disables all buttons in a container component
+
+    Parameters
+    ----------
+    container (interactions.ContainerComponent)
+
+    Returns
+    -------
+    container (interactions.ContainerComponent)
+    """
+    for comp in container.components:
+        if isinstance(comp, SectionComponent):
+            accessory = comp.accessory
+            if isinstance(accessory, Button):
+                accessory.disabled = True
+    return container

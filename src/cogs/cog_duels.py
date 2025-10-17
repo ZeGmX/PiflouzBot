@@ -1,5 +1,18 @@
-from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, component_callback, slash_command, slash_option
-from interactions.client.utils.misc_utils import disable_components
+from interactions import (
+    Button,
+    ButtonStyle,
+    Color,
+    ContainerComponent,
+    Extension,
+    OptionType,
+    SectionComponent,
+    SlashCommandChoice,
+    TextDisplayComponent,
+    auto_defer,
+    component_callback,
+    slash_command,
+    slash_option,
+)
 from interactions.ext.paginators import Paginator
 from math import ceil
 
@@ -66,15 +79,19 @@ class CogDuels(Extension):
         new_duel = generate_duel(int(ctx.author.id), id_challenged, amount, duel_type)
 
         mention = "anyone" if user is None else user.mention
+        txt = f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}!"
 
-        buttons = [
-            Button(style=ButtonStyle.SUCCESS, label="", custom_id=CogDuels.DUEL_ACCEPT_BUTTON_NAME, emoji="✅"),
-            Button(style=ButtonStyle.DANGER, label="", custom_id=CogDuels.DUEL_DENY_BUTTON_NAME, emoji="❎"),
-            Button(style=ButtonStyle.SECONDARY, label="", custom_id=CogDuels.DUEL_CANCEL_BUTTON_NAME, emoji="🚫")
+        components = [
+            TextDisplayComponent(txt),
+            SectionComponent(components=[TextDisplayComponent("Accept:")], accessory=Button(style=ButtonStyle.SUCCESS, label="", custom_id=CogDuels.DUEL_ACCEPT_BUTTON_NAME, emoji="✅")),
+            SectionComponent(components=[TextDisplayComponent("Deny:")], accessory=Button(style=ButtonStyle.DANGER, label="", custom_id=CogDuels.DUEL_DENY_BUTTON_NAME, emoji="❎")),
+            SectionComponent(components=[TextDisplayComponent("Cancel:")], accessory=Button(style=ButtonStyle.SECONDARY, label="", custom_id=CogDuels.DUEL_CANCEL_BUTTON_NAME, emoji="🚫"))
         ]
+        if user is None: components.remove(components[-2])  # Remove the deny button if challenging anyone
+        container = ContainerComponent(*components, accent_color=Color.random().value)
 
         channel = ctx.channel
-        msg = await channel.send(f"{ctx.author.mention} challenged {mention} at {duel_type} betting {amount} {Constants.PIFLOUZ_EMOJI}! Click the green button below to accept or click the red one to deny. Click the gray one to cancel the challenge", components=buttons)
+        msg = await channel.send(components=container)
 
         opponent_name = "anyone" if user is None else user.username
 
@@ -139,7 +156,8 @@ class CogDuels(Extension):
         await duel.on_accept(thread)
         await thread.edit(name=f"[Accepted] {thread.name}")
 
-        components = disable_components(*ctx.message.components)
+        components = utils.disabled_buttons_on_container(ctx.message.components[0])
+
         await ctx.message.edit(components=components)
         await ctx.send("Done!", ephemeral=True)
 
@@ -182,7 +200,7 @@ class CogDuels(Extension):
         await thread.edit(name=f"[Denied] {thread.name}")
         await thread.archive()
 
-        components = disable_components(*ctx.message.components)
+        components = utils.disabled_buttons_on_container(ctx.message.components[0])
         await ctx.message.edit(components=components)
 
         await ctx.send("Done", ephemeral=True)
@@ -225,7 +243,7 @@ class CogDuels(Extension):
         await thread.edit(name=f"[Cancelled] {thread.name}")
         await thread.archive()
 
-        components = disable_components(*ctx.message.components)
+        components = utils.disabled_buttons_on_container(ctx.message.components[0])
         await ctx.message.edit(components=components)
 
         await ctx.send("Done!", ephemeral=True)
