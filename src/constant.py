@@ -59,6 +59,7 @@ class Constants:
     ### Image paths
     PIFLOUZ_ANIMATED_PATH = os.getenv("PIFLOUZ_ANIMATED_PATH")
     PIBOU4STONKS_PATH = os.getenv("PIBOU4STONKS_PATH")
+    PIBOU4BIRTHDAY_PATH = os.getenv("PIBOU4BIRTHDAY_PATH")
 
     ### Dates and durations
     REACT_TIME_INTERVAL = int(os.getenv("REACT_TIME_INTERVAL"))  # How many seconds between each react to earn piflouz

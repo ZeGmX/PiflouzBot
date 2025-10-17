@@ -624,7 +624,7 @@ class RaffleEvent(PassiveEvent):
     async def get_embed(self, bot, disable_buy_button=False):
         data = get_event_data(self)
         txt1 = f"## Passive event of the day: new Raffle!\n\n\
-Here is the new raffle! Use `/raffle n` to buy `n` 🎟️!\n\
+Here is the new raffle! Click the button on the right to buy 🎟️!\n\
 They cost {self.ticket_price} {Constants.PIFLOUZ_EMOJI} each\n\
 The user with the winning ticket will earn {100 - self.tax_ratio}% of the total money spent by everyone, plus a {data["base_prize"]} {Constants.PIFLOUZ_EMOJI} base prize!\n"
         txt2 = "Also, some special raffle pibox may appear during the day, giving you free tickets!"
@@ -998,13 +998,13 @@ class BirthdayRaffleEvent(PassiveEvent):
         out_channel = await bot.fetch_channel(db["out_channel"])
 
         # Starting new raffle
-        embed = await self.get_embed(bot)
-        button = self.get_component()
-        message = await out_channel.send(embed=embed, components=button)
+        container = await self.get_embed(bot)
+        message = await out_channel.send(components=container, files=self.get_files())
         await message.pin()
         return int(message.id)
 
     async def on_end(self, bot, msg_id, thread_id=None):
+        await self.update_raffle_message(bot, disable_button=True)
         await super().on_end(bot, msg_id, thread_id)
 
         data = get_event_data(self)
@@ -1041,43 +1041,62 @@ class BirthdayRaffleEvent(PassiveEvent):
     def to_str(self):
         return f"{type(self).__name__}({self.reward})"
 
-    async def update_raffle_message(self, bot):
+    async def update_raffle_message(self, bot, disable_button=False):
         """
         Updates the birthday raffle message with the participants
 
         Parameters
         ----------
         bot (interactions.Client)
+        disable_button (bool): Whether to disable the button
         """
-        embed = await self.get_embed(bot)
-        button = self.get_component()
+        container = await self.get_embed(bot, disable_button=disable_button)
         raffle_message = await fetch_event_message(bot, EventType.PASSIVE)
-        await raffle_message.edit(embed=embed, components=button)
+        await raffle_message.edit(components=container)
 
-    async def get_embed(self, bot):
-        desc = f"Today's raffle is special! Click the button below to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake! The first winner will earn 50%, the second one will get 30% and the third winner will get 20%!"
+    async def get_embed(self, bot, disable_button=False):
+        desc1 = f"## Birthday Special Raffle!\n\nToday's raffle is special! Click the button on the right to participate, and it's completely free! {self.reward} {Constants.PIFLOUZ_EMOJI} are at stake!"
+        desc2 = "The first winner will earn 50%, the second one will get 30% and the third winner will get 20%!"
 
-        embed = Embed(title="Birthday Special Raffle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4BIRTHDAY_URL))
+        components = [
+            SectionComponent(
+                components=[TextDisplayComponent(desc1)],
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{Constants.PIBOU4BIRTHDAY_PATH.split('/')[-1]}"))
+            ),
+            SectionComponent(
+                components=[TextDisplayComponent(desc2)],
+                accessory=self.get_component(disabled=disable_button)
+            ),
+        ]
 
         participation = get_event_data(self)["participation"]
         if len(participation) > 0:
             val = "\n".join(f"• <@{user_id}>" for user_id in participation)
 
-            embed.add_field(name="Current participants", value=val, inline=False)
-            embed.add_field(name="Total prize", value=f"The three winners will earn 50%, 30% and 20% of the total jackpot of {self.reward} {Constants.PIFLOUZ_EMOJI}!", inline=False)
+            components.append(SeparatorComponent(divider=True, spacing=SeparatorSpacingSize.LARGE))
+            components.append(TextDisplayComponent("### Current participants\n\n" + val))
+            components.append(SeparatorComponent(divider=False, spacing=SeparatorSpacingSize.SMALL))
+            components.append(TextDisplayComponent(f"### Total prize\n\nThe three winners will earn 50%, 30% and 20% of the total jackpot of {self.reward} {Constants.PIFLOUZ_EMOJI}!"))
 
-        return embed
+        return ContainerComponent(*components, accent_color=Color.random().value)
 
-    def get_component(self):
+    def get_component(self, disabled=False):
         """
         Returns the button to register to the Raffle
+
+        Parameters
+        ----------
+        disabled (bool): Whether the button should be disabled
 
         Returns
         -------
         res (interactions.Button)
         """
-        res = Button(style=ButtonStyle.SECONDARY, custom_id=self.BUTTON_ID, emoji=self.BUTTON_ID)
+        res = Button(style=ButtonStyle.SECONDARY, custom_id=self.BUTTON_ID, emoji=self.BUTTON_ID, disabled=disabled)
         return res
+
+    def get_files(self):
+        return [File(Constants.PIBOU4BIRTHDAY_PATH)]
 
 
 class MoveMatchEvent(ChallengeEvent):
