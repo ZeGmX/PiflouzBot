@@ -33,6 +33,7 @@ from .events import (
     get_event_object,
     prepare_events,
     register_listeners,
+    reset_buffered_events,
     reset_event_database,
     update_events,
     wait_for_buffer_ready,

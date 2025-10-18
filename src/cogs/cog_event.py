@@ -1,7 +1,8 @@
-from interactions import Extension, Modal, OptionType, ShortText, auto_defer, component_callback, modal_callback, slash_command, slash_option
+from interactions import Extension, File, Modal, OptionType, ShortText, auto_defer, component_callback, modal_callback, slash_command, slash_option
+import os
 
 from constant import Constants
-from embed_messages import get_embed_wordle
+from embed_messages import get_container_wordle
 from events import (
     BirthdayEvent,
     BirthdayRaffleEvent,
@@ -211,8 +212,9 @@ class CogEvent(Extension):
         header_str (str)
         """
         user_id = ctx.author.id
-        embed = await get_embed_wordle(wordle.solution, guesses, header_str, user_id)
-        await ctx.send(embed=embed, ephemeral=True)
+        container, file = await get_container_wordle(wordle.solution, guesses, header_str, user_id)
+        await ctx.send(components=container, files=[File(file)], ephemeral=True)
+        os.remove(file.file)
 
     async def birthday_ingredient_button_callback(self, ctx, emoji):
         """

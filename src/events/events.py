@@ -12,6 +12,8 @@ from interactions import (
     File,
     FlatUIColors,
     IntervalTrigger,
+    MediaGalleryComponent,
+    MediaGalleryItem,
     SectionComponent,
     SeparatorComponent,
     SeparatorSpacingSize,
@@ -257,7 +259,7 @@ def get_default_db_data(event_type):
                 "current_message_id": -1,
                 "current_thread_id": -1,
                 "buffered_data": dict(),
-                "match": {"riddle": "", "main_solution": "", "all_solutions": [], "url_riddle": "", "url_solution": "", "completed": dict()},
+                "match": {"riddle": "", "main_solution": "", "all_solutions": [], "path_riddle": "", "path_solution": "", "completed": dict()},
                 "subseq": {"subseq": "", "example_solution": "", "completed": dict(), "nb_solutions": [], "msg_id": dict()},
                 "wordle": {"word": "", "guesses": dict()},
                 "chess_puzzle": {"puzzle": dict(), "progress": dict()}
@@ -757,7 +759,7 @@ class PiboxRewardIncreasedEvent(EventFromPowerups):
 
 
 class ChallengeEvent(Event):
-    async def get_embed(self, bot):
+    async def get_container(self, bot):
         """
         Returns an embed for the announcement message
 
@@ -767,7 +769,7 @@ class ChallengeEvent(Event):
 
         Returns
         -------
-        embed (interactions.Embed)
+        embed (interactions.Embed | interactions.ContainerComponent)
         """
         return None
 
@@ -786,7 +788,7 @@ class ChallengeEvent(Event):
         out_channel = await bot.fetch_channel(db["out_channel"])
 
         # Starting new event
-        embed = await self.get_embed(bot)
+        embed = await self.get_container(bot)
         message = await out_channel.send(embed=embed)
         await message.pin()
         now = datetime.date.today()
@@ -807,7 +809,7 @@ class WordleEvent(ChallengeEvent):
         self.max_reward = max_reward
         self.hard_mode_bonus = hard_mode_bonus
 
-    async def get_embed(self, bot):
+    async def get_container(self, bot):
         """
         Returns an embed to announce the event
 
@@ -1107,35 +1109,44 @@ class MoveMatchEvent(ChallengeEvent):
     def __init__(self, reward):
         self.reward = reward
 
-    async def get_embed(self, img_url):
+    async def get_container(self, img_path):
         """
-        Returns an embed to announce the event
+        Returns a container to announce the event + the attached files
 
         Parameters
         ----------
-        image_url (str):
-            Imgur url of the image to show
+        image_path (str):
+            Path to the image to show
 
         Returns
         -------
-        embed (interactions.Embed)
+        container (interactions.ContainerComponent)
+        files (interactions.File list)
         """
+        title = "Challenge event of the day: move exactly two matches to make the equation correct!"
         desc = f"Use `/match guess [equation]` to try to find the correct solution of the day and earn {self.reward} {Constants.PIFLOUZ_EMOJI}!"
-        embed = Embed(title="Challenge event of the day: move exactly two matches to make the equation correct!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
-        return embed
+        thumbnail_file = File(Constants.PIBOU4STONKS_PATH)
+        main_file = File(img_path)
+        components = [
+            SectionComponent(
+                components=[TextDisplayComponent(f"## {title}\n\n{desc}")],
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{thumbnail_file.file_name}"))
+            ),
+            MediaGalleryComponent(items=[MediaGalleryItem(UnfurledMediaItem(f"attachment://{main_file.file_name}"))])
+        ]
+
+        return ContainerComponent(*components, accent_color=Color.random().value), [thumbnail_file, main_file]
 
     async def prepare(self, bot):
         event = await MatchesInterface.new()
-        event.save_all("src/events/")
-        url_riddle = utils.upload_image_to_imgur("src/events/riddle.png")
-        url_sol = utils.upload_image_to_imgur("src/events/solution.png")
+        event.save_all("src/events/buffered_files/")
 
         data = get_buffer_event_data(self)
         data["riddle"] = event.riddle.str
         data["main_solution"] = event.main_sol.str
         data["all_solutions"] = event.all_sols
-        data["url_riddle"] = url_riddle
-        data["url_solution"] = url_sol
+        data["path_riddle"] = "src/events/riddle.png"  # Will be moved to this location on on_begin
+        data["path_solution"] = "src/events/solution.png"  # Will be moved to this location on on_begin
 
     async def on_begin(self, bot):
         if "out_channel" not in db.keys(): return
@@ -1144,12 +1155,16 @@ class MoveMatchEvent(ChallengeEvent):
         data = get_event_data(self)
         buffer = get_buffer_event_data(self)
 
+        # Move the files to the right folder
+        for filename in os.listdir("src/events/buffered_files"):
+            os.replace(f"src/events/buffered_files/{filename}", f"src/events/{filename}")
+
         for key, val in buffer.items():
             data[key] = val
 
         # Starting new event
-        embed = await self.get_embed(data["url_riddle"])
-        message = await out_channel.send(embed=embed)
+        container, files = await self.get_container(data["path_riddle"])
+        message = await out_channel.send(components=container, files=files)
         await message.pin()
         now = datetime.date.today()
         thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
@@ -1168,14 +1183,26 @@ class MoveMatchEvent(ChallengeEvent):
             desc_str += "Unfortunately, no one found any solution this time :("
 
         thread = await bot.fetch_channel(thread_id)
-        embed = Embed(title="The event is over!", description=desc_str, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), images=EmbedAttachment(url=data["url_solution"]))
-        await thread.send(embed=embed)
+
+        thumbnail_file = File(Constants.PIBOU4STONKS_PATH)
+        main_file = File(data["path_solution"])
+        components = [
+            SectionComponent(
+                components=[TextDisplayComponent("## The event is over!\n\n" + desc_str)],
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{thumbnail_file.file_name}"))
+            ),
+            MediaGalleryComponent(items=[MediaGalleryItem(UnfurledMediaItem(f"attachment://{main_file.file_name}"))])
+        ]
+        container = ContainerComponent(*components, accent_color=Color.random().value)
+
+        await thread.send(components=container, files=[thumbnail_file, main_file])
 
         await super().on_end(bot, msg_id, thread_id)
 
         data["completed"] = dict()
         data["all_solutions"] = []
 
+        # Clean up the event files
         try:
             os.remove("src/events/riddle.png")
             os.remove("src/events/solution.png")
@@ -1200,7 +1227,7 @@ class SubseqChallengeEvent(ChallengeEvent):
         self.max_rewardable_words = max_rewardable_words
         self.reward_per_word = reward_per_word
 
-    async def get_embed(self, bot):
+    async def get_container(self, bot):
         desc = f"Use `/subseq guess [word]` to try to find the answer.\n\n\
 You can earn {Constants.PIFLOUZ_EMOJI} in the following ways:\n\
 • [Level 1] Find any solution to earn {self.reward_default} {Constants.PIFLOUZ_EMOJI}!\n\
@@ -1431,9 +1458,9 @@ class ChessPuzzleEvent(ChallengeEvent):
         self.rating_min = rating_min
         self.rating_max = rating_max
 
-    async def get_embed(self, img_url):
+    async def get_container(self, img_url):
         """
-        Returns an embed to announce the event
+        Returns a container + files to announce the event
 
         Parameters
         ----------
@@ -1442,25 +1469,35 @@ class ChessPuzzleEvent(ChallengeEvent):
 
         Returns
         -------
-            embed (interactions.Embed)
+        container (interactions.ContainerComponent)
+        files (interactions.File list)
         """
         data = get_event_data(self)
         puzzle = data["puzzle"]
         nb_moves = len(puzzle["moves"].split()) // 2
         rating = puzzle["rating"]
-        desc = f"Use `/chess guess [move]` to try to find the answer and earn {self.reward} {Constants.PIFLOUZ_EMOJI}\n\nYou need to find a sequence of {nb_moves} moves\nThe puzzle is rated {rating}\n\nYour move should be written in UCI notation ([initial position][destination], e.g. 'e2e4' for moving the pawn from e2 to e4). For a promotion, add the piece you want to promote to (eg. e7e8q for promoting to a queen)"
-        embed = Embed(title="Challenge event of the day: find the solution to this chess puzzle!", description=desc, color=Color.random(), thumbnail=EmbedAttachment(url=Constants.PIBOU4STONKS_URL), fields=[], images=EmbedAttachment(url=img_url))
-        return embed
+        title = "Challenge event of the day: find the solution to this chess puzzle!"
+        desc = f"<@&{Constants.CHESS_EVENT_NOTIF_ROLE_ID}> Use `/chess guess [move]` to try to find the answer and earn {self.reward} {Constants.PIFLOUZ_EMOJI}\n\nYou need to find a sequence of {nb_moves} moves\nThe puzzle is rated {rating}\n\nYour move should be written in UCI notation ([initial position][destination], e.g. 'e2e4' for moving the pawn from e2 to e4). For a promotion, add the piece you want to promote to (eg. e7e8q for promoting to a queen)"
+
+        thumbnail_file = File(Constants.PIBOU4STONKS_PATH)
+        main_file = File(img_url)
+        components = [
+            SectionComponent(
+                components=[TextDisplayComponent(f"## {title}\n\n{desc}")],
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{thumbnail_file.file_name}"))
+            ),
+            MediaGalleryComponent(items=[MediaGalleryItem(UnfurledMediaItem(f"attachment://{main_file.file_name}"))])
+        ]
+        return ContainerComponent(*components, accent_color=Color.random().value), [thumbnail_file, main_file]
 
     async def prepare(self, bot):
         data = get_buffer_event_data(self)
 
         rating = random.randint(self.rating_min, self.rating_max)
         puzzle = ChessProblem.new_problem(rating=rating)
-        puzzle.save_all("src/events/buffered_files")
-        url_starting_position = utils.upload_image_to_imgur("src/events/buffered_files/board0.png")
+        puzzle.save_all("src/events/buffered_files/")
 
-        data["url_start"] = url_starting_position
+        data["path_start"] = "src/events/board0.png"  # Will be moved to this location on on_begin
         data["puzzle"] = puzzle.to_dict()
 
     async def on_begin(self, bot):
@@ -1477,9 +1514,9 @@ class ChessPuzzleEvent(ChallengeEvent):
         for filename in os.listdir("src/events/buffered_files"):
             os.replace(f"src/events/buffered_files/{filename}", f"src/events/{filename}")
 
-        embed = await self.get_embed(data_buffer["url_start"])
+        container, files = await self.get_container(data_buffer["path_start"])
 
-        message = await out_channel.send(f"<@&{Constants.CHESS_EVENT_NOTIF_ROLE_ID}>", embed=embed)
+        message = await out_channel.send(components=container, files=files)
         await message.pin()
         now = datetime.date.today()
         thread = await message.create_thread(name=f"[{now.day}/{now.month}] Challenge event of the day")
@@ -1487,11 +1524,19 @@ class ChessPuzzleEvent(ChallengeEvent):
 
     async def on_end(self, bot, msg_id, thread_id=None):
         thread = await bot.fetch_channel(thread_id)
-        msg = "Today's chess puzzle is over! The solution was:"
-        await thread.send(msg, file="src/events/chess_puzzle_solution.gif")
+
+        file = File("src/events/chess_puzzle_solution.gif")
+        components = [
+            TextDisplayComponent("## Today's chess puzzle is over! The solution was:"),
+            MediaGalleryComponent(items=[MediaGalleryItem(UnfurledMediaItem(f"attachment://{file.file_name}"))])
+        ]
+        container = ContainerComponent(*components, accent_color=Color.random().value)
+
+        await thread.send(components=container, files=[file])
 
         await super().on_end(bot, msg_id, thread_id)
 
+        # Clean up the event files
         path = "src/events"
         for filename in os.listdir(path):
             base, extension = os.path.splitext(filename)

@@ -8,7 +8,10 @@ from interactions import (
     Embed,
     EmbedAttachment,
     EmbedField,
+    File,
     MaterialColors,
+    MediaGalleryComponent,
+    MediaGalleryItem,
     RoleColors,
     SectionComponent,
     SeparatorComponent,
@@ -90,11 +93,6 @@ def get_embeds_help_message():
                 EmbedField(
                     name="`$tarpin`",
                     value="What could that be? Can be used in any channel",
-                    inline=False
-                ),
-                EmbedField(
-                    name="`/raffle n`",
-                    value="Buy raffle tickets to test your luck ⚠️ Only works during a raffle event ",
                     inline=False
                 ),
                 EmbedField(
@@ -469,9 +467,9 @@ async def get_embed_end_raffle(bot, winner_id, prize):
     return embed
 
 
-async def get_embed_wordle(solution, guesses, header_str, user_id):
+async def get_container_wordle(solution, guesses, header_str, user_id, upload_to_imgur=False):
     """
-    Generates the wordle image, host it on imgur and put it in an embed
+    Generates the wordle image, and returns the container component with the image and header
 
     Parameters
     ----------
@@ -483,13 +481,34 @@ async def get_embed_wordle(solution, guesses, header_str, user_id):
         message written on the embed
     user_id (int):
         id of the guesser
+    upload_to_imgur (bool):
+        whether to upload the image to imgur or attached to the Discord message
+
+    Returns
+    -------
+    container (interactions.ContainerComponent)
+    attachement_path (str):
+        path to the attachment (either local file or imgur url)
     """
     wordle = Wordle(solution)
 
     path = f"wordle_tmp_{user_id}.png"
     await asyncio.to_thread(wordle.generate_image, guesses, path)
-    url = utils.upload_image_to_imgur(path)
-    os.remove(path)
+
+    if upload_to_imgur:
+        files = []
+        media_url = utils.upload_image_to_imgur(path)
+        attachment_path = media_url
+        os.remove(path)
+    else:
+        file = File(path)
+        media_url = f"attachment://{file.file_name}"
+        attachment_path = file.file
+
+    components = [
+        TextDisplayComponent("## Wordle\n\n" + header_str),
+        MediaGalleryComponent([MediaGalleryItem(UnfurledMediaItem(media_url))])
+    ]
 
     color = MaterialColors.AMBER
     if len(guesses) > 0 and guesses[-1] == solution:
@@ -497,5 +516,4 @@ async def get_embed_wordle(solution, guesses, header_str, user_id):
     elif len(guesses) == Wordle.NB_ATTEMPTS:
         color = RoleColors.DARK_RED
 
-    embed = Embed(title="Wordle", description=header_str, color=color, images=[EmbedAttachment(url=url)])
-    return embed
+    return ContainerComponent(*components, accent_color=color.value), attachment_path

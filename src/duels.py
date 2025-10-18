@@ -370,9 +370,9 @@ class WordleDuel(Duel):
             self.dict[f"result{user}"] = Wordle.NB_ATTEMPTS + 1
             header_str = "You failed to find the word!"
 
-        embed = await embed_messages.get_embed_wordle(self.dict["word"], guesses, header_str, user_id)
-        self.dict[f"last_image_url{user}"] = embed.images[0].url
-        return {"embed": embed}
+        container, url = await embed_messages.get_container_wordle(self.dict["word"], guesses, header_str, user_id, upload_to_imgur=True)
+        self.dict[f"last_image_url{user}"] = url
+        return {"components": container}
 
     def get_winner_loser(self):
         n1 = self.dict["result1"]

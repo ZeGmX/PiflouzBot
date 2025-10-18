@@ -125,7 +125,7 @@ class CogBuy(Extension):
     @utils.check_message_to_be_processed
     async def store_cmd(self, ctx):
         """
-        Callback for the raffle command
+        Callback for the store command
 
         Parameters
         ----------
