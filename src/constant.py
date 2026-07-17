@@ -112,14 +112,21 @@ class Constants:
     DEFAULT_PROFILE_PICTURE = os.getenv("DEFAULT_PROFILE_PICTURE")
     PROFILE_PICTURE_UPDATE = eval(os.getenv("PROFILE_PICTURE_UPDATE"))
 
+    # TCG
+    TCG_BASE_PATH = "src/TCG/assets/small_cards/"
+    TCG_FAMILIES = ["arcana", "bell", "butterfly", "eye", "hammer"]
+    TCG_ALL_CARDS = []
+
     @staticmethod
     def load():
         import events  # noqa: F401
         import pibox  # noqa: F401
         import powerups  # noqa: F401
         from random_pool import RandomPool, RandomPoolTable
+        from TCG import tcg
 
         Constants.POWERUPS_STORE = eval(os.getenv("POWERUPS_STORE"))
         Constants.RANDOM_EVENTS_PASSIVE = RandomPool.from_dict(eval(os.getenv("RANDOM_EVENTS_PASSIVE")))
         Constants.RANDOM_EVENTS_CHALLENGE = RandomPool.from_dict(eval(os.getenv("RANDOM_EVENTS_CHALLENGE")))
         Constants.PIBOX_POOL_TABLE = RandomPoolTable.from_dict(eval(os.getenv("PIBOX_POOL_TABLE")))
+        Constants.TCG_ALL_CARDS = tcg.get_all_cards()

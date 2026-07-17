@@ -64,6 +64,8 @@ def get_new_user_profile():
     -------
     profile (dict)
     """
+    from TCG.tcg import CardCollection
+
     return {
         "piflouz_balance": 0,
         "turbo_piflouz_balance": 0,
@@ -77,6 +79,7 @@ def get_new_user_profile():
         "daily_bonus": 0,
         "daily_bonus_date": "0001-01-01",
         "birthday_date": "0000-00-00",
+        "card_collection": CardCollection.create_empty_collection(),
     }
 
 
