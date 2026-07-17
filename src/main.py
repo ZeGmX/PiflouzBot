@@ -163,5 +163,6 @@ if __name__ == "__main__":
     bot.load_extension("cogs.cog_status_check")
     bot.load_extension("cogs.cog_would_you_rather")
     bot.load_extension("cogs.cog_birthday_tracker")
+    bot.load_extension("cogs.cog_tcg")
 
     bot.start()
