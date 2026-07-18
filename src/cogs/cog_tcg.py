@@ -25,7 +25,6 @@ class CogTCG(Extension):
 
     @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="pack_type", description="The type of pack you want to open", opt_type=OptionType.STRING, required=True, choices=[
-        SlashCommandChoice(name="arcana", value="arcana"),
         SlashCommandChoice(name="bell", value="bell"),
         SlashCommandChoice(name="butterfly", value="butterfly"),
         SlashCommandChoice(name="eye", value="eye"),
