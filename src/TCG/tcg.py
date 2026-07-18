@@ -32,7 +32,7 @@ class CardFamily:
     def pretty_str(self):
         return self.name.capitalize()
 
-    def get_ids(self):
+    def get_ids(self, small = True):
         """
         Returns the IDs of the card for this family (= name of the files in the folder)
 
@@ -40,7 +40,8 @@ class CardFamily:
         -------
             list[str]: The IDs of the card for this family
         """
-        files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, self.name))
+        folder = "small_cards" if small else "big_cards"
+        files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, folder, self.name))
         return list(map(lambda x: x.split(".")[0], files))
 
 
@@ -91,7 +92,7 @@ class Card:
         """
         return str(self.id)
 
-    def get_image_path(self, small=True):
+    def get_image_path(self, small: bool = True):
         """
         Returns the path to the image of the card
 
@@ -103,10 +104,7 @@ class Card:
             str: The path to the image of the card
         """
         folder = "small_cards" if small else "big_cards"
-        if small:
-            return os.path.join(Constants.TCG_BASE_PATH, folder, self.family_name(), self.id_name() + ".png")
-        else:
-            return os.path.join(Constants.TCG_BASE_PATH, folder, self.family_name(), self.id_name() + ".png")
+        return os.path.join(Constants.TCG_BASE_PATH, folder, self.family_name(), self.id_name() + ".png")
 
 
 class CardCollection:

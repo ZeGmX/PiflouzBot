@@ -113,7 +113,7 @@ class Constants:
     PROFILE_PICTURE_UPDATE = eval(os.getenv("PROFILE_PICTURE_UPDATE"))
 
     # TCG
-    TCG_BASE_PATH = "src/TCG/assets/small_cards/"
+    TCG_BASE_PATH = "src/TCG/assets/"
     TCG_FAMILIES = ["arcana", "bell", "butterfly", "eye", "hammer"]
     TCG_ALL_CARDS = []
 
