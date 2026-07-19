@@ -1,8 +1,9 @@
+import asyncio
 from interactions import Extension, OptionType, SlashCommandChoice, auto_defer, slash_command, slash_option
 
 from constant import Constants
+from embed_messages import get_container_TCG_pull
 from TCG.tcg import generate_random_pack, get_user_collection
-import time
 import utils
 
 
@@ -52,13 +53,20 @@ class CogTCG(Extension):
         user_collection = get_user_collection(usr_id)
         user_collection.add_cards(pack_cards)
 
-        images = [card.get_image_path() for card in pack_cards]
+        response = await ctx.send(file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
 
-        response = await ctx.send(f"Opening {pack_type} pack!", file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
+        await asyncio.sleep(3)  # Wait for the animation to finish
 
-        time.sleep(3)  # Wait for the animation to finish
-        message_content = f"You opened a {pack_type} pack and got the following cards:\n" + "\n".join(map(str, pack_cards))
-        await response.edit(content=message_content, context=ctx, files= images)
+        for i in range(len(pack_cards)):
+            await asyncio.sleep(1)  # Wait for the card to be revealed
+
+            sub_pack_cards = pack_cards[:i + 1]
+
+            images = [card.get_image_path(small=False) for card in sub_pack_cards]
+            card_names = [str(card) for card in sub_pack_cards]
+
+            container = get_container_TCG_pull(card_names, images, pack_type)
+            await response.edit(content=None, components=[container], context=ctx, files=images)
 
     @slash_command(name="deck", description="Display your card collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)

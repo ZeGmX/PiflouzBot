@@ -23,6 +23,7 @@ from interactions import (
 from interactions.client.utils.misc_utils import disable_components
 import logging
 from math import floor
+import ntpath
 import os
 import random
 
@@ -632,7 +633,7 @@ The user with the winning ticket will earn {100 - self.tax_ratio}% of the total 
         components = [
             SectionComponent(
                 components=[TextDisplayComponent(txt1)],
-                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{Constants.PIBOU4STONKS_PATH.split('/')[-1]}"))
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{ntpath.basename(Constants.PIBOU4STONKS_PATH)}"))
             ),
             SectionComponent(
                 components=[TextDisplayComponent(txt2)],
@@ -1061,7 +1062,7 @@ class BirthdayRaffleEvent(PassiveEvent):
         components = [
             SectionComponent(
                 components=[TextDisplayComponent(desc1)],
-                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{Constants.PIBOU4BIRTHDAY_PATH.split('/')[-1]}"))
+                accessory=ThumbnailComponent(UnfurledMediaItem(f"attachment://{ntpath.basename(Constants.PIBOU4BIRTHDAY_PATH)}"))
             ),
             SectionComponent(
                 components=[TextDisplayComponent(desc2)],

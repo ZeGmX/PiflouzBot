@@ -9,6 +9,8 @@ from interactions import (
     EmbedAttachment,
     EmbedField,
     MaterialColors,
+    MediaGalleryComponent,
+    MediaGalleryItem,
     RoleColors,
     SectionComponent,
     SeparatorComponent,
@@ -18,6 +20,7 @@ from interactions import (
     UnfurledMediaItem,
 )
 from math import ceil
+import ntpath
 import os
 import random
 
@@ -225,7 +228,7 @@ def get_container_piflouz():
     components = [
         SectionComponent(
             components=[title_txt_component],
-            accessory=ThumbnailComponent(media=UnfurledMediaItem(f"attachment://{Constants.PIFLOUZ_ANIMATED_PATH.split('/')[-1]}"))
+            accessory=ThumbnailComponent(media=UnfurledMediaItem(f"attachment://{ntpath.basename(Constants.PIFLOUZ_ANIMATED_PATH)}"))
         ),
         SectionComponent(
             components=[TextDisplayComponent(desc3 + "\n\n" + desc4)],
@@ -499,3 +502,38 @@ async def get_embed_wordle(solution, guesses, header_str, user_id):
 
     embed = Embed(title="Wordle", description=header_str, color=color, images=[EmbedAttachment(url=url)])
     return embed
+
+
+def get_container_TCG_pull(card_names, cards_images, pack_name):
+    """
+    Returns an container to display the cards pulled from a pack
+
+    Parameters
+    ----------
+    card_names (List[str]):
+        the names of the cards pulled from the pack
+    cards_images (List[str]):
+        the paths to the images of the cards pulled from the pack
+    pack_name (str):
+        the name of the pack
+
+    Returns
+    -------
+    interactions.ContainerComponent
+    """
+    # Initialize with header
+    components = [
+        TextDisplayComponent(f"You opened a {pack_name} pack and got the following cards:"),
+    ]
+
+    for card_name, card_image in zip(card_names, cards_images):
+        components.append(TextDisplayComponent(card_name))
+
+        gallery = MediaGalleryComponent(items=[MediaGalleryItem(media=UnfurledMediaItem(f"attachment://{ntpath.basename(card_image)}"))])
+        components.append(gallery)
+
+    # Put everything in a container
+    return ContainerComponent(
+        *components,
+        accent_color=RoleColors.DARK_RED.value
+    )

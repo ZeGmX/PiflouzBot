@@ -32,7 +32,7 @@ class CardFamily:
     def pretty_str(self):
         return self.name.capitalize()
 
-    def get_ids(self, small = True):
+    def get_ids(self, small=True):
         """
         Returns the IDs of the card for this family (= name of the files in the folder)
 
