@@ -1,8 +1,9 @@
 import asyncio
 from interactions import Extension, OptionType, SlashCommandChoice, auto_defer, slash_command, slash_option
+import os
+from PIL import Image
 
 from constant import Constants
-from embed_messages import get_container_TCG_pull
 from TCG.tcg import generate_random_pack, get_user_collection
 import utils
 
@@ -55,18 +56,41 @@ class CogTCG(Extension):
 
         response = await ctx.send(file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
 
-        await asyncio.sleep(3)  # Wait for the animation to finish
+        await asyncio.sleep(5)  # Wait for the animation to finish
 
+        card_imgs = []
+        # Read all images
         for i in range(len(pack_cards)):
-            await asyncio.sleep(1)  # Wait for the card to be revealed
+            path = pack_cards[i].get_image_path(small=False)
+            card_imgs.append(Image.open(path))
 
-            sub_pack_cards = pack_cards[:i + 1]
+        card_img_size = card_imgs[0].size
+        padding = 50
+        total_width = card_img_size[0] * len(card_imgs) + padding * (len(card_imgs) - 1)
+        total_height = card_img_size[1]
 
-            images = [card.get_image_path(small=False) for card in sub_pack_cards]
-            card_names = [str(card) for card in sub_pack_cards]
+        final_img = Image.new("RGBA", (total_width, total_height), (255, 255, 255, 0))
+        frames = [final_img.copy()]
 
-            container = get_container_TCG_pull(card_names, images, pack_type)
-            await response.edit(content=None, components=[container], context=ctx, files=images)
+        # Paste images onto the new image
+        for i, img in enumerate(card_imgs):
+            final_img.paste(img, (i * (card_img_size[0] + padding), 0))
+            frames.append(final_img.copy())
+
+            print(final_img.getpixel((2635, 830)), frames[-1].getpixel((2635, 830)), frames[-2].getpixel((2635, 830)))  # Debugging line to check pixel values
+
+        # Save the new image
+        file = f"src/TCG/assets/tmp/{ctx.author.id}.gif"
+        durations = [500] + [2000] * (len(pack_cards) - 1) + [60000]  # 500ms for the first frame, 2000ms for each card reveal, and a long duration for the last frame
+        frames[0].save(file, save_all=True, append_images=frames[1:], optimize=False, duration=durations, loop=0)
+
+        txt = f"You opened a {pack_type} pack and got the following cards:"
+
+        await response.edit(content=txt, file=file, context=ctx)
+
+        # delete the temporary file after sending it
+        if os.path.exists(file):
+            os.remove(file)
 
     @slash_command(name="deck", description="Display your card collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)
