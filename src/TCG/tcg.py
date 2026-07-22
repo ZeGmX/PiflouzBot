@@ -1,9 +1,9 @@
 import os
 import random
 
-# import utils
 from constant import Constants
 from database.my_database import ElementDict
+from random_pool import RandomPool, RandomPoolTable
 from user_profile import get_profile
 
 
@@ -43,6 +43,23 @@ class CardFamily:
         folder = "small_cards" if small else "big_cards"
         files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, folder, self.name))
         return list(map(lambda x: x.split(".")[0], files))
+
+    def get_pool_table(self, rare_boost_multiplier=1):
+        """
+        Returns the pool table for this family
+
+        Parameters
+        ----------
+            rare_boost_multiplier (int, optional): The multiplier for the rare cards (c, j, q, k). Defaults to 1.
+
+        Returns
+        -------
+            dict: The pool table for this family
+        """
+        pool = {"name": "card", "pool": [
+                (name, 10 if name.isnumeric() else 1 * rare_boost_multiplier) for name in self.get_ids()
+            ]}
+        return RandomPool.from_dict(pool)
 
 
 class CardID:
@@ -117,7 +134,6 @@ class CardCollection:
     def create_empty_collection():
         """
         Creates a deserialized empty collection for the user, in the format stored in the db.
-        TODO: Docstring
         """
         return {family: {card_id: 0 for card_id in CardFamily(family).get_ids()} for family in Constants.TCG_FAMILIES}
 
@@ -212,22 +228,26 @@ def generate_random_card(randomizer: random.Random | None = None):
     return Card(family, id)
 
 
-def generate_random_pack(randomizer: random.Random | None = None, pack_size: int = 5):
+def generate_random_pack(random_pool_table: RandomPoolTable):
     """
     Generates a random pack of cards
 
     Args:
-        randomizer (random.Random, optional): The random number generator
-        pack_size (int, optional): The size of the pack
+        random_pool_table (RandomPoolTable): The random pool table to use for generating the pack
 
     Returns
     -------
         list[Card]: The generated pack of cards
     """
-    if randomizer is None:
-        randomizer = random.Random()
+    pack_cards = []
+    for i, (pool, _) in enumerate(random_pool_table.pools):
+        card_family = pool.get_random()
+        card_id = CardFamily(card_family).get_pool_table(rare_boost_multiplier=50 if i >= 3 else 1).get_random()
 
-    return [generate_random_card(randomizer) for _ in range(pack_size)]
+        print(card_family, card_id)
+
+        pack_cards.append(Card(card_family, card_id))
+    return pack_cards
 
 
 def get_user_collection(user_id):
@@ -256,6 +276,32 @@ def get_user_collection(user_id):
 
 if __name__ == "__main__":
     pass
+
+    # card_pool_common = {"pools": [
+    #     ({"name": "card", "pool": [
+    #         (name, 10 if name.isnumeric() else 1) for name in CardFamily("bell").get_ids()
+    #     ]})
+    # ]}
+
+    # card_pool_rare = {"pools": [
+    #     ({"name": "card", "pool": [
+    #         (name, 10 if name.isnumeric() else 50) for name in CardFamily("bell").get_ids()
+    #     ]})
+    # ]}
+
+    # card_pool_arcana = {"pools": [
+    #     ({"name": "card", "pool": [
+    #         (name, 1) for name in CardFamily("arcana").get_ids()
+    #     ]})
+    # ]}
+
+    # banner_table = {"pools": [
+    #     ({"name": "card1", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+    #     ({"name": "card2", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+    #     ({"name": "card3", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+    #     ({"name": "card4", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 5)]}, 1),
+    #     ({"name": "card5", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 40)]}, 1),
+    # ]}
 
     # # Test the Card class
     # card = Card("H", "A")

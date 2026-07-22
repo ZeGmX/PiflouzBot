@@ -4,6 +4,7 @@ import os
 from PIL import Image
 
 from constant import Constants
+from random_pool import RandomPoolTable
 from TCG.tcg import generate_random_pack, get_user_collection
 import utils
 
@@ -27,10 +28,10 @@ class CogTCG(Extension):
 
     @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="pack_type", description="The type of pack you want to open", opt_type=OptionType.STRING, required=True, choices=[
-        SlashCommandChoice(name="bell", value="bell"),
-        SlashCommandChoice(name="butterfly", value="butterfly"),
-        SlashCommandChoice(name="eye", value="eye"),
-        SlashCommandChoice(name="hammer", value="hammer")
+        SlashCommandChoice(name="🔔", value="bell"),
+        SlashCommandChoice(name="🦋", value="butterfly"),
+        SlashCommandChoice(name="👁️", value="eye"),
+        SlashCommandChoice(name="🔨", value="hammer")
     ])
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
@@ -47,8 +48,22 @@ class CogTCG(Extension):
         # TODO: Payment?
 
         # Generate the cards in the pack
-        # TODO: use pack type to change probabilities?
-        pack_cards = generate_random_pack()
+        banner_table = {"pools": [
+            ({"name": "card1", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card2", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card3", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card4", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 10)]}, 1),
+            ({"name": "card5", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 80)]}, 1),
+        ]}
+        # Apply a weight multiplier to the family of the pack being opened to increase the chances of getting cards from that family
+        pack_multiplier = 5
+        for pool in banner_table["pools"]:
+            for i, (name, weight) in enumerate(pool[0]["pool"]):
+                if name == pack_type:
+                    pool[0]["pool"][i] = (name, weight * pack_multiplier)
+
+        random_pool_table = RandomPoolTable.from_dict(banner_table)
+        pack_cards = generate_random_pack(random_pool_table)
 
         # add cards to the user's collection
         user_collection = get_user_collection(usr_id)
