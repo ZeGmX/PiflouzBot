@@ -115,6 +115,7 @@ class Constants:
     # TCG
     TCG_BASE_PATH = "src/TCG/assets/"
     TCG_FAMILIES = ["arcana", "bell", "butterfly", "eye", "hammer"]
+    TCG_FAMILIES_EMOJIS = ["🧙", "🔔", "🦋", "👁️", "🔨"]
     TCG_ALL_CARDS = []
 
     @staticmethod

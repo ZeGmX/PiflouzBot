@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 import random
 
 from constant import Constants
@@ -41,8 +42,11 @@ class CardFamily:
             list[str]: The IDs of the card for this family
         """
         folder = "small_cards" if small else "big_cards"
-        files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, folder, self.name))
-        return list(map(lambda x: x.split(".")[0], files))
+        # files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, folder, self.name))
+        # files = filter(lambda x: x.endswith(".png"), files)  # get images only
+        # return list(map(lambda x: x.split(".")[0], files))
+        with open(os.path.join(Constants.TCG_BASE_PATH, folder, self.name, "order.txt"), "r") as f:
+            return [line.strip() for line in f.readlines()]
 
     def get_pool_table(self, rare_boost_multiplier=1):
         """
@@ -242,9 +246,7 @@ def generate_random_pack(random_pool_table: RandomPoolTable):
     pack_cards = []
     for i, (pool, _) in enumerate(random_pool_table.pools):
         card_family = pool.get_random()
-        card_id = CardFamily(card_family).get_pool_table(rare_boost_multiplier=50 if i >= 3 else 1).get_random()
-
-        print(card_family, card_id)
+        card_id = CardFamily(card_family).get_pool_table(rare_boost_multiplier=35 if i >= 3 else 1).get_random()
 
         pack_cards.append(Card(card_family, card_id))
     return pack_cards
@@ -272,6 +274,51 @@ def get_user_collection(user_id):
 
     assert isinstance(fetched_result, ElementDict), "Profile is not an ElementDict"
     return CardCollection(fetched_result)
+
+
+def get_user_family_deck_image(user_id, family):
+    """
+    Returns the user's deck image for a specific family
+
+    Parameters
+    ----------
+        user_id (int/str): The ID of the user
+        family (CardFamily): The family of the cards
+
+    Returns
+    -------
+        str: The path to the user's deck image for the specified family
+    """
+    profile = get_profile(user_id)
+    deck_family = profile["card_collection"][family.name]
+
+    nb_cards = len(family.get_ids())
+    nb_cards_per_row = nb_cards // 2
+
+    padding = 16  # pixels of padding between cards
+    card_width, card_height = 690, 1200  # pixels of the card image
+
+    # Read the background image
+    background = Image.open(os.path.join(Constants.TCG_BASE_PATH, "big_cards", family.name, "deck.png"))
+
+    all_cards = family.get_ids(small=False)
+
+    for i, card in enumerate(all_cards):
+        row = i // nb_cards_per_row
+        col = i % nb_cards_per_row
+
+        if deck_family[card] == 0: continue
+
+        # Add the card image to the background
+        img_path = Card(family.name, card).get_image_path(small=False)
+        card_img = Image.open(img_path)
+        background.paste(card_img, (col * (card_width + padding) + padding, row * (card_height + padding) + padding))
+
+    # save image
+    output_path = os.path.join(Constants.TCG_BASE_PATH, "tmp", f"{user_id}_{family.name}_deck.png")
+    background.save(output_path)
+
+    return output_path
 
 
 if __name__ == "__main__":

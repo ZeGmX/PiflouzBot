@@ -1,11 +1,12 @@
 import asyncio
-from interactions import Extension, OptionType, SlashCommandChoice, auto_defer, slash_command, slash_option
+from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, component_callback, slash_command, slash_option
 import os
 from PIL import Image
+import re
 
 from constant import Constants
 from random_pool import RandomPoolTable
-from TCG.tcg import generate_random_pack, get_user_collection
+from TCG.tcg import CardFamily, generate_random_pack, get_user_collection, get_user_family_deck_image
 import utils
 
 
@@ -26,12 +27,12 @@ class CogTCG(Extension):
     def __init__(self, bot):
         self.bot = bot
 
+        for family in Constants.TCG_FAMILIES:
+            self.bot.add_component_callback(self.callback_from_id(f"deck_family_{family}"))
+
     @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="pack_type", description="The type of pack you want to open", opt_type=OptionType.STRING, required=True, choices=[
-        SlashCommandChoice(name="🔔", value="bell"),
-        SlashCommandChoice(name="🦋", value="butterfly"),
-        SlashCommandChoice(name="👁️", value="eye"),
-        SlashCommandChoice(name="🔨", value="hammer")
+        SlashCommandChoice(name=emoji, value=name) for name, emoji in zip(Constants.TCG_FAMILIES[1:], Constants.TCG_FAMILIES_EMOJIS[1:])
     ])
     @auto_defer(ephemeral=True)
     @utils.check_message_to_be_processed
@@ -92,8 +93,6 @@ class CogTCG(Extension):
             final_img.paste(img, (i * (card_img_size[0] + padding), 0))
             frames.append(final_img.copy())
 
-            print(final_img.getpixel((2635, 830)), frames[-1].getpixel((2635, 830)), frames[-2].getpixel((2635, 830)))  # Debugging line to check pixel values
-
         # Save the new image
         file = f"src/TCG/assets/tmp/{ctx.author.id}.gif"
         durations = [500] + [2000] * (len(pack_cards) - 1) + [60000]  # 500ms for the first frame, 2000ms for each card reveal, and a long duration for the last frame
@@ -115,11 +114,60 @@ class CogTCG(Extension):
         """
         Event for the /deck command, renders and display the user's deck
         """
+        await self.display_deck_family(ctx, user, family=CardFamily(Constants.TCG_FAMILIES[0]))
+
+    async def display_deck_family(self, ctx, user=None, family=None):
+        """
+        Event for the /deck command, renders and display the user's deck
+
+        Parameters
+        ----------
+        ctx (interactions.SlashContext)
+            The context of the command
+        user (interactions.User)
+            The user whose deck we want to display. If None, the command author is used
+        family (CardFamily)
+            The family of cards to display. If None, the first family is used (= arcana)
+        """
         member = user or ctx.author
 
-        usr_collection = get_user_collection(member.id)
+        response_str = f"Here are the cards of {member.mention}:\n"
 
-        response_str = f"Here are the cards of {member.nick}:\n"
-        response_str += usr_collection.__str__()
-        response_str += "\nThis command is a WIP. Visualisation is coming."
-        await ctx.send(response_str)
+        img_path = get_user_family_deck_image(member.id, family)  # TODO: Allow the user to choose the family to display
+
+        components = [
+            Button(style=ButtonStyle.GRAY, label=emoji, custom_id=f"deck_family_{name}") for name, emoji in zip(Constants.TCG_FAMILIES, Constants.TCG_FAMILIES_EMOJIS)
+        ]
+
+        i = Constants.TCG_FAMILIES.index(family.name)
+        components[i].style = ButtonStyle.GREEN
+        components[i].disabled = True
+
+        await ctx.send(response_str, file=img_path, components=components, ephemeral=True)
+
+    def callback_from_id(self, custom_id):
+        """
+        Returns the callback function for the /deck button with the given custom_id
+
+        Parameters
+        ----------
+        custom_id (str)
+
+        Returns
+        -------
+        interactions.ComponentCommand
+        """
+        @component_callback(custom_id)
+        @auto_defer(ephemeral=True)
+        async def callback(ctx):
+            # extract the user id from the message content
+            content = ctx.message.content
+            pattern = r"<@!?(\d+)>"
+            match = re.search(pattern, content)
+            user = match.group(1) if match else None
+
+            if user is not None:
+                user = await ctx.guild.fetch_member(int(user))
+
+            await self.display_deck_family(ctx, user, family=CardFamily(custom_id[len("deck_family_"):]))
+        return callback
