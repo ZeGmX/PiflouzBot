@@ -117,6 +117,9 @@ class Constants:
     TCG_FAMILIES = ["arcana", "bell", "butterfly", "eye", "hammer"]
     TCG_FAMILIES_EMOJIS = ["🧙", "🔔", "🦋", "👁️", "🔨"]
     TCG_ALL_CARDS = []
+    TCG_PULL_CREDIT_DAY = eval(os.getenv("TCG_PULL_CREDIT_DAY"))
+    TCG_NOTIF_ROLE_ID = int(os.getenv("TCG_NOTIF_ROLE_ID"))
+    TCG_PULL_CREDIT_TIME = eval(os.getenv("TCG_PULL_CREDIT_TIME"))
 
     @staticmethod
     def load():

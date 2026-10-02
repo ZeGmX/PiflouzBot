@@ -99,11 +99,11 @@ async def end_current_season(bot):
 
     # Reseting the database
     user_profile.reset_all("piflouz_balance")
-    user_profile.reset_all("discovered_piflex")
     user_profile.reset_all("donation_balance")
+    user_profile.reset_all("mining_combo")
+    user_profile.reset_all("discovered_piflex")
     user_profile.reset_all("powerups")
     user_profile.reset_all("previous_get_time")  # So that the combo is set to 0 for the next /get
-    user_profile.reset_all("mining_combo")
 
     user_profile.set_all_inactive()
 

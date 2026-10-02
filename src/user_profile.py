@@ -80,6 +80,7 @@ def get_new_user_profile():
         "daily_bonus_date": "0001-01-01",
         "birthday_date": "0000-00-00",
         "card_collection": CardCollection.create_empty_collection(),
+        "can_pull": True,
     }
 
 

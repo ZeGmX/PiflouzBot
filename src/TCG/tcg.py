@@ -1,11 +1,15 @@
+import datetime
+from interactions import Task
 import os
 from PIL import Image
 import random
 
 from constant import Constants
+from custom_task_triggers import TimeTriggerDT
+from database import db
 from database.my_database import ElementDict
 from random_pool import RandomPool, RandomPoolTable
-from user_profile import get_profile
+from user_profile import get_profile, reset_all
 
 
 def get_all_cards():
@@ -295,7 +299,7 @@ def get_user_family_deck_image(user_id, family):
     nb_cards = len(family.get_ids())
     nb_cards_per_row = nb_cards // 2
 
-    padding = 16  # pixels of padding between cards
+    padding = 20  # pixels of padding between cards
     card_width, card_height = 690, 1200  # pixels of the card image
 
     # Read the background image
@@ -312,7 +316,7 @@ def get_user_family_deck_image(user_id, family):
         # Add the card image to the background
         img_path = Card(family.name, card).get_image_path(small=False)
         card_img = Image.open(img_path)
-        background.paste(card_img, (col * (card_width + padding) + padding, row * (card_height + padding) + padding))
+        background.paste(card_img, (col * (card_width + padding), row * (card_height + padding)))
 
     # save image
     output_path = os.path.join(Constants.TCG_BASE_PATH, "tmp", f"{user_id}_{family.name}_deck.png")
@@ -321,53 +325,14 @@ def get_user_family_deck_image(user_id, family):
     return output_path
 
 
-if __name__ == "__main__":
-    pass
-
-    # card_pool_common = {"pools": [
-    #     ({"name": "card", "pool": [
-    #         (name, 10 if name.isnumeric() else 1) for name in CardFamily("bell").get_ids()
-    #     ]})
-    # ]}
-
-    # card_pool_rare = {"pools": [
-    #     ({"name": "card", "pool": [
-    #         (name, 10 if name.isnumeric() else 50) for name in CardFamily("bell").get_ids()
-    #     ]})
-    # ]}
-
-    # card_pool_arcana = {"pools": [
-    #     ({"name": "card", "pool": [
-    #         (name, 1) for name in CardFamily("arcana").get_ids()
-    #     ]})
-    # ]}
-
-    # banner_table = {"pools": [
-    #     ({"name": "card1", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
-    #     ({"name": "card2", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
-    #     ({"name": "card3", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
-    #     ({"name": "card4", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 5)]}, 1),
-    #     ({"name": "card5", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 40)]}, 1),
-    # ]}
-
-    # # Test the Card class
-    # card = Card("H", "A")
-    # print(card.name)  # Output: AH
-
-    # # Test the Collection class
-    # collection = Collection()
-    # print(collection.cards_counts)
-
-    # collection.add_card("H", "A")
-    # print(collection.cards_counts)
-
-    # collection.add_card("D", "A")
-    # print(collection.cards_counts)
-
-    # collection.add_card("H", "K")
-    # print(collection.cards_counts)
-    # collection.add_card("H", "K")
-    # print(collection.cards_counts)
-
-    # print(collection.get_card("H", "A"))
-    # print(collection.get_card("H", "K"))
+@Task.create(TimeTriggerDT(Constants.TCG_PULL_CREDIT_TIME))
+async def handle_pull_credit(bot):
+    """
+    Creates the task to reset the pull credit for all users every day at 8am UTC
+    """
+    today = datetime.datetime.now(tz=Constants.TIMEZONE).date()
+    if today.weekday() == Constants.TCG_PULL_CREDIT_DAY:
+        reset_all("can_pull")
+        msg = f"<@&{Constants.TCG_NOTIF_ROLE_ID}> You can now pull a pack using `/pull`"
+        channel = await bot.fetch_channel(db["out_channel"])
+        await channel.send(msg)

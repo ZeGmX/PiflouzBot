@@ -1,4 +1,5 @@
 import asyncio
+import calendar
 from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, component_callback, slash_command, slash_option
 import os
 from PIL import Image
@@ -7,6 +8,7 @@ import re
 from constant import Constants
 from random_pool import RandomPoolTable
 from TCG.tcg import CardFamily, generate_random_pack, get_user_collection, get_user_family_deck_image
+from user_profile import get_profile
 import utils
 
 
@@ -46,7 +48,9 @@ class CogTCG(Extension):
             the cards inside the pack
         """
         usr_id = str(ctx.author.id)
-        # TODO: Payment?
+        profile = get_profile(usr_id)
+
+        await utils.custom_assert(profile["can_pull"], f"You cannot pull a pack right now. You'll be able to pull again on {calendar.day_name[Constants.TCG_PULL_CREDIT_DAY]} at {Constants.TCG_PULL_CREDIT_TIME.strftime('%H:%M')}", ctx)
 
         # Generate the cards in the pack
         banner_table = {"pools": [
@@ -69,10 +73,11 @@ class CogTCG(Extension):
         # add cards to the user's collection
         user_collection = get_user_collection(usr_id)
         user_collection.add_cards(pack_cards)
+        profile["can_pull"] = False
 
         response = await ctx.send(file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
 
-        await asyncio.sleep(5)  # Wait for the animation to finish
+        await asyncio.sleep(10)  # Wait for the animation to finish
 
         card_imgs = []
         # Read all images
