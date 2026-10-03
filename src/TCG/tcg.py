@@ -1,0 +1,338 @@
+import datetime
+from interactions import Task
+import os
+from PIL import Image
+import random
+
+from constant import Constants
+from custom_task_triggers import TimeTriggerDT
+from database import db
+from database.my_database import ElementDict
+from random_pool import RandomPool, RandomPoolTable
+from user_profile import get_profile, reset_all
+
+
+def get_all_cards():
+    """
+    Returns all the cards in the TCG
+
+    Returns
+    -------
+        list[Card]: All the cards in the TCG
+    """
+    return {family: [Card(family=family, id=id) for id in CardFamily(family).get_ids()] for family in Constants.TCG_FAMILIES}
+
+
+class CardFamily:
+    """
+    Represents a family of cards in the TCG
+    """
+
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def pretty_str(self):
+        return self.name.capitalize()
+
+    def get_ids(self, small=True):
+        """
+        Returns the IDs of the card for this family (= name of the files in the folder)
+
+        Returns
+        -------
+            list[str]: The IDs of the card for this family
+        """
+        folder = "small_cards" if small else "big_cards"
+        # files = os.listdir(os.path.join(Constants.TCG_BASE_PATH, folder, self.name))
+        # files = filter(lambda x: x.endswith(".png"), files)  # get images only
+        # return list(map(lambda x: x.split(".")[0], files))
+        with open(os.path.join(Constants.TCG_BASE_PATH, folder, self.name, "order.txt"), "r") as f:
+            return [line.strip() for line in f.readlines()]
+
+    def get_pool_table(self, rare_boost_multiplier=1):
+        """
+        Returns the pool table for this family
+
+        Parameters
+        ----------
+            rare_boost_multiplier (int, optional): The multiplier for the rare cards (c, j, q, k). Defaults to 1.
+
+        Returns
+        -------
+            dict: The pool table for this family
+        """
+        pool = {"name": "card", "pool": [
+                (name, 10 if name.isnumeric() else 1 * rare_boost_multiplier) for name in self.get_ids()
+            ]}
+        return RandomPool.from_dict(pool)
+
+
+class CardID:
+    """
+    Represents the ID of a card in the TCG (regardless of family)
+    """
+
+    def __init__(self, id):
+        self.id = id
+
+    def __str__(self):
+        return self.id
+
+    def pretty_str(self):
+        return self.id.capitalize()
+
+
+class Card:
+    """
+    Represents a card in the TCG
+    """
+
+    def __init__(self, family: str, id: str):
+        self.family = CardFamily(family)
+        self.id = CardID(id)
+
+    def __str__(self):
+        return self.family.pretty_str() + " - " + self.id.pretty_str()
+
+    def family_name(self):
+        """
+        Returns the name of the card's family as a string
+
+        Returns
+        -------
+        str
+        """
+        return str(self.family)
+
+    def id_name(self):
+        """
+        Returns the name of the card's ID as a string
+
+        Returns
+        -------
+        str
+        """
+        return str(self.id)
+
+    def get_image_path(self, small: bool = True):
+        """
+        Returns the path to the image of the card
+
+        Args:
+            small (bool, optional): Whether to return the path to the small image or the large image. Defaults to True
+
+        Returns
+        -------
+            str: The path to the image of the card
+        """
+        folder = "small_cards" if small else "big_cards"
+        return os.path.join(Constants.TCG_BASE_PATH, folder, self.family_name(), self.id_name() + ".png")
+
+
+class CardCollection:
+    def __init__(self, counts: dict[str, int] | ElementDict | None = None):
+        if counts is None:
+            counts = self.create_empty_collection()
+        self.cards_counts: dict[str, int] | ElementDict = counts
+
+    @staticmethod
+    def create_empty_collection():
+        """
+        Creates a deserialized empty collection for the user, in the format stored in the db.
+        """
+        return {family: {card_id: 0 for card_id in CardFamily(family).get_ids()} for family in Constants.TCG_FAMILIES}
+
+    def get_card_count(self, family, id) -> int:
+        """
+        Returns the number of copies of a card in the user's collection
+
+        Parameters
+        ----------
+        family (str): The family of the card
+        id (str): The ID of the card
+
+        Returns
+        -------
+            int: The number of copies of the card in the user's collection
+        """
+        return self.cards_counts[family][id]
+
+    def add_card(self, family, id):
+        """
+        Adds a copy of a card to the user's collection
+
+        Parameters
+        ----------
+        family (str): The family of the card
+        id (str): The ID of the card
+
+        Returns
+        -------
+            int: The updated number of copies of the card in the user's collection
+        """
+        self.cards_counts[family][id] += 1
+        return self.get_card_count(family, id)
+
+    def add_cards(self, cards: list[Card]):
+        """
+        Adds multiple cards to the user's collection
+
+        Parameters
+        ----------
+        cards (list[Card]): The list of cards to add
+
+        Returns
+        -------
+            dict[str, int]: The updated card counts in the user's collection
+        """
+        for card in cards:
+            self.add_card(card.family.name, card.id.id)
+        return self.cards_counts
+
+    def deserialize(self):
+        return self.cards_counts
+
+    def __str__(self):
+        filtered_families = [family for family in self.cards_counts.keys() if any(count > 0 for count in self.cards_counts[family].values())]  # Filter families with at least one card
+        filtered_collection = {family: {card_id: count for card_id, count in self.cards_counts[family].items() if count > 0} for family in filtered_families}
+        return str(filtered_collection)
+
+
+def add_card_to_collection(user_id, card):
+    """
+    Adds a card to the user's collection
+
+    Args:
+        user_id (int/str): The ID of the user
+        card (Card): The card to add
+    """
+    current_collection = get_user_collection(user_id)
+
+    current_collection["card_name"] = card.name
+
+    raise NotImplementedError("This function is not implemented yet")
+
+
+def generate_random_card(randomizer: random.Random | None = None):
+    """
+    Generates a random card
+
+    Args:
+        randomizer (random.Random, optional): The random number generator
+
+    Returns
+    -------
+        Card: The generated card
+    """
+    if randomizer is None:
+        randomizer = random.Random()
+
+    family = randomizer.choice(Constants.TCG_FAMILIES)
+    id = randomizer.choice(CardFamily(family).get_ids())  # TODO: add rarity
+
+    return Card(family, id)
+
+
+def generate_random_pack(random_pool_table: RandomPoolTable):
+    """
+    Generates a random pack of cards
+
+    Args:
+        random_pool_table (RandomPoolTable): The random pool table to use for generating the pack
+
+    Returns
+    -------
+        list[Card]: The generated pack of cards
+    """
+    pack_cards = []
+    for i, (pool, _) in enumerate(random_pool_table.pools):
+        card_family = pool.get_random()
+        card_id = CardFamily(card_family).get_pool_table(rare_boost_multiplier=35 if i >= 3 else 1).get_random()
+
+        pack_cards.append(Card(card_family, card_id))
+    return pack_cards
+
+
+def get_user_collection(user_id):
+    """
+    Returns the user's collection of cards
+    Also creates an empty collection if the user doesn't have one yet.
+
+    Parameters
+    ----------
+        user_id (int/str): The ID of the user
+
+    Returns
+    -------
+        CardCollection: The user's collection of cards
+    """
+    profile = get_profile(user_id)
+
+    if "card_collection" not in profile:
+        profile["card_collection"] = CardCollection.create_empty_collection()
+
+    fetched_result = profile["card_collection"]
+
+    assert isinstance(fetched_result, ElementDict), "Profile is not an ElementDict"
+    return CardCollection(fetched_result)
+
+
+def get_user_family_deck_image(user_id, family):
+    """
+    Returns the user's deck image for a specific family
+
+    Parameters
+    ----------
+        user_id (int/str): The ID of the user
+        family (CardFamily): The family of the cards
+
+    Returns
+    -------
+        str: The path to the user's deck image for the specified family
+    """
+    profile = get_profile(user_id)
+    deck_family = profile["card_collection"][family.name]
+
+    nb_cards = len(family.get_ids())
+    nb_cards_per_row = nb_cards // 2
+
+    padding = 20  # pixels of padding between cards
+    card_width, card_height = 690, 1200  # pixels of the card image
+
+    # Read the background image
+    background = Image.open(os.path.join(Constants.TCG_BASE_PATH, "big_cards", family.name, "deck.png"))
+
+    all_cards = family.get_ids(small=False)
+
+    for i, card in enumerate(all_cards):
+        row = i // nb_cards_per_row
+        col = i % nb_cards_per_row
+
+        if deck_family[card] == 0: continue
+
+        # Add the card image to the background
+        img_path = Card(family.name, card).get_image_path(small=False)
+        card_img = Image.open(img_path)
+        background.paste(card_img, (col * (card_width + padding), row * (card_height + padding)))
+
+    # save image
+    output_path = os.path.join(Constants.TCG_BASE_PATH, "tmp", f"{user_id}_{family.name}_deck.png")
+    background.save(output_path)
+
+    return output_path
+
+
+@Task.create(TimeTriggerDT(Constants.TCG_PULL_CREDIT_TIME))
+async def handle_pull_credit(bot):
+    """
+    Creates the task to reset the pull credit for all users every day at 8am UTC
+    """
+    today = datetime.datetime.now(tz=Constants.TIMEZONE).date()
+    if today.weekday() == Constants.TCG_PULL_CREDIT_DAY:
+        reset_all("can_pull")
+        msg = f"<@&{Constants.TCG_NOTIF_ROLE_ID}> You can now pull a pack using `/pull`"
+        channel = await bot.fetch_channel(db["out_channel"])
+        await channel.send(msg)

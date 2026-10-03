@@ -213,6 +213,7 @@ class CogMisc(Extension):
         SlashCommandChoice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
         SlashCommandChoice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
         SlashCommandChoice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications"),
+        SlashCommandChoice(value=str(Constants.TCG_NOTIF_ROLE_ID), name="TCG Notifications"),
         SlashCommandChoice(value=str(Constants.CHAOS_ROLE_ID), name="CHAOS"),
         SlashCommandChoice(value=str(Constants.CHESS_EVENT_NOTIF_ROLE_ID), name="Chess Event Notifications")
     ])
@@ -237,6 +238,7 @@ class CogMisc(Extension):
         SlashCommandChoice(value=str(Constants.TWITCH_NOTIF_ROLE_ID), name="Twitch Notifications"),
         SlashCommandChoice(value=str(Constants.PIBOX_NOTIF_ROLE_ID), name="Pibox Notifications"),
         SlashCommandChoice(value=str(Constants.BIRTHDAY_NOTIF_ROLE_ID), name="Birthday Notifications"),
+        SlashCommandChoice(value=str(Constants.TCG_NOTIF_ROLE_ID), name="TCG Notifications"),
         SlashCommandChoice(value=str(Constants.CHAOS_ROLE_ID), name="CHAOS"),
         SlashCommandChoice(value=str(Constants.CHESS_EVENT_NOTIF_ROLE_ID), name="Chess Event Notifications")
     ])

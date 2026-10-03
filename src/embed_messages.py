@@ -1,6 +1,8 @@
 import asyncio
+import calendar
 import copy
 from interactions import (
+    ActionRow,
     Button,
     ButtonStyle,
     Color,
@@ -16,11 +18,14 @@ from interactions import (
     SectionComponent,
     SeparatorComponent,
     SeparatorSpacingSize,
+    StringSelectMenu,
+    StringSelectOption,
     TextDisplayComponent,
     ThumbnailComponent,
     UnfurledMediaItem,
 )
 from math import ceil
+import ntpath
 import os
 import random
 
@@ -56,8 +61,8 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/profile`",
-                    value="Check all the data from your profile",
+                    name="`/profile [user]`",
+                    value="Check all the data from someone's profile",
                     inline=False
                 ),
                 EmbedField(
@@ -184,6 +189,16 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
+                    name="`/pull`",
+                    value="Open a pack and add cards to your collection",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/deck [user]`",
+                    value="Display your card collection or someone else's",
+                    inline=False
+                ),
+                EmbedField(
                     name="Things I do in the background",
                     value=f"- I will send a message everytime the greatest streamers go live on Twitch\n\
 - I can give you {Constants.PIFLOUZ_EMOJI} if you click on the button below the piflouz message\n\
@@ -223,7 +238,7 @@ def get_container_piflouz():
     components = [
         SectionComponent(
             components=[title_txt_component],
-            accessory=ThumbnailComponent(media=UnfurledMediaItem(f"attachment://{Constants.PIFLOUZ_ANIMATED_PATH.split('/')[-1]}"))
+            accessory=ThumbnailComponent(media=UnfurledMediaItem(f"attachment://{ntpath.basename(Constants.PIFLOUZ_ANIMATED_PATH)}"))
         ),
         SectionComponent(
             components=[TextDisplayComponent(desc3 + "\n\n" + desc4)],
@@ -517,3 +532,31 @@ async def get_container_wordle(solution, guesses, header_str, user_id, upload_to
         color = RoleColors.DARK_RED
 
     return ContainerComponent(*components, accent_color=color.value), attachment_path
+
+
+def get_container_TCG_pull(select_id):
+    """
+    Returns an container to ask the user which banner they want to pull from
+
+    Returns
+    -------
+    interactions.ContainerComponent
+    """
+    # Initialize with header
+    components = [
+        TextDisplayComponent(f"You can open one pack per week (resets every {calendar.day_name[Constants.TCG_PULL_CREDIT_DAY]} at {Constants.TCG_PULL_CREDIT_TIME.strftime('%H:%M')})\nEach pack contains 5 random cards:\n- The first three have a very low chance of being arcana\n- The fourth and fifth have increased chance of being face cards or arcana\nFace cards are also rarer than number cards\n\nChoose which banner to open a pack from:"),
+        ActionRow(
+            StringSelectMenu(
+                *[
+                    StringSelectOption(label=f"Weights of {name} cards ×5", value=i, emoji=emoji) for i, (name, emoji) in enumerate(zip(Constants.TCG_BANNERS, Constants.TCG_BANNER_EMOJIS))
+                ],
+                custom_id=select_id
+            )
+        )
+    ]
+
+    # Put everything in a container
+    return ContainerComponent(
+        *components,
+        accent_color=Color.random().value
+    )

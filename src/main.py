@@ -15,6 +15,7 @@ import powerups
 import rank_handlers
 import seasons
 import socials
+import TCG
 import utils
 
 
@@ -124,6 +125,7 @@ async def on_startup():
     socials.check_birthday.start(bot)
     socials.check_profile_picture_update.start(bot)
     utils.backup_db.start()
+    TCG.handle_pull_credit.start(bot)
 
     await pibox.load_all_pibox(bot)
     await events.register_listeners(bot)
@@ -163,5 +165,6 @@ if __name__ == "__main__":
     bot.load_extension("cogs.cog_status_check")
     bot.load_extension("cogs.cog_would_you_rather")
     bot.load_extension("cogs.cog_birthday_tracker")
+    bot.load_extension("cogs.cog_tcg")
 
     bot.start()

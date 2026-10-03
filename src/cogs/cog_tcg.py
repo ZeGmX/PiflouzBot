@@ -1,0 +1,210 @@
+import asyncio
+import calendar
+from interactions import Button, ButtonStyle, Extension, OptionType, auto_defer, component_callback, slash_command, slash_option
+import os
+from PIL import Image
+import re
+
+from constant import Constants
+import embed_messages
+from random_pool import RandomPoolTable
+from TCG.tcg import CardFamily, generate_random_pack, get_user_collection, get_user_family_deck_image
+from user_profile import get_profile
+import utils
+
+
+class CogTCG(Extension):
+    """
+    Commands for the TCG system
+    --
+    fields:
+        bot: interactions.Client
+    --
+    Slash commands:
+        /pull
+        /deck
+    Select menus:
+        SELECT_MENU_ID
+    Message commands:
+    Modals:
+    """
+
+    SELECT_MENU_ID = "tcg_pull_select_menu"
+
+    def __init__(self, bot):
+        self.bot = bot
+
+        for family in Constants.TCG_FAMILIES:
+            self.bot.add_component_callback(self.callback_from_id(f"deck_family_{family}"))
+
+    async def pull_pack(self, ctx, pack_type: str):
+        """
+        Opens a pack and adds the card inside to the user's collection
+        
+        Parameters
+        ----------
+        ctx (interactions.ComponentContext)
+        pack_type (str)
+            The type of pack to open
+        """
+        usr_id = str(ctx.author.id)
+        profile = get_profile(usr_id)
+
+        await utils.custom_assert(profile["can_pull"], f"You cannot pull a pack right now. You'll be able to pull again on {calendar.day_name[Constants.TCG_PULL_CREDIT_DAY]} at {Constants.TCG_PULL_CREDIT_TIME.strftime('%H:%M')}", ctx)
+
+        # Generate the cards in the pack
+        banner_table = {"pools": [
+            ({"name": "card1", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card2", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card3", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 1)]}, 1),
+            ({"name": "card4", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 10)]}, 1),
+            ({"name": "card5", "pool": [("bell", 10), ("hammer", 10), ("butterfly", 10), ("eye", 10), ("arcana", 80)]}, 1),
+        ]}
+        # Apply a weight multiplier to the family of the pack being opened to increase the chances of getting cards from that family
+        pack_multiplier = 5
+        for pool in banner_table["pools"]:
+            for i, (name, weight) in enumerate(pool[0]["pool"]):
+                if name == pack_type:
+                    pool[0]["pool"][i] = (name, weight * pack_multiplier)
+
+        random_pool_table = RandomPoolTable.from_dict(banner_table)
+        pack_cards = generate_random_pack(random_pool_table)
+
+        # add cards to the user's collection
+        user_collection = get_user_collection(usr_id)
+        user_collection.add_cards(pack_cards)
+        profile["can_pull"] = False
+
+        old_comp = ctx.message.components
+        old_comp[0].components[1].components[0].options[int(ctx.values[0])].default = True
+        old_comp[0].components[1].components[0].disabled = True
+        await ctx.edit_origin(components=old_comp)
+        response = await ctx.send(file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
+
+        await asyncio.sleep(5)  # Wait for the animation to finish
+
+        card_imgs = []
+        # Read all images
+        for i in range(len(pack_cards)):
+            path = pack_cards[i].get_image_path(small=False)
+            card_imgs.append(Image.open(path))
+
+        card_img_size = card_imgs[0].size
+        padding = 50
+        total_width = card_img_size[0] * len(card_imgs) + padding * (len(card_imgs) - 1)
+        total_height = card_img_size[1]
+
+        final_img = Image.new("RGBA", (total_width, total_height), (255, 255, 255, 0))
+        frames = [final_img.copy()]
+
+        # Paste images onto the new image
+        for i, img in enumerate(card_imgs):
+            final_img.paste(img, (i * (card_img_size[0] + padding), 0))
+            frames.append(final_img.copy())
+
+        # Save the new image
+        file = f"src/TCG/assets/tmp/{ctx.author.id}.gif"
+        durations = [500] + [2000] * (len(pack_cards) - 1) + [60000]  # 500ms for the first frame, 2000ms for each card reveal, and a long duration for the last frame
+        frames[0].save(file, save_all=True, append_images=frames[1:], optimize=False, duration=durations, loop=0)
+
+        txt = f"You opened a {pack_type} pack and got the following cards:"
+
+        await response.edit(content=txt, file=file, context=ctx)
+
+        # delete the temporary file after sending it
+        if os.path.exists(file):
+            os.remove(file)
+
+    @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
+    @auto_defer(ephemeral=True)
+    @utils.check_message_to_be_processed
+    async def pull_pack_callback(self, ctx):
+        """
+        Callback for the /pull command
+
+        Parameters
+        ----------
+        ctx : interactions.InteractionContext 
+        """
+        # Create the component
+        ui = embed_messages.get_container_TCG_pull(CogTCG.SELECT_MENU_ID)
+        await ctx.send(components=ui, ephemeral=True)
+
+    @slash_command(name="deck", description="Display your card collection", scopes=Constants.GUILD_IDS)
+    @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)
+    @auto_defer(ephemeral=True)
+    @utils.check_message_to_be_processed
+    async def display_deck(self, ctx, user=None):
+        """
+        Event for the /deck command, renders and display the user's deck
+        """
+        await self.display_deck_family(ctx, user, family=CardFamily(Constants.TCG_FAMILIES[0]))
+
+    async def display_deck_family(self, ctx, user=None, family=None):
+        """
+        Event for the /deck command, renders and display the user's deck
+
+        Parameters
+        ----------
+        ctx (interactions.SlashContext)
+            The context of the command
+        user (interactions.User)
+            The user whose deck we want to display. If None, the command author is used
+        family (CardFamily)
+            The family of cards to display. If None, the first family is used (= arcana)
+        """
+        member = user or ctx.author
+
+        response_str = f"Here are the cards of {member.mention}:\n"
+
+        img_path = get_user_family_deck_image(member.id, family)
+
+        components = [
+            Button(style=ButtonStyle.GRAY, emoji=emoji, custom_id=f"deck_family_{name}") for name, emoji in zip(Constants.TCG_FAMILIES, Constants.TCG_FAMILIES_EMOJIS)
+        ]
+
+        i = Constants.TCG_FAMILIES.index(family.name)
+        components[i].style = ButtonStyle.GREEN
+        components[i].disabled = True
+
+        await ctx.send(response_str, file=img_path, components=components, ephemeral=True)
+
+    def callback_from_id(self, custom_id):
+        """
+        Returns the callback function for the /deck button with the given custom_id
+
+        Parameters
+        ----------
+        custom_id (str)
+
+        Returns
+        -------
+        interactions.ComponentCommand
+        """
+        @component_callback(custom_id)
+        @auto_defer(ephemeral=True)
+        async def callback(ctx):
+            # extract the user id from the message content
+            content = ctx.message.content
+            pattern = r"<@!?(\d+)>"
+            match = re.search(pattern, content)
+            user = match.group(1) if match else None
+
+            if user is not None:
+                user = await ctx.guild.fetch_member(int(user))
+
+            await self.display_deck_family(ctx, user, family=CardFamily(custom_id[len("deck_family_"):]))
+        return callback
+
+    @component_callback(SELECT_MENU_ID)
+    async def callback(self, ctx):
+        """
+        Callback for the /pull select menu
+
+        Parameters
+        ----------
+        ctx : interactions.ComponentContext
+        """
+        anwser = ctx.values
+        family = Constants.TCG_BANNERS[int(anwser[0])]
+        await self.pull_pack(ctx, family)
