@@ -1,11 +1,12 @@
 import asyncio
 import calendar
-from interactions import Button, ButtonStyle, Extension, OptionType, SlashCommandChoice, auto_defer, component_callback, slash_command, slash_option
+from interactions import Button, ButtonStyle, Extension, OptionType, auto_defer, component_callback, slash_command, slash_option
 import os
 from PIL import Image
 import re
 
 from constant import Constants
+import embed_messages
 from random_pool import RandomPoolTable
 from TCG.tcg import CardFamily, generate_random_pack, get_user_collection, get_user_family_deck_image
 from user_profile import get_profile
@@ -22,9 +23,13 @@ class CogTCG(Extension):
     Slash commands:
         /pull
         /deck
+    Select menus:
+        SELECT_MENU_ID
     Message commands:
     Modals:
     """
+
+    SELECT_MENU_ID = "tcg_pull_select_menu"
 
     def __init__(self, bot):
         self.bot = bot
@@ -32,20 +37,15 @@ class CogTCG(Extension):
         for family in Constants.TCG_FAMILIES:
             self.bot.add_component_callback(self.callback_from_id(f"deck_family_{family}"))
 
-    @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
-    @slash_option(name="pack_type", description="The type of pack you want to open", opt_type=OptionType.STRING, required=True, choices=[
-        SlashCommandChoice(name=emoji, value=name) for name, emoji in zip(Constants.TCG_FAMILIES[1:], Constants.TCG_FAMILIES_EMOJIS[1:])
-    ])
-    @auto_defer(ephemeral=True)
-    @utils.check_message_to_be_processed
     async def pull_pack(self, ctx, pack_type: str):
         """
         Opens a pack and adds the card inside to the user's collection
-
-        Returns
-        -------
-        list of Card
-            the cards inside the pack
+        
+        Parameters
+        ----------
+        ctx (interactions.ComponentContext)
+        pack_type (str)
+            The type of pack to open
         """
         usr_id = str(ctx.author.id)
         profile = get_profile(usr_id)
@@ -75,9 +75,13 @@ class CogTCG(Extension):
         user_collection.add_cards(pack_cards)
         profile["can_pull"] = False
 
+        old_comp = ctx.message.components
+        old_comp[0].components[1].components[0].options[int(ctx.values[0])].default = True
+        old_comp[0].components[1].components[0].disabled = True
+        await ctx.edit_origin(components=old_comp)
         response = await ctx.send(file=f"src/TCG/assets/pack_animations/{pack_type}.gif")
 
-        await asyncio.sleep(10)  # Wait for the animation to finish
+        await asyncio.sleep(5)  # Wait for the animation to finish
 
         card_imgs = []
         # Read all images
@@ -111,6 +115,21 @@ class CogTCG(Extension):
         if os.path.exists(file):
             os.remove(file)
 
+    @slash_command(name="pull", description="Open a pack and add cards to your collection", scopes=Constants.GUILD_IDS)
+    @auto_defer(ephemeral=True)
+    @utils.check_message_to_be_processed
+    async def pull_pack_callback(self, ctx):
+        """
+        Callback for the /pull command
+
+        Parameters
+        ----------
+        ctx : interactions.InteractionContext 
+        """
+        # Create the component
+        ui = embed_messages.get_container_TCG_pull(CogTCG.SELECT_MENU_ID)
+        await ctx.send(components=ui, ephemeral=True)
+
     @slash_command(name="deck", description="Display your card collection", scopes=Constants.GUILD_IDS)
     @slash_option(name="user", description="The person you want to check. Leave empty to check your own profile", opt_type=OptionType.USER, required=False)
     @auto_defer(ephemeral=True)
@@ -138,10 +157,10 @@ class CogTCG(Extension):
 
         response_str = f"Here are the cards of {member.mention}:\n"
 
-        img_path = get_user_family_deck_image(member.id, family)  # TODO: Allow the user to choose the family to display
+        img_path = get_user_family_deck_image(member.id, family)
 
         components = [
-            Button(style=ButtonStyle.GRAY, label=emoji, custom_id=f"deck_family_{name}") for name, emoji in zip(Constants.TCG_FAMILIES, Constants.TCG_FAMILIES_EMOJIS)
+            Button(style=ButtonStyle.GRAY, emoji=emoji, custom_id=f"deck_family_{name}") for name, emoji in zip(Constants.TCG_FAMILIES, Constants.TCG_FAMILIES_EMOJIS)
         ]
 
         i = Constants.TCG_FAMILIES.index(family.name)
@@ -176,3 +195,16 @@ class CogTCG(Extension):
 
             await self.display_deck_family(ctx, user, family=CardFamily(custom_id[len("deck_family_"):]))
         return callback
+
+    @component_callback(SELECT_MENU_ID)
+    async def callback(self, ctx):
+        """
+        Callback for the /pull select menu
+
+        Parameters
+        ----------
+        ctx : interactions.ComponentContext
+        """
+        anwser = ctx.values
+        family = Constants.TCG_BANNERS[int(anwser[0])]
+        await self.pull_pack(ctx, family)

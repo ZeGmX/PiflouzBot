@@ -1,6 +1,8 @@
 import asyncio
+import calendar
 import copy
 from interactions import (
+    ActionRow,
     Button,
     ButtonStyle,
     Color,
@@ -9,12 +11,12 @@ from interactions import (
     EmbedAttachment,
     EmbedField,
     MaterialColors,
-    MediaGalleryComponent,
-    MediaGalleryItem,
     RoleColors,
     SectionComponent,
     SeparatorComponent,
     SeparatorSpacingSize,
+    StringSelectMenu,
+    StringSelectOption,
     TextDisplayComponent,
     ThumbnailComponent,
     UnfurledMediaItem,
@@ -56,8 +58,8 @@ def get_embeds_help_message():
                     inline=False
                 ),
                 EmbedField(
-                    name="`/profile`",
-                    value="Check all the data from your profile",
+                    name="`/profile [user]`",
+                    value="Check all the data from someone's profile",
                     inline=False
                 ),
                 EmbedField(
@@ -186,6 +188,16 @@ def get_embeds_help_message():
                 EmbedField(
                     name="`/chess status`",
                     value="Check how your chess problem solving is going ⚠️ Only works during chess events",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/pull`",
+                    value="Open a pack and add cards to your collection",
+                    inline=False
+                ),
+                EmbedField(
+                    name="`/deck [user]`",
+                    value="Display your card collection or someone else's",
                     inline=False
                 ),
                 EmbedField(
@@ -504,18 +516,9 @@ async def get_embed_wordle(solution, guesses, header_str, user_id):
     return embed
 
 
-def get_container_TCG_pull(card_names, cards_images, pack_name):
+def get_container_TCG_pull(select_id):
     """
-    Returns an container to display the cards pulled from a pack
-
-    Parameters
-    ----------
-    card_names (List[str]):
-        the names of the cards pulled from the pack
-    cards_images (List[str]):
-        the paths to the images of the cards pulled from the pack
-    pack_name (str):
-        the name of the pack
+    Returns an container to ask the user which banner they want to pull from
 
     Returns
     -------
@@ -523,17 +526,19 @@ def get_container_TCG_pull(card_names, cards_images, pack_name):
     """
     # Initialize with header
     components = [
-        TextDisplayComponent(f"You opened a {pack_name} pack and got the following cards:"),
+        TextDisplayComponent(f"You can open one pack per week (resets every {calendar.day_name[Constants.TCG_PULL_CREDIT_DAY]} at {Constants.TCG_PULL_CREDIT_TIME.strftime('%H:%M')})\nEach pack contains 5 random cards:\n- The first three have a very low chance of being arcana\n- The fourth and fifth have increased chance of being face cards or arcana\nFace cards are also rarer than number cards\n\nChoose which banner to open a pack from:"),
+        ActionRow(
+            StringSelectMenu(
+                *[
+                    StringSelectOption(label=f"Weights of {name} cards ×5", value=i, emoji=emoji) for i, (name, emoji) in enumerate(zip(Constants.TCG_BANNERS, Constants.TCG_BANNER_EMOJIS))
+                ],
+                custom_id=select_id
+            )
+        )
     ]
-
-    for card_name, card_image in zip(card_names, cards_images):
-        components.append(TextDisplayComponent(card_name))
-
-        gallery = MediaGalleryComponent(items=[MediaGalleryItem(media=UnfurledMediaItem(f"attachment://{ntpath.basename(card_image)}"))])
-        components.append(gallery)
 
     # Put everything in a container
     return ContainerComponent(
         *components,
-        accent_color=RoleColors.DARK_RED.value
+        accent_color=Color.random().value
     )

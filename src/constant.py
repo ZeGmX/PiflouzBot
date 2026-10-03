@@ -113,9 +113,11 @@ class Constants:
     PROFILE_PICTURE_UPDATE = eval(os.getenv("PROFILE_PICTURE_UPDATE"))
 
     # TCG
-    TCG_BASE_PATH = "src/TCG/assets/"
-    TCG_FAMILIES = ["arcana", "bell", "butterfly", "eye", "hammer"]
-    TCG_FAMILIES_EMOJIS = ["🧙", "🔔", "🦋", "👁️", "🔨"]
+    TCG_BASE_PATH = os.getenv("TCG_BASE_PATH")
+    TCG_FAMILIES = eval(os.getenv("TCG_FAMILIES"))
+    TCG_FAMILIES_EMOJIS = eval(os.getenv("TCG_FAMILIES_EMOJIS"))
+    TCG_BANNERS = eval(os.getenv("TCG_BANNERS"))
+    TCG_BANNER_EMOJIS = eval(os.getenv("TCG_BANNER_EMOJIS"))
     TCG_ALL_CARDS = []
     TCG_PULL_CREDIT_DAY = eval(os.getenv("TCG_PULL_CREDIT_DAY"))
     TCG_NOTIF_ROLE_ID = int(os.getenv("TCG_NOTIF_ROLE_ID"))
